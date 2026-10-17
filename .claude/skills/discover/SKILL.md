@@ -14,7 +14,7 @@ pre-call mini report.
 
 1. Run `pipeline discover --sector "$0" --district "$1"` via the
    orchestrator. Output: `leads/<district>-<sector>.csv` + a
-   `pending_approval` batch + WhatsApp summary to the operator.
+   `pending_approval` batch + operator summary via NOTIFY_CHANNEL.
 2. For each Tier A lead, write a 5-line TURKISH pre-call note into the leads
    data: business name, the site's 3 most visible gaps (from heuristics, in
    plain language), mobile score, preview link placeholder, suggested opening

@@ -50,3 +50,20 @@ Consequences:
   panel.
 - If WhatsApp delivery proves flaky in practice, a fallback channel can be
   revisited; nothing else in the pipeline depends on the channel choice.
+
+## D3 — Telegram until WhatsApp business verification (2026-10-17)
+
+**Decision (operator):** D2 is suspended, not reversed. Meta permanently
+restricted the fresh test WABA ("Hesap Kısıtlandı", duration: permanent)
+and the only unlock path it offers is business verification, which requires
+a registered company — the operator does not have one yet.
+
+Consequences:
+- Interim notification channel: Telegram bot (operator picked it over
+  ntfy.sh/e-mail). `TELEGRAM_BOT_TOKEN` + `TELEGRAM_CHAT_ID` return to .env.
+- The notify stage is written channel-pluggable: `telegram` now, `whatsapp`
+  activates once the operator registers a company (şahıs şirketi planned —
+  also needed for invoicing/Vercel commercial use), passes Meta business
+  verification with the tax certificate, and the `site_ready` template is
+  approved. WA_* env vars stay documented but optional until then.
+- Discover summaries follow the same channel abstraction.
