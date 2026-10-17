@@ -95,8 +95,9 @@ Non-negotiable subset enforced by audit/verify:
   Yönet" equally styled; no pre-checked boxes; no analytics/marketing scripts
   in demos at all; footer links to Aydınlatma Metni and Çerez Politikası.
 - Preview demos: visible "Taslak / Önizleme — resmi site değildir" band,
-  `noindex`, Basic-Auth. People photos from the old site are blurred or
-  replaced with placeholders until consent is verified (FSEK 86 / KVKK).
+  `noindex`, Basic-Auth. Photographs from the old site, including staff
+  portraits, ARE used in these private demos — see §7 and its TODO for the
+  operator decision and the deferred FSEK 86 / KVKK question.
 - Opening hours with Turkish day names (Pzt…Paz) visible on page AND in
   LocalBusiness JSON-LD `openingHoursSpecification`; most specific schema
   subtype (`Dentist`, `HairSalon`, …).
@@ -122,9 +123,12 @@ region or DOM fact. Written neutrally (no "fail/should" steering).
 | DJ10 | Do more than one section animate on scroll into view? |
 | DJ11 | Is the memorable "one bold element" from design-plan.md actually present? |
 | DJ12 | Are opening hours visible with Turkish day names? |
+| DJ13 | Does every rendered section contain body content, not just labels and headings? |
+| DJ14 | Does the page use photographs from the crawl rather than placeholder images? |
+| DJ15 | Does any visible body copy restate the template's reference-clinic wording rather than this client's own text? |
 
-DJ3–DJ7, DJ10 passing means "no". Generic-cluster or Turkish-text failures
-(DJ3–DJ7) are hard fails → fix loop. Others go to the digest as design notes.
+DJ3–DJ7, DJ10 and DJ15 passing means "no". Generic-cluster or Turkish-text failures
+(DJ3–DJ7) and content failures (DJ13–DJ15) are hard fails → fix loop. Others go to the digest as design notes.
 Aesthetic comparisons between two variants use randomized A/B pairwise voting,
 sampled 3×, trusted only on unanimity — never absolute 1–10 scores.
 
@@ -132,3 +136,54 @@ sampled 3×, trusted only on unanimity — never absolute 1–10 scores.
      questions based on what the judge gets wrong. -->
 <!-- TODO(uygar): decide the default body/heading font shortlist (3-4 pairs)
      allowed for client sites, so generate doesn't pick exotic fonts. -->
+
+## 7. Content reuse (ours — added after the first real run)
+
+The first rebuild was judged thin and templated. The root cause was not the
+palette: the crawl discarded the page text and downloaded none of the
+photography, so the generator had titles and headings and nothing else, and
+filled the gap with its own copy. These rules close that.
+
+- **The client's own words are the copy.** Service descriptions, team bios,
+  FAQ answers and about text come from `crawl/content.json` (per-page
+  `contentBlocks`, plus a merged `faq` array). Lift them; do not rewrite from
+  scratch and do not summarize away the specifics.
+- **Editing is allowed, invention is not.** Fix spelling and mojibake, break
+  a wall of text into readable paragraphs, cut filler and marketing padding,
+  tighten a 120-word paragraph to 60. Never add a claim, a credential, a
+  treatment, a guarantee or a statistic the old site did not make.
+- **A section with no source content is dropped**, not padded. An empty
+  testimonials section is worse than no testimonials section.
+- **Photography comes from `crawl/asset-manifest.json`.** Self-host the real
+  images; placeholders are a fallback for when the crawl found none, not the
+  default. Pick by `width`/`height` — the hero needs the largest usable
+  image, not the first one in the list.
+- Every asset carries `license_unknown: true` and a `source_url`. Keep the
+  manifest with the generated site so provenance survives into the demo.
+
+<!-- TODO(uygar): operator decided (2026-10-18) that real photographs,
+     including staff portraits, are used in private noindex demos. The
+     FSEK 86 / KVKK consent question is deferred to the point of sale, not
+     the demo. Revisit with a lawyer before any public deployment. -->
+
+## 8. Density and hierarchy (ours — the "thin and generic" failure)
+
+A correct, accessible, fast page can still be lifeless. These are the
+checkable parts of what made the first attempt feel templated:
+
+- **Use the vendored `ui-ux-pro-max` dataset for palette, type pairing and
+  per-section layout** instead of reaching for defaults. It carries product
+  palettes with reasoning profiles, font pairings and UX guidelines; a
+  clinic should land on a clinic's palette, not a generic brand ramp.
+- **The hero carries real content**, not just a headline over empty space:
+  the clinic's actual positioning line, a real photograph, and the primary
+  CTA in the first mobile viewport.
+- **Sections are ordered by what a visitor needs**, not by template order:
+  what this business does and where → proof it is competent (team,
+  treatments) → how to reach it. Hours and map belong near contact, not
+  stranded mid-page.
+- **No section renders as a bare list of labels.** A service needs its
+  description; a team member needs their title and their photo; an FAQ entry
+  needs its answer.
+- Vertical rhythm is deliberate: section padding varies with importance
+  rather than every block getting the same spacing token.

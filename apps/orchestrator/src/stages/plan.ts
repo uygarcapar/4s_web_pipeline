@@ -30,8 +30,20 @@ export const planStage: StageModule = {
     const prompt = `You are planning a rebuilt website for a Turkish small business.
 
 Inputs you MUST read before writing anything:
-- ${designRules} — the hard design rules, especially the five generic-AI clusters in §2 and the Turkey rules in §5.
+- ${designRules} — the hard design rules. §2 (generic-AI clusters), §5 (Turkey),
+  §7 (content reuse) and §8 (density and hierarchy) all constrain this plan.
+- ${join(ctx.runDir, "crawl", "content.json")} — the CLIENT'S OWN TEXT: per-page
+  content blocks, detected FAQ pairs and headings. This is the copy the rebuilt
+  site uses. Read it properly; a plan that ignores it produces a thin site.
+- ${join(ctx.runDir, "crawl", "asset-manifest.json")} — the photographs downloaded
+  from the current site, with pixel dimensions. The rebuild uses these, not
+  placeholders.
 - ${screenshotDir} — mobile and desktop screenshots of the CURRENT site. Read at least index.mobile.png and index.desktop.png.
+- The vendored \`ui-ux-pro-max\` skill at ${join(ctx.repoRoot, ".claude", "skills", "ui-ux-pro-max")} —
+  a searchable dataset of product palettes (with reasoning profiles), font
+  pairings, UX guidelines and per-section layout patterns. Query it for the
+  palette and type pairing instead of reaching for your own defaults; read its
+  SKILL.md first to learn how to search the data files.
 - Ground-truth facts (verbatim, never invent or alter these):
 ${facts}
 - Audit findings the rebuild must fix:
@@ -57,14 +69,32 @@ Produce exactly these artifacts, in this order:
    Zod validation at build time. If the look you want is not an existing
    variant, pick the closest one and describe the difference in the section
    spec instead.
-   This is a one-page site: a single page at "/" with an ordered section list. Order sections so the first mobile viewport answers what the business does, where it is, and how to reach it.
+   This is a one-page site: a single page at "/" with an ordered section list.
+   Order sections by what a visitor needs, not by template order: what this
+   business does and where → proof it is competent (team photos, treatments,
+   FAQ) → how to reach it (contact, hours, map together at the end).
+   Include a section ONLY if content.json actually has content for it; an
+   empty testimonials block is worse than no testimonials block.
 
-3. ${join(planDir, "sections")}/<id>.md — one spec per section in your sitemap. Each spec states: the section's purpose, which facts.json fields it consumes (name the fields), the Turkish copy to use, the chosen variant, and which crawl assets (if any) it needs.
+3. ${join(planDir, "sections")}/<id>.md — one spec per section in your sitemap.
+   Each spec states: the section's purpose, which facts.json fields it consumes
+   (name them), the chosen variant, and — the important part — THE ACTUAL
+   TURKISH COPY, lifted from content.json. Quote the source text and give the
+   edited version next to it. Editing means: fixing spelling and mojibake,
+   splitting walls of text, cutting marketing filler, shortening a 120-word
+   paragraph to 60. It does NOT mean inventing a claim, a treatment, a
+   credential or a statistic the current site does not make.
+   Each spec also names the specific image files from asset-manifest.json it
+   uses, chosen by their width/height — the hero needs the largest usable
+   photograph, not the first entry in the list.
 
 Hard rules:
 - Facts are verbatim. Never invent or "improve" a phone number, address, opening hour, price, or service name. If a fact is missing from facts.json, the section must not claim it.
 - Turkish user-facing copy with correct ş/ğ/ı/İ/ç/ö/ü. Code, file names and your own notes in English.
-- Services are NOT in facts.json — derive them only from the crawl pages (their URLs and titles) and say in the spec where each came from.
+- Services are NOT in facts.json — take them from content.json (service page
+  titles AND their descriptions) and cite the source URL for each.
+- Staff portraits and clinic photographs from the crawl ARE used (operator
+  decision, see design-rules.md §7). Name them per section.
 - Write no site code, no TSX, no CSS. Specs only.
 
 When every artifact is written, reply with one sentence naming the bold element.`;

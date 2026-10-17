@@ -11,6 +11,17 @@ To update: re-clone upstream, diff, copy, and update the pins here.
 | `skill-creator` | anthropics/skills `skills/skill-creator` | `dbd4588f9e1033efb41dad4bef2f7947c8993d44` | 2026-10-17 |
 | `web-design-guidelines` | [vercel-labs/agent-skills](https://github.com/vercel-labs/agent-skills) `skills/web-design-guidelines` | `063bee94c3f4df8453406c830b0a7df0f2860278` | 2026-10-17 |
 | `react-best-practices` | vercel-labs/agent-skills `skills/react-best-practices` | `063bee94c3f4df8453406c830b0a7df0f2860278` | 2026-10-17 |
+| `ui-ux-pro-max` + `design`, `ui-styling`, `brand`, `design-system` | ui-ux-pro-max-skill plugin, v2.13.0 | plugin version 2.13.0 | 2026-10-18 |
+
+`ui-ux-pro-max` is a searchable design-intelligence dataset (styles, product
+palettes with reasoning profiles, font pairings, UX guidelines, icons, chart
+types, per-stack UI guidance). It was added after the first real run produced
+a site the operator judged thin and templated; `generate` and
+`section-builder` load it so palette, type and layout decisions come from
+that dataset rather than the model's defaults.
+
+Trimmed when vendoring: `ui-styling/canvas-fonts` (5.5 MB of TTFs for canvas
+banner rendering — irrelevant to a Next.js site pipeline).
 
 Deliberately NOT vendored:
 - `vercel-optimize` (vercel-labs/agent-skills): it is a cost/observability

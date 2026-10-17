@@ -5,12 +5,14 @@ disable-model-invocation: true
 allowed-tools: Read, Write, Grep, Glob
 skills:
   - frontend-design
+  - ui-ux-pro-max
 argument-hint: [domain]
 ---
 
-Plan stage for `runs/$ARGUMENTS/`. Inputs: `crawl/pages.json`,
-`crawl/screenshots/`, `audit/facts.json`, `audit/issues.json`, and
-`template/design-rules.md`. If `plan/design-plan.md` already exists, stop
+Plan stage for `runs/$ARGUMENTS/`. Inputs: `crawl/content.json` (the
+client's own text and FAQ pairs), `crawl/asset-manifest.json` (their
+photographs with dimensions), `crawl/pages.json`, `crawl/screenshots/`,
+`audit/facts.json`, `audit/issues.json`, and `template/design-rules.md`. If `plan/design-plan.md` already exists, stop
 (idempotency).
 
 1. Write `runs/$ARGUMENTS/plan/design-plan.md` FIRST: 4–6 named colors

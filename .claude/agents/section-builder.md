@@ -8,6 +8,7 @@ isolation: worktree
 skills:
   - frontend-design
   - web-design-guidelines
+  - ui-ux-pro-max
 memory: false
 ---
 

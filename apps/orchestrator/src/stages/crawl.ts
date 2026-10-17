@@ -5,21 +5,32 @@ import { Configuration, PlaywrightCrawler } from "crawlee";
 import { chromium, devices } from "playwright";
 import type { StageContext, StageModule, StageResult } from "./types.js";
 import {
+  buildContentArtifact,
   collectPageData,
   findAddressCandidates,
   findHoursCandidates,
   findPhoneCandidates,
   hasMojibake,
+  isTooSmallImage,
   normalizeUrl,
+  originalAssetUrl,
+  readImageDimensions,
   slugForUrl,
+  type ContentBlock,
+  type ImageDimensions,
   type PhoneCandidates,
 } from "./crawl-extract.js";
 
 const MAX_PAGES = 30;
 const MAX_CONCURRENCY = 2;
 const MAX_SCREENSHOT_PAGES = 10;
-const MAX_ASSETS = 30;
+const MAX_ASSETS = 60;
+const MAX_ASSET_CANDIDATES = 300;
 const MAX_ASSET_BYTES = 5 * 1024 * 1024;
+/** Below this, an image is an icon/spacer/tracking pixel, not photography. */
+const MIN_ASSET_BYTES = 10_000;
+const MIN_ASSET_LONG_EDGE = 200;
+const MAX_VISIBLE_TEXT = 20_000;
 const NAV_TIMEOUT_SECS = 30;
 
 interface PageExtraction {
@@ -29,7 +40,12 @@ interface PageExtraction {
   metaDescription: string | null;
   htmlLang: string | null;
   h1: string[];
+  /** Visible text, capped at MAX_VISIBLE_TEXT characters. */
+  visibleText: string;
+  /** True length of the page's visible text, before the cap. */
   visibleTextLength: number;
+  /** Ordered semantic copy of the page (headings, paragraphs, list items). */
+  contentBlocks: ContentBlock[];
   telHrefs: string[];
   whatsappHrefs: string[];
   mailtoHrefs: string[];
@@ -56,14 +72,35 @@ interface AssetManifestEntry {
   sha256: string;
   content_type: string;
   license_unknown: true;
+  /** Pixel size when readable from the file header, else null. */
+  width: number | null;
+  height: number | null;
+  /** Page URLs this image appeared on. */
+  referenced_on: string[];
+}
+
+/** An image URL to try, with the pages that referenced it. */
+interface AssetCandidate {
+  url: string;
+  referencedOn: string[];
+  /** Favicons are kept regardless of size (they are never photography). */
+  isFavicon: boolean;
+}
+
+interface FetchedAsset {
+  url: string;
+  bytes: Buffer;
+  contentType: string;
 }
 
 /**
  * Crawl stage (deterministic, no LLM). Crawls the lead's site same-hostname
  * with Crawlee's PlaywrightCrawler (robots.txt respected, polite UA, never
- * submits forms), extracts business signals per page, captures desktop +
- * iPhone 13 screenshots, downloads same-origin images/favicon with a license
- * manifest, and writes pages.json (the idempotency artifact) last.
+ * submits forms), extracts business signals AND the client's own copy per
+ * page, captures desktop + iPhone 13 screenshots, downloads content images
+ * from any origin (Wix/WordPress CDNs included) with a license manifest,
+ * writes crawl/content.json for the plan+generate stages, and writes
+ * pages.json (the idempotency artifact) last.
  */
 export const crawlStage: StageModule = {
   stage: "crawl",
@@ -154,7 +191,9 @@ async function runCrawl(ctx: StageContext): Promise<StageResult> {
           metaDescription: raw.metaDescription,
           htmlLang: raw.htmlLang,
           h1: raw.h1,
+          visibleText: raw.visibleText.slice(0, MAX_VISIBLE_TEXT),
           visibleTextLength: raw.visibleText.length,
+          contentBlocks: raw.contentBlocks,
           telHrefs: raw.telHrefs,
           whatsappHrefs: raw.whatsappHrefs,
           mailtoHrefs: raw.mailtoHrefs,
@@ -175,6 +214,8 @@ async function runCrawl(ctx: StageContext): Promise<StageResult> {
         ctx.log(`crawled ${pageUrl}`, {
           title: raw.title,
           screenshot: desktopShot !== null,
+          textLength: raw.visibleText.length,
+          contentBlocks: raw.contentBlocks.length,
         });
 
         await enqueueLinks({ strategy: "same-hostname" });
@@ -201,8 +242,8 @@ async function runCrawl(ctx: StageContext): Promise<StageResult> {
   // browser (Crawlee drives a single desktop-configured browser pool).
   await takeMobileScreenshots(pages, screenshotsDir, userAgent, ctx.log);
 
-  const assetCandidates = collectAssetCandidates(pages, ctx.url);
-  const manifest = await downloadAssets(
+  const assetCandidates = collectAssetCandidates(pages);
+  const { manifest, skippedSmall } = await downloadAssets(
     assetCandidates,
     assetsDir,
     userAgent,
@@ -218,17 +259,37 @@ async function runCrawl(ctx: StageContext): Promise<StageResult> {
     JSON.stringify(mergeSignals(ctx, pages), null, 2) + "\n",
   );
 
+  // The client's own copy, merged cross-page: the plan and generate stages
+  // reuse this text verbatim instead of inventing new Turkish.
+  const content = buildContentArtifact(pages);
+  writeFileSync(
+    join(crawlDir, "content.json"),
+    JSON.stringify(content, null, 2) + "\n",
+  );
+
   // The idempotency artifact is written last so a partial run is retried.
   writeFileSync(
     join(crawlDir, "pages.json"),
     JSON.stringify(pages, null, 2) + "\n",
   );
 
+  const totalBlocks = pages.reduce((n, p) => n + p.contentBlocks.length, 0);
   ctx.log(
-    `crawl done: ${pages.length} pages, ${manifest.length} assets, ` +
-      `${desktopShots} screenshotted pages`,
+    `crawl done: ${pages.length} pages, ${manifest.length} assets ` +
+      `(${skippedSmall} skipped as too small), ${desktopShots} ` +
+      `screenshotted pages, ${totalBlocks} content blocks, ` +
+      `${content.faq.length} FAQ pairs`,
   );
-  return { ok: true, data: { pages: pages.length, assets: manifest.length } };
+  return {
+    ok: true,
+    data: {
+      pages: pages.length,
+      assets: manifest.length,
+      assetsSkippedSmall: skippedSmall,
+      contentBlocks: totalBlocks,
+      faqPairs: content.faq.length,
+    },
+  };
 }
 
 /** Merged signals across all crawled pages (input for audit/facts). */
@@ -302,98 +363,205 @@ async function takeMobileScreenshots(
   }
 }
 
-/** Same-origin image + favicon URLs, favicon first, capped at MAX_ASSETS. */
+/**
+ * Image + favicon candidates with the pages that referenced them, favicons
+ * first. Images are taken from ANY origin: most Turkish SMB sites are
+ * Wix/WordPress and serve every photo from a CDN host (static.wixstatic.com,
+ * i0.wp.com, …), so a same-origin rule downloads nothing usable.
+ */
 function collectAssetCandidates(
   pages: PageExtraction[],
-  startUrl: string,
-): string[] {
-  const allowedHosts = new Set<string>();
-  for (const raw of [startUrl, ...pages.map((p) => p.url)]) {
+): AssetCandidate[] {
+  const isHttp = (raw: string): boolean => {
     try {
-      allowedHosts.add(new URL(raw).hostname);
-    } catch {
-      // Ignore unparseable URLs.
-    }
-  }
-  const sameOrigin = (raw: string): boolean => {
-    try {
-      return allowedHosts.has(new URL(raw).hostname);
+      const url = new URL(raw);
+      return url.protocol === "http:" || url.protocol === "https:";
     } catch {
       return false;
     }
   };
 
-  const favicons = pages
-    .flatMap((p) => p.faviconUrls)
-    .filter(sameOrigin)
-    .slice(0, 3);
+  // url -> referencing page URLs, in first-seen order.
+  const refs = new Map<string, Set<string>>();
+  const addRef = (url: string, pageUrl: string): void => {
+    if (!isHttp(url)) return;
+    const existing = refs.get(url);
+    if (existing === undefined) refs.set(url, new Set([pageUrl]));
+    else existing.add(pageUrl);
+  };
+
+  const faviconUrls = new Set<string>();
+  for (const page of pages) {
+    for (const url of page.faviconUrls.slice(0, 3)) {
+      if (!isHttp(url) || faviconUrls.size >= 3) continue;
+      faviconUrls.add(url);
+      addRef(url, page.url);
+    }
+  }
   const firstPage = pages[0];
-  if (favicons.length === 0 && firstPage !== undefined) {
+  if (faviconUrls.size === 0 && firstPage !== undefined) {
     try {
-      favicons.push(new URL("/favicon.ico", firstPage.url).toString());
+      const fallback = new URL("/favicon.ico", firstPage.url).toString();
+      faviconUrls.add(fallback);
+      addRef(fallback, firstPage.url);
     } catch {
       // No favicon candidate.
     }
   }
 
-  const images = pages
-    .flatMap((p) => [...p.imageUrls, ...p.backgroundImageUrls])
-    .filter(sameOrigin);
-
-  return [...new Set([...favicons, ...images])]
-    .filter((u) => !u.startsWith("data:"))
-    .slice(0, MAX_ASSETS);
+  const imageUrls: string[] = [];
+  for (const page of pages) {
+    for (const url of [...page.imageUrls, ...page.backgroundImageUrls]) {
+      if (!isHttp(url) || faviconUrls.has(url)) continue;
+      if (!refs.has(url)) imageUrls.push(url);
+      addRef(url, page.url);
+    }
+  }
+  const candidates: AssetCandidate[] = [
+    ...[...faviconUrls].map((url) => ({ url, isFavicon: true })),
+    ...imageUrls.map((url) => ({ url, isFavicon: false })),
+  ].map(({ url, isFavicon }) => ({
+    url,
+    isFavicon,
+    referencedOn: [...(refs.get(url) ?? new Set<string>())],
+  }));
+  return candidates.slice(0, MAX_ASSET_CANDIDATES);
 }
 
+/** GET one asset, enforcing the per-asset size cap. Null when unusable. */
+async function fetchAsset(
+  sourceUrl: string,
+  userAgent: string,
+  log: StageContext["log"],
+): Promise<FetchedAsset | null> {
+  const res = await fetch(sourceUrl, {
+    headers: {
+      "user-agent": userAgent,
+      // Ask for formats whose headers we can measure (not AVIF).
+      accept: "image/webp,image/png,image/jpeg,image/gif,image/*;q=0.8,*/*;q=0.5",
+    },
+    redirect: "follow",
+    signal: AbortSignal.timeout(20_000),
+  });
+  if (!res.ok) {
+    log(`asset skipped (HTTP ${res.status}): ${sourceUrl}`);
+    return null;
+  }
+  const declared = Number(res.headers.get("content-length") ?? "0");
+  if (declared > MAX_ASSET_BYTES) {
+    log(`asset skipped (>5MB declared): ${sourceUrl}`);
+    return null;
+  }
+  const contentType =
+    res.headers.get("content-type")?.split(";")[0]?.trim() ??
+    "application/octet-stream";
+  if (
+    !contentType.startsWith("image/") &&
+    contentType !== "application/octet-stream" &&
+    contentType !== "binary/octet-stream"
+  ) {
+    log(`asset skipped (content-type ${contentType}): ${sourceUrl}`);
+    return null;
+  }
+  const bytes = Buffer.from(await res.arrayBuffer());
+  if (bytes.byteLength > MAX_ASSET_BYTES) {
+    log(`asset skipped (>5MB body): ${sourceUrl}`);
+    return null;
+  }
+  return { url: sourceUrl, bytes, contentType };
+}
+
+/**
+ * Download the candidates into assets/ and build the provenance manifest.
+ *
+ * For every CDN-resized URL the untransformed original is tried too and the
+ * larger successful response wins; identical photos (same sha256) are stored
+ * once with their referencing pages merged. Icons, spacers and tracking
+ * pixels (<10KB, or <200px on the long edge when measurable) are skipped.
+ */
 async function downloadAssets(
-  candidates: string[],
+  candidates: AssetCandidate[],
   assetsDir: string,
   userAgent: string,
   log: StageContext["log"],
-): Promise<AssetManifestEntry[]> {
+): Promise<{ manifest: AssetManifestEntry[]; skippedSmall: number }> {
   const manifest: AssetManifestEntry[] = [];
   const usedNames = new Set<string>();
+  const bySha = new Map<string, AssetManifestEntry>();
+  const attempted = new Set<string>();
+  let skippedSmall = 0;
 
-  for (const [index, sourceUrl] of candidates.entries()) {
+  for (const [index, candidate] of candidates.entries()) {
     if (manifest.length >= MAX_ASSETS) break;
-    try {
-      const res = await fetch(sourceUrl, {
-        headers: { "user-agent": userAgent },
-        redirect: "follow",
-        signal: AbortSignal.timeout(15_000),
-      });
-      if (!res.ok) {
-        log(`asset skipped (HTTP ${res.status}): ${sourceUrl}`);
-        continue;
+
+    const urls = [candidate.url];
+    const original = originalAssetUrl(candidate.url);
+    if (original !== null) urls.unshift(original);
+
+    let best: FetchedAsset | null = null;
+    for (const url of urls) {
+      if (attempted.has(url)) continue;
+      attempted.add(url);
+      try {
+        const fetched = await fetchAsset(url, userAgent, log);
+        if (fetched === null) continue;
+        if (best === null || fetched.bytes.byteLength > best.bytes.byteLength) {
+          best = fetched;
+        }
+      } catch (err) {
+        log(`asset download failed: ${url}: ${errorMessage(err)}`);
       }
-      const declared = Number(res.headers.get("content-length") ?? "0");
-      if (declared > MAX_ASSET_BYTES) {
-        log(`asset skipped (>5MB declared): ${sourceUrl}`);
-        continue;
-      }
-      const bytes = Buffer.from(await res.arrayBuffer());
-      if (bytes.byteLength > MAX_ASSET_BYTES) {
-        log(`asset skipped (>5MB body): ${sourceUrl}`);
-        continue;
-      }
-      const contentType =
-        res.headers.get("content-type")?.split(";")[0]?.trim() ??
-        "application/octet-stream";
-      const file = assetFileName(sourceUrl, contentType, index, usedNames);
-      writeFileSync(join(assetsDir, file), bytes);
-      manifest.push({
-        file,
-        source_url: sourceUrl,
-        fetched_at: new Date().toISOString(),
-        sha256: createHash("sha256").update(bytes).digest("hex"),
-        content_type: contentType,
-        license_unknown: true,
-      });
-    } catch (err) {
-      log(`asset download failed: ${sourceUrl}: ${errorMessage(err)}`);
     }
+    if (best === null) continue;
+
+    const dimensions: ImageDimensions = readImageDimensions(best.bytes);
+    if (
+      !candidate.isFavicon &&
+      isTooSmallImage(
+        best.bytes.byteLength,
+        dimensions,
+        MIN_ASSET_BYTES,
+        MIN_ASSET_LONG_EDGE,
+      )
+    ) {
+      skippedSmall += 1;
+      log(`asset skipped (too small): ${best.url}`, {
+        bytes: best.bytes.byteLength,
+        width: dimensions.width,
+        height: dimensions.height,
+      });
+      continue;
+    }
+
+    const sha256 = createHash("sha256").update(best.bytes).digest("hex");
+    const duplicate = bySha.get(sha256);
+    if (duplicate !== undefined) {
+      for (const pageUrl of candidate.referencedOn) {
+        if (!duplicate.referenced_on.includes(pageUrl)) {
+          duplicate.referenced_on.push(pageUrl);
+        }
+      }
+      log(`asset deduped (same sha256 as ${duplicate.file}): ${best.url}`);
+      continue;
+    }
+
+    const file = assetFileName(best.url, best.contentType, index, usedNames);
+    writeFileSync(join(assetsDir, file), best.bytes);
+    const entry: AssetManifestEntry = {
+      file,
+      source_url: best.url,
+      fetched_at: new Date().toISOString(),
+      sha256,
+      content_type: best.contentType,
+      license_unknown: true,
+      width: dimensions.width,
+      height: dimensions.height,
+      referenced_on: [...candidate.referencedOn],
+    };
+    manifest.push(entry);
+    bySha.set(sha256, entry);
   }
-  return manifest;
+  return { manifest, skippedSmall };
 }
 
 const EXT_BY_TYPE: Record<string, string> = {

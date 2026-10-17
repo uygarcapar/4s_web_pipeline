@@ -1,11 +1,20 @@
 import { describe, expect, it } from "vitest";
 import {
+  buildContentArtifact,
+  dedupeFaqPairs,
+  faqFromContentBlocks,
+  faqFromJsonLd,
   findAddressCandidates,
   findHoursCandidates,
   findPhoneCandidates,
   hasMojibake,
+  isTooSmallImage,
   normalizeUrl,
+  originalAssetUrl,
+  plainText,
+  readImageDimensions,
   slugForUrl,
+  type ContentBlock,
 } from "./crawl-extract.js";
 
 describe("findPhoneCandidates", () => {
@@ -129,5 +138,557 @@ describe("slugForUrl", () => {
 
   it("falls back to 'index' for unparseable input", () => {
     expect(slugForUrl("not a url")).toBe("index");
+  });
+});
+
+/* ------------------------------------------------------------------ */
+/* Image header dimensions (hand-built headers, no files, no network) */
+/* ------------------------------------------------------------------ */
+
+const ascii = (text: string): number[] =>
+  [...text].map((c) => c.charCodeAt(0));
+const be16 = (n: number): number[] => [(n >> 8) & 0xff, n & 0xff];
+const be32 = (n: number): number[] => [...be16(n >>> 16), ...be16(n & 0xffff)];
+const le16 = (n: number): number[] => [n & 0xff, (n >> 8) & 0xff];
+const le24 = (n: number): number[] => [...le16(n & 0xffff), (n >> 16) & 0xff];
+
+function pngHeader(width: number, height: number): Uint8Array {
+  return new Uint8Array([
+    0x89,
+    ...ascii("PNG"),
+    0x0d,
+    0x0a,
+    0x1a,
+    0x0a,
+    ...be32(13),
+    ...ascii("IHDR"),
+    ...be32(width),
+    ...be32(height),
+    8,
+    6,
+    0,
+    0,
+    0,
+  ]);
+}
+
+function jpegHeader(width: number, height: number): Uint8Array {
+  return new Uint8Array([
+    0xff,
+    0xd8, // SOI
+    0xff,
+    0xe0, // APP0
+    ...be16(16),
+    ...ascii("JFIF"),
+    0,
+    1,
+    1,
+    0,
+    0,
+    1,
+    0,
+    1,
+    0,
+    0,
+    0xff,
+    0xdb, // DQT, skipped
+    ...be16(4),
+    0,
+    0,
+    0xff,
+    0xc0, // SOF0
+    ...be16(17),
+    8, // sample precision
+    ...be16(height),
+    ...be16(width),
+    3,
+    1,
+    0x22,
+    0,
+  ]);
+}
+
+function gifHeader(width: number, height: number): Uint8Array {
+  return new Uint8Array([
+    ...ascii("GIF89a"),
+    ...le16(width),
+    ...le16(height),
+    0xf7,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+  ]);
+}
+
+function webpLossyHeader(width: number, height: number): Uint8Array {
+  return new Uint8Array([
+    ...ascii("RIFF"),
+    0,
+    0,
+    0,
+    0,
+    ...ascii("WEBP"),
+    ...ascii("VP8 "),
+    0,
+    0,
+    0,
+    0,
+    0x10,
+    0x00,
+    0x00, // frame tag
+    0x9d,
+    0x01,
+    0x2a, // sync code
+    ...le16(width),
+    ...le16(height),
+  ]);
+}
+
+function webpLosslessHeader(width: number, height: number): Uint8Array {
+  const bits = (width - 1) | ((height - 1) << 14);
+  return new Uint8Array([
+    ...ascii("RIFF"),
+    0,
+    0,
+    0,
+    0,
+    ...ascii("WEBP"),
+    ...ascii("VP8L"),
+    0,
+    0,
+    0,
+    0,
+    0x2f,
+    bits & 0xff,
+    (bits >>> 8) & 0xff,
+    (bits >>> 16) & 0xff,
+    (bits >>> 24) & 0xff,
+  ]);
+}
+
+function webpExtendedHeader(width: number, height: number): Uint8Array {
+  return new Uint8Array([
+    ...ascii("RIFF"),
+    0,
+    0,
+    0,
+    0,
+    ...ascii("WEBP"),
+    ...ascii("VP8X"),
+    0,
+    0,
+    0,
+    0,
+    0x10, // flags
+    0,
+    0,
+    0, // reserved
+    ...le24(width - 1),
+    ...le24(height - 1),
+  ]);
+}
+
+describe("readImageDimensions", () => {
+  it("reads a PNG IHDR header", () => {
+    expect(readImageDimensions(pngHeader(1920, 1080))).toEqual({
+      width: 1920,
+      height: 1080,
+    });
+  });
+
+  it("reads a JPEG SOFn header past skipped segments", () => {
+    expect(readImageDimensions(jpegHeader(800, 600))).toEqual({
+      width: 800,
+      height: 600,
+    });
+  });
+
+  it("reads a GIF logical screen descriptor", () => {
+    expect(readImageDimensions(gifHeader(120, 90))).toEqual({
+      width: 120,
+      height: 90,
+    });
+  });
+
+  it("reads WebP VP8, VP8L and VP8X headers", () => {
+    expect(readImageDimensions(webpLossyHeader(640, 480))).toEqual({
+      width: 640,
+      height: 480,
+    });
+    expect(readImageDimensions(webpLosslessHeader(300, 200))).toEqual({
+      width: 300,
+      height: 200,
+    });
+    expect(readImageDimensions(webpExtendedHeader(1600, 900))).toEqual({
+      width: 1600,
+      height: 900,
+    });
+  });
+
+  it("returns nulls for unsupported, truncated or empty data", () => {
+    const unknown = { width: null, height: null };
+    expect(readImageDimensions(new Uint8Array(0))).toEqual(unknown);
+    expect(readImageDimensions(pngHeader(10, 10).slice(0, 12))).toEqual(
+      unknown,
+    );
+    // SVG markup and an AVIF-style ftyp box are not header-measurable.
+    expect(readImageDimensions(new Uint8Array(ascii("<svg width='10'>")))).toEqual(
+      unknown,
+    );
+    expect(
+      readImageDimensions(
+        new Uint8Array([...be32(24), ...ascii("ftypavif"), ...new Array(8).fill(0)]),
+      ),
+    ).toEqual(unknown);
+  });
+
+  it("does not mistake a JPEG with no SOF for a sized image", () => {
+    expect(
+      readImageDimensions(new Uint8Array([0xff, 0xd8, ...new Array(20).fill(0)])),
+    ).toEqual({ width: null, height: null });
+  });
+});
+
+describe("isTooSmallImage", () => {
+  it("rejects tiny files regardless of dimensions", () => {
+    expect(isTooSmallImage(900, { width: 2000, height: 1200 }, 10_000, 200)).toBe(
+      true,
+    );
+  });
+
+  it("rejects icons whose long edge is under the threshold", () => {
+    expect(isTooSmallImage(50_000, { width: 180, height: 120 }, 10_000, 200)).toBe(
+      true,
+    );
+  });
+
+  it("keeps real photography", () => {
+    expect(
+      isTooSmallImage(240_000, { width: 1200, height: 800 }, 10_000, 200),
+    ).toBe(false);
+  });
+
+  it("keeps big-enough files whose dimensions are unknown", () => {
+    expect(isTooSmallImage(240_000, { width: null, height: null }, 10_000, 200)).toBe(
+      false,
+    );
+  });
+});
+
+/* ------------------------------------------------------------------ */
+/* CDN transform URLs                                                 */
+/* ------------------------------------------------------------------ */
+
+describe("originalAssetUrl", () => {
+  it("truncates a wixstatic transform at /v1/", () => {
+    const resized =
+      "https://static.wixstatic.com/media/512fd9_abc~mv2.png/v1/fill/" +
+      "w_171,h_60,al_c,q_85,enc_avif,quality_auto/diskent-logo.png";
+    expect(originalAssetUrl(resized)).toBe(
+      "https://static.wixstatic.com/media/512fd9_abc~mv2.png",
+    );
+  });
+
+  it("truncates a wixstatic crop transform too", () => {
+    const cropped =
+      "https://static.wixstatic.com/media/512fd9_x~mv2.jpg/v1/crop/" +
+      "x_101,y_0,w_1571,h_2268/fill/w_151,h_218/Nesrin.jpg";
+    expect(originalAssetUrl(cropped)).toBe(
+      "https://static.wixstatic.com/media/512fd9_x~mv2.jpg",
+    );
+  });
+
+  it("drops a WordPress -WxH filename suffix", () => {
+    expect(originalAssetUrl("https://cdn.example.com/wp/klinik-1024x768.jpg")).toBe(
+      "https://cdn.example.com/wp/klinik.jpg",
+    );
+  });
+
+  it("returns null when there is no transform segment", () => {
+    expect(
+      originalAssetUrl("https://static.wixstatic.com/media/512fd9_abc~mv2.png"),
+    ).toBeNull();
+    expect(originalAssetUrl("https://example.com/images/hero.jpg")).toBeNull();
+  });
+
+  it("returns null when /v1/ is not a file-path suffix", () => {
+    expect(originalAssetUrl("https://api.example.com/v1/images/hero.jpg")).toBeNull();
+  });
+
+  it("returns null for data URIs and unparseable input", () => {
+    expect(originalAssetUrl("data:image/png;base64,AAAA")).toBeNull();
+    expect(originalAssetUrl("not a url")).toBeNull();
+  });
+});
+
+/* ------------------------------------------------------------------ */
+/* FAQ pairing + content artifact                                     */
+/* ------------------------------------------------------------------ */
+
+const block = (tag: string, text: string): ContentBlock => ({ tag, text });
+
+describe("plainText", () => {
+  it("strips markup and entities from schema.org answers", () => {
+    expect(plainText("<p>Diş  beyazlatma&nbsp;<b>2 saat</b> sürer.</p>")).toBe(
+      "Diş beyazlatma 2 saat sürer.",
+    );
+  });
+});
+
+describe("faqFromContentBlocks", () => {
+  it("pairs a question block with the next non-heading block", () => {
+    const blocks = [
+      block("h2", "Sıkça Sorulan Sorular"),
+      block("h3", "Diş beyazlatma ne kadar sürer?"),
+      block("p", "Tek seansta yaklaşık 45 dakika sürer."),
+      block("h3", "Implant tedavisi ağrılı mı?"),
+      block("p", "Lokal anestezi ile ağrı duymazsınız."),
+    ];
+    expect(faqFromContentBlocks(blocks, "https://example.com/sss")).toEqual([
+      {
+        question: "Diş beyazlatma ne kadar sürer?",
+        answer: "Tek seansta yaklaşık 45 dakika sürer.",
+        sourceUrl: "https://example.com/sss",
+      },
+      {
+        question: "Implant tedavisi ağrılı mı?",
+        answer: "Lokal anestezi ile ağrı duymazsınız.",
+        sourceUrl: "https://example.com/sss",
+      },
+    ]);
+  });
+
+  it("ignores a question whose next block is a heading", () => {
+    const blocks = [
+      block("h3", "Randevu nasıl alınır?"),
+      block("h2", "İletişim"),
+      block("p", "Telefon: 0212 345 67 89"),
+    ];
+    expect(faqFromContentBlocks(blocks, "https://example.com/")).toEqual([]);
+  });
+
+  it("does not use a following question as an answer", () => {
+    const blocks = [
+      block("p", "Fiyatlar nedir?"),
+      block("p", "Taksit var mı?"),
+      block("p", "Kredi kartına 6 taksit yapılır."),
+    ];
+    const pairs = faqFromContentBlocks(blocks, "https://example.com/");
+    expect(pairs).toEqual([
+      {
+        question: "Taksit var mı?",
+        answer: "Kredi kartına 6 taksit yapılır.",
+        sourceUrl: "https://example.com/",
+      },
+    ]);
+  });
+
+  it("ignores blocks that are not questions and dedupes repeats", () => {
+    const blocks = [
+      block("p", "Kliniğimiz Kadıköy'de hizmet veriyor."),
+      block("p", "Nerede bulunuyorsunuz?"),
+      block("p", "Kadıköy, İstanbul."),
+      block("p", "Nerede bulunuyorsunuz?"),
+      block("p", "Kadıköy, İstanbul."),
+    ];
+    expect(faqFromContentBlocks(blocks, "https://example.com/")).toHaveLength(1);
+  });
+
+  it("returns an empty array when nothing looks like a question", () => {
+    expect(
+      faqFromContentBlocks(
+        [block("h1", "Hoş geldiniz"), block("p", "Diş kliniği")],
+        "https://example.com/",
+      ),
+    ).toEqual([]);
+  });
+});
+
+describe("faqFromJsonLd", () => {
+  it("reads FAQPage mainEntity questions", () => {
+    const jsonLd = [
+      {
+        "@context": "https://schema.org",
+        "@type": "FAQPage",
+        mainEntity: [
+          {
+            "@type": "Question",
+            name: "Dolgu ne kadar dayanır?",
+            acceptedAnswer: { "@type": "Answer", text: "<p>5-10 yıl</p>" },
+          },
+        ],
+      },
+    ];
+    expect(faqFromJsonLd(jsonLd, "https://example.com/sss")).toEqual([
+      {
+        question: "Dolgu ne kadar dayanır?",
+        answer: "5-10 yıl",
+        sourceUrl: "https://example.com/sss",
+      },
+    ]);
+  });
+
+  it("finds Question nodes nested in a @graph and full type URLs", () => {
+    const jsonLd = [
+      {
+        "@graph": [
+          { "@type": "Dentist", name: "Dişkent" },
+          {
+            "@type": "http://schema.org/Question",
+            name: "Ücretler nedir?",
+            suggestedAnswer: [{ text: "Muayene 500 TL" }],
+          },
+        ],
+      },
+    ];
+    expect(faqFromJsonLd(jsonLd, "https://example.com/")).toEqual([
+      {
+        question: "Ücretler nedir?",
+        answer: "Muayene 500 TL",
+        sourceUrl: "https://example.com/",
+      },
+    ]);
+  });
+
+  it("skips questions without an answer and non-FAQ JSON-LD", () => {
+    expect(
+      faqFromJsonLd(
+        [
+          { "@type": "Question", name: "Cevapsız soru?" },
+          { "@type": "LocalBusiness", name: "Dişkent" },
+        ],
+        "https://example.com/",
+      ),
+    ).toEqual([]);
+  });
+
+  it("returns an empty array for empty JSON-LD", () => {
+    expect(faqFromJsonLd([], "https://example.com/")).toEqual([]);
+  });
+});
+
+describe("dedupeFaqPairs", () => {
+  it("keeps the first pair per question, ignoring case and spacing", () => {
+    const pairs = dedupeFaqPairs([
+      { question: "Nerede?", answer: "Kadıköy", sourceUrl: "a" },
+      { question: "nerede?", answer: "İstanbul", sourceUrl: "b" },
+      { question: "Nerede   ?", answer: "Başka", sourceUrl: "c" },
+    ]);
+    expect(pairs).toEqual([
+      { question: "Nerede?", answer: "Kadıköy", sourceUrl: "a" },
+      { question: "Nerede   ?", answer: "Başka", sourceUrl: "c" },
+    ]);
+  });
+});
+
+describe("buildContentArtifact", () => {
+  it("merges pages, FAQ pairs (JSON-LD first) and headings", () => {
+    const artifact = buildContentArtifact([
+      {
+        url: "https://example.com/",
+        slug: "index",
+        title: "Dişkent",
+        h1: ["Dişkent Diş Kliniği"],
+        contentBlocks: [
+          block("h1", "Dişkent Diş Kliniği"),
+          block("h2", "Hizmetlerimiz"),
+          block("p", "İmplant, ortodonti ve estetik diş hekimliği."),
+          block("h3", "Randevu nasıl alınır?"),
+          block("p", "Telefonla veya WhatsApp üzerinden."),
+        ],
+        jsonLd: [
+          {
+            "@type": "FAQPage",
+            mainEntity: {
+              "@type": "Question",
+              name: "Pazar günü açık mısınız?",
+              acceptedAnswer: { text: "Pazar kapalıyız." },
+            },
+          },
+        ],
+      },
+      {
+        url: "https://example.com/sss",
+        slug: "sss",
+        title: "SSS",
+        h1: ["Sıkça Sorulan Sorular"],
+        contentBlocks: [
+          block("h1", "Sıkça Sorulan Sorular"),
+          // Already present from the homepage JSON-LD: deduped.
+          block("h2", "Pazar günü açık mısınız?"),
+          block("p", "Hayır."),
+        ],
+        jsonLd: [],
+      },
+    ]);
+
+    expect(artifact.pages.map((p) => p.slug)).toEqual(["index", "sss"]);
+    expect(artifact.pages[0]?.contentBlocks).toHaveLength(5);
+    expect(artifact.faq).toEqual([
+      {
+        question: "Pazar günü açık mısınız?",
+        answer: "Pazar kapalıyız.",
+        sourceUrl: "https://example.com/",
+      },
+      {
+        question: "Randevu nasıl alınır?",
+        answer: "Telefonla veya WhatsApp üzerinden.",
+        sourceUrl: "https://example.com/",
+      },
+    ]);
+    expect(artifact.headings).toEqual([
+      {
+        text: "Dişkent Diş Kliniği",
+        level: 1,
+        sourceUrl: "https://example.com/",
+      },
+      { text: "Hizmetlerimiz", level: 2, sourceUrl: "https://example.com/" },
+      {
+        text: "Randevu nasıl alınır?",
+        level: 3,
+        sourceUrl: "https://example.com/",
+      },
+      {
+        text: "Sıkça Sorulan Sorular",
+        level: 1,
+        sourceUrl: "https://example.com/sss",
+      },
+      {
+        text: "Pazar günü açık mısınız?",
+        level: 2,
+        sourceUrl: "https://example.com/sss",
+      },
+    ]);
+  });
+
+  it("emits empty faq/headings for pages with no content", () => {
+    expect(
+      buildContentArtifact([
+        {
+          url: "https://example.com/",
+          slug: "index",
+          title: "",
+          h1: [],
+          contentBlocks: [],
+          jsonLd: [],
+        },
+      ]),
+    ).toEqual({
+      pages: [
+        {
+          url: "https://example.com/",
+          slug: "index",
+          title: "",
+          h1: [],
+          contentBlocks: [],
+        },
+      ],
+      faq: [],
+      headings: [],
+    });
   });
 });

@@ -29,8 +29,18 @@ Read first:
 - ${join(planDir, "design-plan.md")} — the design you are implementing. Follow it; the "one bold element" must survive into the build.
 - ${join(planDir, "sitemap.json")} — the exact sections and their order.
 - ${join(planDir, "sections")}/ — one spec per section.
-- ${factsPath} — verbatim ground truth.
-- ${join(ctx.repoRoot, "template", "design-rules.md")} and ${join(ctx.repoRoot, "template", "build-rules.md")} — hard rules.
+- ${factsPath} — verbatim ground truth (name, phone, address, hours).
+- ${join(ctx.runDir, "crawl", "content.json")} — the client's own Turkish text.
+  The section specs quote it; this is the full source if you need more.
+- ${join(ctx.runDir, "crawl", "asset-manifest.json")} — photographs downloaded
+  from the current site, with pixel dimensions and source URLs. Copy the ones
+  the specs name into ${siteDir}/public/images/ and use them. Placeholders are
+  only for sections where the crawl found no suitable photograph.
+- ${join(ctx.repoRoot, "template", "design-rules.md")} and ${join(ctx.repoRoot, "template", "build-rules.md")} — hard rules. §7 (content reuse) and §8 (density) matter most here.
+- The vendored \`ui-ux-pro-max\` skill at ${join(ctx.repoRoot, ".claude", "skills", "ui-ux-pro-max")}
+  for per-section layout and spacing decisions, and
+  ${join(ctx.repoRoot, ".claude", "skills", "react-best-practices")} for the
+  performance rules the verify gate measures.
 - ${siteDir}/src/lib/schema.ts — the Zod schema your site.config.ts must satisfy, and the exact variant names each section accepts.
 - ${siteDir}/site.config.ts — the current (reference clinic) content you are replacing.
 
@@ -38,6 +48,7 @@ Edit ONLY these paths:
 - ${siteDir}/site.config.ts
 - ${siteDir}/src/sections/**
 - ${siteDir}/src/styles/tokens.css
+- ${siteDir}/public/images/** (copy in the crawl photographs you use)
 
 Rules that will be checked mechanically after you finish:
 - Every value in facts.json is verbatim. Do not invent or alter a phone number, address, opening hour, service name or price. A fact that is absent must not be claimed.
@@ -45,7 +56,15 @@ Rules that will be checked mechanically after you finish:
 - Turkish user-facing copy with real ş/ğ/ı/İ/ç/ö/ü. Code and comments in English.
 - Phone and WhatsApp links only via telHref/waHref from src/lib/format.ts; currency via formatTRY, dates via formatDateTR, uppercase via upperTR.
 - next/image only, never <img>. No arbitrary hex in sections — the brand comes from --brand-h / --brand-c in tokens.css.
-- People photographs from the old site must NOT be used; use the existing placeholder images. Consent is unverified (KVKK / FSEK 86).
+- Use the REAL photographs from asset-manifest.json, including staff portraits
+  (operator decision, design-rules.md §7). Copy them into public/images/ and
+  reference them with next/image at their true width/height. The hero takes the
+  largest usable photograph. Keep the manifest alongside the site so the
+  provenance of each image survives.
+- Every section renders real body content, not a list of labels: a service
+  shows its description, a team member their title, an FAQ entry its answer.
+  If a section has no source content, drop it from site.config.ts rather than
+  padding it with invented copy.
 - Set the brand hue and chroma from design-plan.md, and the fonts in src/app/layout.tsx are fixed — if the plan names different typefaces, note it in your final message rather than editing layout.tsx.
 
 Work in this order: site.config.ts first (it drives everything), then each section component, then tokens.css. After each meaningful edit run \`pnpm exec tsc --noEmit\` in ${siteDir} and fix what it reports.

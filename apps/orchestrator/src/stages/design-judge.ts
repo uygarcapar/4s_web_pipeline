@@ -26,7 +26,18 @@ export interface JudgeResult {
   costUsd: number;
 }
 
-const HARD_FAIL_IDS = new Set(["DJ3", "DJ4", "DJ5", "DJ6", "DJ7"]);
+// Generic-cluster and Turkish-text violations, plus the content checks added
+// after the first run shipped a site with no real copy or photography.
+const HARD_FAIL_IDS = new Set([
+  "DJ3",
+  "DJ4",
+  "DJ5",
+  "DJ6",
+  "DJ7",
+  "DJ13",
+  "DJ14",
+  "DJ15",
+]);
 
 const JUDGE_SCHEMA: Record<string, unknown> = {
   type: "object",
@@ -66,19 +77,26 @@ export async function runDesignJudge(
 
     const result = await runLlmSession({
       prompt: `Judge the site at http://localhost:${port}/ against the rubric in
-${join(ctx.repoRoot, "template", "design-rules.md")} §6 (questions DJ1-DJ12).
+${join(ctx.repoRoot, "template", "design-rules.md")} §6 (questions DJ1-DJ15).
 
 Read the rubric first, then inspect the running site with the Playwright MCP
 tools. Take your own screenshots at 375px and 1440px wide before answering.
 
-Answer every question DJ1 through DJ12. For each: the id, pass (true/false,
+Answer every question DJ1 through DJ15. For each: the id, pass (true/false,
 or null when it genuinely cannot be determined visually), and one sentence of
 evidence citing what you actually observed — a screenshot region or a DOM
 fact. Do not add criteria of your own, do not score aesthetics, and do not
 comment on anything the rubric does not ask about.
 
-Note the rubric's phrasing: for DJ3, DJ4, DJ5, DJ6, DJ7 and DJ10 a passing
-answer means "no" (the generic trait is absent).`,
+Note the rubric's phrasing: for DJ3, DJ4, DJ5, DJ6, DJ7, DJ10 and DJ15 a
+passing answer means "no" (the unwanted trait is absent).
+
+For DJ14, a placeholder is an image under
+${join(ctx.runDir, "generate", "public", "images")} that ships with the
+template (the generic SVGs named hero-placeholder / gallery-N) rather than a
+photograph downloaded from the client's current site. Compare what the page
+renders against
+${join(ctx.runDir, "crawl", "asset-manifest.json")}.`,
       // Run from the run directory so the judge's screenshots and the
       // Playwright MCP scratch dir land under runs/<domain>/ instead of
       // littering the repo root.
