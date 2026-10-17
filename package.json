@@ -1,0 +1,17 @@
+{
+  "name": "4s-web-pipeline",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Automated website-rebuild pipeline for Turkish SMBs: discover, crawl, audit, plan, generate, verify, deploy, notify",
+  "engines": {
+    "node": ">=22.0.0"
+  },
+  "packageManager": "pnpm@11.5.2",
+  "scripts": {
+    "typecheck": "pnpm -r --if-present typecheck",
+    "lint": "pnpm -r --if-present lint",
+    "test": "pnpm -r --if-present test",
+    "build": "pnpm -r --if-present build",
+    "seed": "pnpm --filter @pipeline/core seed"
+  }
+}

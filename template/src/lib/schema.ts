@@ -1,0 +1,267 @@
+import { z } from "zod";
+
+/**
+ * Zod schemas for the site configuration (single source of truth).
+ *
+ * Every schema is `.strict()`: unknown keys are a hard error so the
+ * LLM fill stage cannot silently invent fields. `site.config.ts` is
+ * validated with `siteConfigSchema.parse` at module load — an invalid
+ * config fails the build, never ships.
+ */
+
+/** "HH:MM" 24h time, e.g. "09:00". */
+const timeSchema = z
+  .string()
+  .regex(/^([01]\d|2[0-3]):[0-5]\d$/, "Expected HH:MM 24h time");
+
+/** E.164 Turkish number: +90 followed by exactly 10 digits. */
+const e164TRSchema = z
+  .string()
+  .regex(/^\+90[2345]\d{9}$/, "Expected Turkish E.164 number (+90XXXXXXXXXX)");
+
+/** Call-to-action: tel / WhatsApp deep link, or a plain link (href required). */
+export const ctaSchema = z
+  .object({
+    label: z.string().min(1),
+    action: z.enum(["tel", "whatsapp", "link"]),
+    href: z.string().min(1).optional(),
+  })
+  .strict()
+  .refine((cta) => cta.action !== "link" || cta.href !== undefined, {
+    message: 'href is required when action is "link"',
+    path: ["href"],
+  });
+
+export const imageSchema = z
+  .object({
+    src: z.string().min(1),
+    alt: z.string().min(1),
+  })
+  .strict();
+
+/* -------------------------------------------------------------------------- */
+/* Sections                                                                   */
+/* -------------------------------------------------------------------------- */
+
+const sectionBase = {
+  id: z.string().min(1),
+};
+
+export const heroSectionSchema = z
+  .object({
+    ...sectionBase,
+    type: z.literal("hero"),
+    variant: z.enum(["default", "centered"]).optional(),
+    headline: z.string().min(1),
+    subheadline: z.string().min(1).optional(),
+    ctaPrimary: ctaSchema,
+    ctaSecondary: ctaSchema.optional(),
+    image: imageSchema.optional(),
+  })
+  .strict();
+
+export const servicesSectionSchema = z
+  .object({
+    ...sectionBase,
+    type: z.literal("services"),
+    variant: z.enum(["default", "list"]).optional(),
+    title: z.string().min(1).optional(),
+    items: z
+      .array(
+        z
+          .object({
+            title: z.string().min(1),
+            description: z.string().min(1),
+            icon: z.string().min(1).optional(),
+          })
+          .strict(),
+      )
+      .min(1),
+  })
+  .strict();
+
+export const gallerySectionSchema = z
+  .object({
+    ...sectionBase,
+    type: z.literal("gallery"),
+    variant: z.enum(["default", "strip"]).optional(),
+    title: z.string().min(1).optional(),
+    images: z.array(imageSchema).min(1),
+  })
+  .strict();
+
+export const testimonialsSectionSchema = z
+  .object({
+    ...sectionBase,
+    type: z.literal("testimonials"),
+    variant: z.enum(["default", "compact"]).optional(),
+    title: z.string().min(1).optional(),
+    items: z
+      .array(
+        z
+          .object({
+            quote: z.string().min(1),
+            author: z.string().min(1),
+          })
+          .strict(),
+      )
+      .min(1),
+  })
+  .strict();
+
+export const faqSectionSchema = z
+  .object({
+    ...sectionBase,
+    type: z.literal("faq"),
+    variant: z.enum(["default", "compact"]).optional(),
+    title: z.string().min(1).optional(),
+    items: z
+      .array(
+        z
+          .object({
+            question: z.string().min(1),
+            answer: z.string().min(1),
+          })
+          .strict(),
+      )
+      .min(1),
+  })
+  .strict();
+
+export const contactSectionSchema = z
+  .object({
+    ...sectionBase,
+    type: z.literal("contact"),
+    variant: z.enum(["default", "split"]).optional(),
+    title: z.string().min(1).optional(),
+    /** The form is a mailto/tel fallback only — the site has no backend. */
+    showForm: z.boolean(),
+  })
+  .strict();
+
+export const mapSectionSchema = z
+  .object({
+    ...sectionBase,
+    type: z.literal("map"),
+    variant: z.enum(["default", "tall"]).optional(),
+    // No extra props: the map renders from config.contact.mapsEmbedQuery.
+  })
+  .strict();
+
+export const hoursSectionSchema = z
+  .object({
+    ...sectionBase,
+    type: z.literal("hours"),
+    variant: z.enum(["default", "compact"]).optional(),
+    title: z.string().min(1).optional(),
+    note: z.string().min(1).optional(),
+  })
+  .strict();
+
+export const sectionSchema = z.discriminatedUnion("type", [
+  heroSectionSchema,
+  servicesSectionSchema,
+  gallerySectionSchema,
+  testimonialsSectionSchema,
+  faqSectionSchema,
+  contactSectionSchema,
+  mapSectionSchema,
+  hoursSectionSchema,
+]);
+
+/* -------------------------------------------------------------------------- */
+/* Global config                                                              */
+/* -------------------------------------------------------------------------- */
+
+export const openingHoursEntrySchema = z
+  .object({
+    /** ISO weekday: 1 = Monday … 7 = Sunday. */
+    day: z.number().int().min(1).max(7),
+    /** "09:00" or null when closed that day. */
+    opens: timeSchema.nullable(),
+    closes: timeSchema.nullable(),
+  })
+  .strict()
+  .refine((entry) => (entry.opens === null) === (entry.closes === null), {
+    message: "opens and closes must both be set or both be null",
+    path: ["closes"],
+  });
+
+export const siteConfigSchema = z
+  .object({
+    business: z
+      .object({
+        name: z.string().min(1),
+        legalName: z.string().min(1),
+        slogan: z.string().min(1),
+      })
+      .strict(),
+    /** schema.org type for JSON-LD, e.g. "Dentist", "Restaurant". */
+    businessType: z.string().min(1).default("LocalBusiness"),
+    contact: z
+      .object({
+        phoneE164: e164TRSchema,
+        whatsappE164: e164TRSchema,
+        email: z.email(),
+        address: z.string().min(1),
+        district: z.string().min(1),
+        city: z.string().min(1),
+        /** Free-text query for the Google Maps embed iframe. */
+        mapsEmbedQuery: z.string().min(1),
+      })
+      .strict(),
+    openingHours: z.array(openingHoursEntrySchema).min(1).max(7),
+    brand: z
+      .object({
+        /** OKLCH hue (0-360) driving the brand color ramp. */
+        hue: z.number().min(0).max(360),
+        /** OKLCH chroma (0-0.37) driving the brand color ramp. */
+        chroma: z.number().min(0).max(0.37),
+        fontHeading: z.string().min(1),
+        fontBody: z.string().min(1),
+      })
+      .strict(),
+    seo: z
+      .object({
+        title: z.string().min(1),
+        description: z.string().min(1),
+      })
+      .strict(),
+    kvkk: z
+      .object({
+        companyTitle: z.string().min(1),
+        mersisNo: z.string().regex(/^\d{16}$/).optional(),
+        dataController: z.string().min(1),
+      })
+      .strict(),
+    sellsOnline: z.boolean(),
+    sections: z.array(sectionSchema).min(1),
+  })
+  .strict();
+
+/* -------------------------------------------------------------------------- */
+/* Inferred types                                                             */
+/* -------------------------------------------------------------------------- */
+
+export type SiteConfig = z.infer<typeof siteConfigSchema>;
+export type SiteConfigInput = z.input<typeof siteConfigSchema>;
+export type SectionConfig = z.infer<typeof sectionSchema>;
+export type SectionType = SectionConfig["type"];
+export type Cta = z.infer<typeof ctaSchema>;
+export type SectionImage = z.infer<typeof imageSchema>;
+export type OpeningHoursEntry = z.infer<typeof openingHoursEntrySchema>;
+
+export type HeroSection = z.infer<typeof heroSectionSchema>;
+export type ServicesSection = z.infer<typeof servicesSectionSchema>;
+export type GallerySection = z.infer<typeof gallerySectionSchema>;
+export type TestimonialsSection = z.infer<typeof testimonialsSectionSchema>;
+export type FaqSection = z.infer<typeof faqSectionSchema>;
+export type ContactSection = z.infer<typeof contactSectionSchema>;
+export type MapSection = z.infer<typeof mapSectionSchema>;
+export type HoursSection = z.infer<typeof hoursSectionSchema>;
+
+/** Props contract every section component in the registry implements. */
+export interface SectionComponentProps<T extends SectionConfig = SectionConfig> {
+  section: T;
+  config: SiteConfig;
+}

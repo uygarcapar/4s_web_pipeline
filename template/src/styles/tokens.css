@@ -1,0 +1,49 @@
+/*
+ * Brand design tokens — one of the three files the LLM fill stage may rewrite
+ * (with site.config.ts and src/sections/**).
+ *
+ * Mechanism:
+ * - The whole brand color ramp derives from two custom properties, --brand-h
+ *   (OKLCH hue) and --brand-c (OKLCH chroma). Defaults live on :root below;
+ *   at runtime src/app/layout.tsx overrides them with an inline style on
+ *   <html> using config.brand.hue / config.brand.chroma, so site.config.ts
+ *   stays the single source of truth.
+ * - The @theme block registers --color-brand-50..950 with Tailwind v4, which
+ *   emits them as :root custom properties and generates the usual utilities
+ *   (bg-brand-600, text-brand-50, border-brand-200, ...). Because each step
+ *   references var(--brand-h)/var(--brand-c), the entire ramp follows the
+ *   inline override without a rebuild.
+ * - shadcn semantic tokens (--primary, --ring, ...) are pointed at this ramp
+ *   in src/app/globals.css.
+ */
+
+:root {
+  /* Fallback brand identity; overridden inline from site.config.ts. */
+  --brand-h: 220;
+  --brand-c: 0.12;
+  /* Base corner radius consumed by the shadcn radius scale in globals.css. */
+  --radius: 0.625rem;
+}
+
+@theme {
+  /* OKLCH brand ramp: lightness falls from 50 → 950 while chroma tapers at
+     both ends so very light/dark steps stay in gamut for any hue. */
+  --color-brand-50: oklch(0.984 calc(var(--brand-c) * 0.15) var(--brand-h));
+  --color-brand-100: oklch(0.955 calc(var(--brand-c) * 0.3) var(--brand-h));
+  --color-brand-200: oklch(0.91 calc(var(--brand-c) * 0.5) var(--brand-h));
+  --color-brand-300: oklch(0.845 calc(var(--brand-c) * 0.75) var(--brand-h));
+  --color-brand-400: oklch(0.75 calc(var(--brand-c) * 0.95) var(--brand-h));
+  --color-brand-500: oklch(0.65 var(--brand-c) var(--brand-h));
+  --color-brand-600: oklch(0.57 var(--brand-c) var(--brand-h));
+  --color-brand-700: oklch(0.49 calc(var(--brand-c) * 0.9) var(--brand-h));
+  --color-brand-800: oklch(0.42 calc(var(--brand-c) * 0.75) var(--brand-h));
+  --color-brand-900: oklch(0.36 calc(var(--brand-c) * 0.6) var(--brand-h));
+  --color-brand-950: oklch(0.25 calc(var(--brand-c) * 0.45) var(--brand-h));
+}
+
+@theme inline {
+  /* Font variables are injected on <html> by next/font in layout.tsx. */
+  --font-sans: var(--font-body);
+  --font-heading: var(--font-heading);
+  --font-mono: ui-monospace, "SF Mono", "Cascadia Mono", monospace;
+}

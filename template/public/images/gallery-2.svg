@@ -1,0 +1,11 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="800" height="600" viewBox="0 0 800 600" role="img" aria-label="Placeholder">
+  <defs>
+    <linearGradient id="g" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="oklch(0.91 0.06 220)"/>
+      <stop offset="1" stop-color="oklch(0.75 0.11 220)"/>
+    </linearGradient>
+  </defs>
+  <rect width="800" height="600" fill="url(#g)"/>
+  <circle cx="400" cy="260" r="64" fill="oklch(0.98 0.02 220)" opacity="0.9"/>
+  <text x="50%" y="380" text-anchor="middle" font-family="sans-serif" font-size="40" fill="oklch(0.36 0.07 220)">Muayene</text>
+</svg>

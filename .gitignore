@@ -1,0 +1,40 @@
+# Dependencies
+node_modules/
+.pnpm-store/
+
+# Environment — never commit secrets
+.env
+.env.local
+.env.*.local
+
+# Build outputs
+dist/
+.next/
+out/
+*.tsbuildinfo
+
+# Runtime data
+data/*.db
+data/*.db-journal
+data/*.db-wal
+data/*.db-shm
+runs/
+leads/
+.pipeline/verify-passed
+
+# Test / verify artifacts
+.lighthouseci/
+.reports/
+playwright-report/
+test-results/
+coverage/
+
+# Vercel
+.vercel/
+
+# OS / editor
+.DS_Store
+*.log
+.idea/
+.vscode/*
+!.vscode/extensions.json

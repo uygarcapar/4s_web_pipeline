@@ -1,0 +1,191 @@
+import { siteConfigSchema, type SiteConfigInput } from "@/lib/schema";
+
+/**
+ * Single source of truth for the generated site.
+ *
+ * This file (together with src/sections/** and src/styles/tokens.css) is the
+ * ONLY code the LLM fill stage is allowed to rewrite per client. It is
+ * validated with `siteConfigSchema.parse` at module load, so an invalid
+ * config fails the build instead of shipping a broken site.
+ *
+ * The data below is a realistic but entirely FICTIONAL placeholder business
+ * (a dental clinic in Kadıköy) so the template builds and renders end-to-end.
+ */
+const config: SiteConfigInput = {
+  business: {
+    name: "Moda Diş Kliniği",
+    legalName: "Moda Ağız ve Diş Sağlığı Hizmetleri Ltd. Şti.",
+    slogan: "Kadıköy'de güvenle gülümseyin",
+  },
+  businessType: "Dentist",
+  contact: {
+    phoneE164: "+905551234567",
+    whatsappE164: "+905551234567",
+    email: "info@modadisklinigi.example",
+    address: "Caferağa Mah. Moda Cad. No: 48/A",
+    district: "Kadıköy",
+    city: "İstanbul",
+    mapsEmbedQuery: "Moda Caddesi 48 Kadıköy İstanbul",
+  },
+  openingHours: [
+    { day: 1, opens: "09:00", closes: "19:00" },
+    { day: 2, opens: "09:00", closes: "19:00" },
+    { day: 3, opens: "09:00", closes: "19:00" },
+    { day: 4, opens: "09:00", closes: "19:00" },
+    { day: 5, opens: "09:00", closes: "19:00" },
+    { day: 6, opens: "10:00", closes: "16:00" },
+    { day: 7, opens: null, closes: null },
+  ],
+  brand: {
+    hue: 220,
+    chroma: 0.12,
+    fontHeading: "Lora",
+    fontBody: "Inter",
+  },
+  seo: {
+    title: "Moda Diş Kliniği — Kadıköy Diş Hekimi",
+    description:
+      "Kadıköy Moda'da diş hekimi. İmplant, diş beyazlatma, ortodonti ve çocuk diş hekimliği. Hemen arayın veya WhatsApp'tan randevu alın.",
+  },
+  kvkk: {
+    companyTitle: "Moda Ağız ve Diş Sağlığı Hizmetleri Ltd. Şti.",
+    mersisNo: "0123456789012345",
+    dataController: "Moda Ağız ve Diş Sağlığı Hizmetleri Ltd. Şti.",
+  },
+  sellsOnline: false,
+  sections: [
+    {
+      type: "hero",
+      id: "hero",
+      variant: "default",
+      headline: "Kadıköy'de güvenle gülümseyin",
+      subheadline:
+        "Moda Diş Kliniği'nde modern cihazlar ve deneyimli hekim kadrosuyla ağız ve diş sağlığınız emin ellerde. Aynı gün randevu için hemen arayın.",
+      ctaPrimary: { label: "Hemen Ara", action: "tel" },
+      ctaSecondary: { label: "WhatsApp'tan Yaz", action: "whatsapp" },
+      image: {
+        src: "/images/hero-placeholder.svg",
+        alt: "Moda Diş Kliniği muayene odası",
+      },
+    },
+    {
+      type: "services",
+      id: "services",
+      variant: "default",
+      title: "Hizmetlerimiz",
+      items: [
+        {
+          title: "İmplant Tedavisi",
+          description:
+            "Eksik dişleriniz için uzun ömürlü ve doğal görünümlü implant çözümleri.",
+          icon: "tooth",
+        },
+        {
+          title: "Diş Beyazlatma",
+          description:
+            "Tek seansta güvenli ve kalıcı beyazlatma ile daha parlak bir gülüş.",
+          icon: "sparkles",
+        },
+        {
+          title: "Ortodonti",
+          description:
+            "Şeffaf plak ve tel tedavileriyle her yaşta düzgün diş dizilimi.",
+          icon: "smile",
+        },
+        {
+          title: "Çocuk Diş Hekimliği",
+          description:
+            "Çocuklarınızın diş hekimi korkusu yaşamadan tedavi olduğu sıcak bir ortam.",
+          icon: "baby",
+        },
+      ],
+    },
+    {
+      type: "gallery",
+      id: "gallery",
+      variant: "default",
+      title: "Kliniğimizden Kareler",
+      images: [
+        { src: "/images/gallery-1.svg", alt: "Klinik bekleme salonu" },
+        { src: "/images/gallery-2.svg", alt: "Muayene ünitesi" },
+        { src: "/images/gallery-3.svg", alt: "Sterilizasyon odası" },
+        { src: "/images/gallery-4.svg", alt: "Klinik girişi" },
+      ],
+    },
+    {
+      type: "testimonials",
+      id: "testimonials",
+      variant: "default",
+      title: "Hastalarımız Ne Diyor?",
+      items: [
+        {
+          quote:
+            "Yıllardır diş hekimine gitmekten çekiniyordum. Buradaki güler yüzlü ekip sayesinde implant tedavimi rahatça tamamladım.",
+          author: "Ayşe K.",
+        },
+        {
+          quote:
+            "Oğlumun dolgusu için gittik, doktor hanım o kadar sabırlıydı ki çocuk korkmadan tedavi oldu. Kesinlikle tavsiye ederim.",
+          author: "Mehmet T.",
+        },
+        {
+          quote:
+            "Diş beyazlatma işlemim tek seansta bitti, sonuçtan çok memnunum. Fiyatlar da gayet makul.",
+          author: "Elif S.",
+        },
+      ],
+    },
+    {
+      type: "faq",
+      id: "faq",
+      variant: "default",
+      title: "Sıkça Sorulan Sorular",
+      items: [
+        {
+          question: "Randevu almak zorunda mıyım?",
+          answer:
+            "Acil durumlarda randevusuz hastalarımızı da kabul ediyoruz; ancak bekleme yaşamamanız için telefon veya WhatsApp üzerinden randevu almanızı öneririz.",
+        },
+        {
+          question: "İmplant tedavisi ne kadar sürer?",
+          answer:
+            "Kemik yapınıza bağlı olarak implant tedavisi genellikle 2-4 ay içinde tamamlanır. İlk muayenede size net bir tedavi planı sunarız.",
+        },
+        {
+          question: "Anlaşmalı olduğunuz kurumlar var mı?",
+          answer:
+            "Özel sağlık sigortalarının çoğuyla anlaşmalıyız. Poliçenizin kapsamını öğrenmek için bizi arayabilirsiniz.",
+        },
+        {
+          question: "Ödeme seçenekleriniz nelerdir?",
+          answer:
+            "Nakit ve kredi kartı kabul ediyoruz; uygun taksit seçenekleri için kliniğimize danışabilirsiniz.",
+        },
+      ],
+    },
+    {
+      type: "hours",
+      id: "hours",
+      variant: "default",
+      title: "Çalışma Saatleri",
+      note: "Resmi tatillerde kapalıyız. Acil durumlar için WhatsApp hattımızdan ulaşabilirsiniz.",
+    },
+    {
+      type: "contact",
+      id: "contact",
+      variant: "default",
+      title: "İletişim",
+      showForm: true,
+    },
+    {
+      type: "map",
+      id: "map",
+      variant: "default",
+    },
+  ],
+};
+
+/** Validated at module load — the only export the app consumes. */
+export const siteConfig = siteConfigSchema.parse(config);
+
+export default siteConfig;
