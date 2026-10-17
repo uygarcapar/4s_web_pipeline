@@ -29,10 +29,17 @@ export const verifyStage: StageModule = {
     }
 
     const runGates = (): { ok: boolean; digest: string } => {
+      // Gates measure the site as it will be in production. SITE_PREVIEW is a
+      // deploy-time concern: it disallows robots and adds noindex, which zeroes
+      // Lighthouse's is-crawlable audit and drags SEO below the gate no matter
+      // how good the site is. The deploy stage sets it on the Vercel project
+      // and verifies the noindex header separately.
+      const gateEnv: NodeJS.ProcessEnv = { ...process.env, PIPELINE_REPO_ROOT: ctx.repoRoot };
+      delete gateEnv.SITE_PREVIEW;
       const res = spawnSync("node", ["scripts/verify.mjs"], {
         cwd: siteDir,
         encoding: "utf8",
-        env: { ...process.env, PIPELINE_REPO_ROOT: ctx.repoRoot },
+        env: gateEnv,
         timeout: 30 * 60 * 1000,
         stdio: ["ignore", "inherit", "inherit"],
       });

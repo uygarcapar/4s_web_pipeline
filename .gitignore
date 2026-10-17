@@ -26,6 +26,7 @@ playwright-report/
 test-results/
 coverage/
 verify-digest.md
+.playwright-mcp/
 # Visual baselines are per-client and machine-specific: every generated site
 # creates its own on first verify (--update-snapshots=missing).
 *-snapshots/

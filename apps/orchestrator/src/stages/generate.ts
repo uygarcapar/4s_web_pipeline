@@ -103,6 +103,11 @@ function copyTemplate(ctx: StageContext, siteDir: string): void {
     "test-results",
     "playwright-report",
     "verify-digest.md",
+    // Visual baselines are per-client: the template's own snapshots would
+    // make every client site fail the visual gate against the reference
+    // clinic's layout, and the fix loop cannot repair that by editing code.
+    // verify.mjs regenerates them with --update-snapshots=missing.
+    "visual.spec.ts-snapshots",
   ]);
   mkdirSync(siteDir, { recursive: true });
   cpSync(templateDir, siteDir, {

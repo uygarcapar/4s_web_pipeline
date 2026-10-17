@@ -79,7 +79,10 @@ comment on anything the rubric does not ask about.
 
 Note the rubric's phrasing: for DJ3, DJ4, DJ5, DJ6, DJ7 and DJ10 a passing
 answer means "no" (the generic trait is absent).`,
-      cwd: ctx.repoRoot,
+      // Run from the run directory so the judge's screenshots and the
+      // Playwright MCP scratch dir land under runs/<domain>/ instead of
+      // littering the repo root.
+      cwd: ctx.runDir,
       model: process.env.JUDGE_MODEL ?? "claude-opus-5",
       maxTurns: Number.parseInt(process.env.JUDGE_MAX_TURNS ?? "30", 10),
       maxBudgetUsd: Number.parseFloat(process.env.JUDGE_BUDGET_USD ?? "3"),
