@@ -126,4 +126,12 @@
   html {
     @apply font-sans;
   }
+  /*
+   * Consent banner is server-rendered so it paints with the first frame.
+   * The pre-paint script in layout.tsx sets this attribute for visitors who
+   * already decided, hiding the banner before it can flash.
+   */
+  html[data-kvkk-consent="set"] [data-consent-banner] {
+    display: none;
+  }
 }

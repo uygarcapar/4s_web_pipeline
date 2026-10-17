@@ -1,23 +1,13 @@
 import { eq } from "drizzle-orm";
-import {
-  createRunState,
-  openStore,
-  readRunState,
-  recordEvent,
-  schema,
-  syncRunToDb,
-  writeRunState,
-} from "@pipeline/core";
-import { dbPath, runsRoot } from "../paths.js";
+import { openStore, recordEvent, schema } from "@pipeline/core";
+import { dbPath } from "../paths.js";
+import { runPipeline } from "../engine.js";
 
 /**
- * Process the queue. Milestone 1: picks the next approved waiting item,
- * creates runs/<domain>/state.json and stops — the stage implementations
- * land in Milestones 2–3. Each stage will be idempotent (skip if its
- * artifact exists) and write state.json + an events row on every transition.
- *
- * The automatic chain is AUTO_STAGES (crawl → audit → plan → generate →
- * verify → notify). `deploy` is manual-only — see docs/DECISIONS.md D1.
+ * Process the queue: pick approved waiting items (priority order) and run
+ * the automatic stage chain (AUTO_STAGES: crawl → audit → plan → generate →
+ * verify → notify; deploy is manual-only, docs/DECISIONS.md D1). The engine
+ * halts cleanly at plan/generate until Milestone 3 lands them.
  */
 export async function runCommand(options: { domain?: string }): Promise<void> {
   const store = openStore({ dbPath: dbPath() });
@@ -36,19 +26,36 @@ export async function runCommand(options: { domain?: string }): Promise<void> {
     return;
   }
 
-  let state = readRunState(next.domain, runsRoot());
-  if (!state) {
-    state = createRunState({ domain: next.domain, url: next.url, source: next.source });
-    writeRunState(state, runsRoot());
-    syncRunToDb(store, state);
-    recordEvent(store, {
-      domain: next.domain,
-      type: "run:create",
-      message: `run created for ${next.domain}`,
-    });
-  }
+  store
+    .update(schema.queue)
+    .set({ status: "running" })
+    .where(eq(schema.queue.id, next.id))
+    .run();
 
-  console.log(`Run initialized for ${next.domain} (state: runs/${next.domain}/state.json).`);
-  console.log("Stages are not implemented yet (crawl/audit/verify/notify land in Milestone 2, plan/generate in Milestone 3; deploy is manual-only).");
-  process.exitCode = 1;
+  const result = await runPipeline({
+    domain: next.domain,
+    url: next.url,
+    source: next.source,
+    store,
+  });
+
+  const queueStatus =
+    result.outcome === "completed" ? "done" : result.outcome === "failed" ? "failed" : "waiting";
+  store
+    .update(schema.queue)
+    .set({ status: queueStatus })
+    .where(eq(schema.queue.id, next.id))
+    .run();
+  recordEvent(store, {
+    domain: next.domain,
+    type: `run:${result.outcome}`,
+    message: `run ${result.outcome}${result.failedStage ? ` at ${result.failedStage}` : ""}`,
+  });
+
+  if (result.outcome === "failed") {
+    console.error(`Run failed at stage '${result.failedStage}'. See runs/${next.domain}/logs/ and state.json.`);
+    process.exitCode = 1;
+  } else if (result.outcome === "completed") {
+    console.log(`Run completed for ${next.domain}.`);
+  }
 }

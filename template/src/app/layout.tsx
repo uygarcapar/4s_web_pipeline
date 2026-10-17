@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import { Inter, Lora } from "next/font/google";
 import type { CSSProperties } from "react";
 
-import { ConsentBanner } from "@/components/consent-banner";
+import { ConsentBanner, CONSENT_PREPAINT_SCRIPT } from "@/components/consent-banner";
 import { PreviewBanner } from "@/components/preview-banner";
 import { SiteFooter } from "@/components/site-footer";
 import { StickyCta } from "@/components/sticky-cta";
@@ -21,11 +21,19 @@ import "./globals.css";
 const headingFont = Lora({
   variable: "--font-heading",
   subsets: ["latin", "latin-ext"],
+  // Static instances only. Without `weight`, next/font ships the full
+  // variable font (~192 KB for both families), which delayed the text LCP
+  // past the 2.5 s gate. The template uses semibold headings and regular
+  // body copy; add a weight here only when a section actually needs it.
+  weight: ["600"],
+  display: "swap",
 });
 
 const bodyFont = Inter({
   variable: "--font-body",
   subsets: ["latin", "latin-ext"],
+  weight: ["400", "600"],
+  display: "swap",
 });
 
 export const metadata: Metadata = buildMetadata(siteConfig);
@@ -48,7 +56,17 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
           "--brand-c": String(siteConfig.brand.chroma),
         } as CSSProperties
       }
+      suppressHydrationWarning
     >
+      <head>
+        {/*
+         * Pre-paint consent check: the banner is server-rendered (so it is
+         * not a post-hydration LCP element); this hides it before the first
+         * frame for visitors who already decided. Hence suppressHydrationWarning
+         * on <html>: the script mutates the root dataset before React hydrates.
+         */}
+        <script dangerouslySetInnerHTML={{ __html: CONSENT_PREPAINT_SCRIPT }} />
+      </head>
       <body className="flex min-h-full flex-col">
         <script
           type="application/ld+json"

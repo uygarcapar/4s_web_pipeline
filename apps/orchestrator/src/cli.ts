@@ -1,5 +1,10 @@
 #!/usr/bin/env tsx
+import { config as loadEnv } from "dotenv";
+import { join } from "node:path";
 import { Command } from "commander";
+import { repoRoot } from "./paths.js";
+
+loadEnv({ path: join(repoRoot(), ".env"), quiet: true });
 import { discoverCommand } from "./commands/discover.js";
 import { approveCommand } from "./commands/approve.js";
 import { queueAddCommand } from "./commands/queue.js";

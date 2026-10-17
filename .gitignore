@@ -13,14 +13,11 @@ dist/
 out/
 *.tsbuildinfo
 
-# Runtime data
-data/*.db
-data/*.db-journal
-data/*.db-wal
-data/*.db-shm
+# Runtime data (the CLI can be invoked from any workspace dir, so match any depth)
+data/
 runs/
 leads/
-.pipeline/verify-passed
+.pipeline/
 
 # Test / verify artifacts
 .lighthouseci/
@@ -28,6 +25,11 @@ leads/
 playwright-report/
 test-results/
 coverage/
+verify-digest.md
+# Visual baselines are per-client and machine-specific: every generated site
+# creates its own on first verify (--update-snapshots=missing).
+*-snapshots/
+.crawlee/
 
 # Vercel
 .vercel/

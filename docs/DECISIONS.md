@@ -67,3 +67,33 @@ Consequences:
   verification with the tax certificate, and the `site_ready` template is
   approved. WA_* env vars stay documented but optional until then.
 - Discover summaries follow the same channel abstraction.
+
+## D4 — LHCI gate calibration after the first real runs (2026-10-17)
+
+**Decision (operator):** resolves the `TODO(uygar)` in build-rules.md about
+LHCI thresholds. Measured on the reference template (static Next.js 16 page,
+LHCI simulated Slow 4G + 4x CPU on localhost, median of 3 runs):
+performance 0.94–0.96, accessibility 1.0, best-practices 1.0, SEO 1.0, but
+LCP swinging 2.7–3.2 s with ±400 ms run-to-run noise.
+
+- `largest-contentful-paint`: hard gate at **3500 ms**, with 2500 ms (the
+  field CWV target) kept as a digest recommendation. A 2500 ms hard gate
+  would fail every generated site on measurement noise alone and burn the
+  3-iteration fix loop.
+- Preset: **`lighthouse:recommended`** instead of `lighthouse:no-pwa`. The
+  latter asserts every audit at error, making `legacy-javascript-insight`
+  (Next.js polyfills) and `network-dependency-tree-insight` (framework chunk
+  chain) permanent blockers that a generated site cannot fix from
+  site.config.ts / sections / tokens.css.
+- The explicit error assertions (category scores, CLS 0.1, script budget
+  250 KB) remain the real gates, matching the plan's intent.
+
+Template fixes made while calibrating (all kept):
+- Google Maps embed replaced with a click-to-load facade: −476 KB of
+  third-party JS off the critical path, and no Google cookies before the
+  visitor makes a KVKK choice.
+- KVKK consent banner is now server-rendered with a pre-paint script that
+  hides it for visitors who already decided (it used to render only after
+  hydration and became a ~3.3 s LCP element).
+- Fonts pinned to the weights actually used instead of full variable faces.
+- Total page weight 873 KB → 375 KB; script 610 KB → 164 KB.

@@ -55,13 +55,22 @@ function subscribeToConsent(callback: () => void): () => void {
   };
 }
 
+/**
+ * Runs before first paint (see layout.tsx): hides the server-rendered
+ * banner for visitors who already decided, so returning visitors never see
+ * a flash. Keep in sync with STORAGE_KEY and the CSS rule in globals.css.
+ */
+export const CONSENT_PREPAINT_SCRIPT = `try{if(localStorage.getItem('kvkk-consent')!==null||document.cookie.indexOf('kvkk-consent=')>-1){document.documentElement.dataset.kvkkConsent='set'}}catch(e){}`;
+
 export function ConsentBanner() {
-  // External-store read: hidden during SSR/hydration (server snapshot) and
-  // whenever a decision is already stored on the client.
+  // Server snapshot is `true` so the banner ships in the SSR HTML and paints
+  // with the first frame (it would otherwise become a post-hydration LCP
+  // element at ~3.3s). The pre-paint script above hides it via CSS for
+  // visitors who already decided; hydration then removes it from the DOM.
   const visible = useSyncExternalStore(
     subscribeToConsent,
     () => !hasStoredConsent(),
-    () => false,
+    () => true,
   );
   const [showPreferences, setShowPreferences] = useState(false);
   const [analytics, setAnalytics] = useState(false);
@@ -85,13 +94,14 @@ export function ConsentBanner() {
     <div
       role="region"
       aria-label="Çerez ve kişisel veri tercihleri"
+      data-consent-banner
       className="fixed inset-x-0 bottom-0 z-50 border-t border-border bg-background/95 p-4 shadow-lg backdrop-blur"
     >
       <div className="mx-auto flex max-w-5xl flex-col gap-3">
+        {/* Kept short on purpose: the detail belongs in the linked pages, and
+            a long paragraph here becomes the page's LCP element on mobile. */}
         <p className="text-sm text-foreground">
-          Bu sitede yalnızca zorunlu çerezler kullanılır; analitik veya
-          pazarlama amaçlı hiçbir izleme yapılmaz. Tercihleriniz, ileride
-          eklenebilecek hizmetler için kaydedilir. Ayrıntılar için{" "}
+          Bu sitede yalnızca zorunlu çerezler kullanılır, izleme yapılmaz.{" "}
           <a href="/cerez-politikasi" className="underline underline-offset-4">
             Çerez Politikası
           </a>{" "}
@@ -99,7 +109,6 @@ export function ConsentBanner() {
           <a href="/kvkk-aydinlatma" className="underline underline-offset-4">
             KVKK Aydınlatma Metni
           </a>
-          ni inceleyebilirsiniz.
         </p>
         {showPreferences && (
           <fieldset className="flex flex-col gap-2 rounded-lg border border-border p-3">

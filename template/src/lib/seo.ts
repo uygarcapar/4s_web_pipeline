@@ -3,11 +3,17 @@ import type { Metadata } from "next";
 import type { SiteConfig } from "@/lib/schema";
 
 /**
- * Canonical site origin. Comes from the SITE_URL env var set by the deploy
- * stage; falls back to localhost so local builds always succeed.
+ * Canonical site origin, used for metadataBase, canonical links, OG URLs
+ * and the sitemap. SITE_URL is set by the deploy stage;
+ * VERCEL_PROJECT_PRODUCTION_URL is injected by Vercel itself, so a site
+ * deployed by hand still never ships a localhost canonical. Localhost is
+ * only the local-build fallback.
  */
 export function getSiteUrl(): string {
-  return process.env.SITE_URL ?? "http://localhost:3000";
+  if (process.env.SITE_URL) return process.env.SITE_URL;
+  const vercelUrl = process.env.VERCEL_PROJECT_PRODUCTION_URL;
+  if (vercelUrl) return `https://${vercelUrl}`;
+  return "http://localhost:3000";
 }
 
 /** True when this deployment is a draft preview (SITE_PREVIEW env set). */
