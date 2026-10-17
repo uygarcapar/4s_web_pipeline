@@ -68,6 +68,7 @@ program
   .command("retry")
   .description("Re-run a failed/blocked domain from its first failed stage")
   .argument("<domain>")
+  .option("--stage <stage>", "force re-run from this stage onward (discards its artifacts)")
   .action(retryCommand);
 
 program

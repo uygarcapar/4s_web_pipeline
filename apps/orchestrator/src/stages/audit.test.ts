@@ -8,6 +8,7 @@ import {
   pickTrPhone,
   readExtracted,
   readPages,
+  resolveTrProvince,
 } from "./facts.js";
 import { runRules, summarizeAxe, summarizeLhr } from "./audit-rules.js";
 import type { LighthouseSummary } from "./audit-rules.js";
@@ -505,5 +506,27 @@ describe("runRules", () => {
       axeViolations: [],
     });
     expect(ok.map((i) => i.id)).not.toContain("cwv-poor");
+  });
+});
+
+describe("resolveTrProvince", () => {
+  it("maps licence-plate codes to province names", () => {
+    expect(resolveTrProvince("34")).toEqual({ name: "İstanbul", fromPlateCode: true });
+    expect(resolveTrProvince("6")).toEqual({ name: "Ankara", fromPlateCode: true });
+    expect(resolveTrProvince("35")).toEqual({ name: "İzmir", fromPlateCode: true });
+    expect(resolveTrProvince("81")).toEqual({ name: "Düzce", fromPlateCode: true });
+  });
+
+  it("passes through real province names unchanged", () => {
+    expect(resolveTrProvince("İstanbul")).toEqual({ name: "İstanbul", fromPlateCode: false });
+    expect(resolveTrProvince("  Bursa ")).toEqual({ name: "Bursa", fromPlateCode: false });
+  });
+
+  it("rejects values that are neither a plate code nor a name", () => {
+    expect(resolveTrProvince("0")).toBeNull();
+    expect(resolveTrProvince("82")).toBeNull();
+    expect(resolveTrProvince("34724")).toBeNull();
+    expect(resolveTrProvince("")).toBeNull();
+    expect(resolveTrProvince(null)).toBeNull();
   });
 });

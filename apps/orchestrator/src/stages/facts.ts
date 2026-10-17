@@ -408,20 +408,28 @@ function jsonldAddressToString(address: unknown): {
   text: string | null;
   locality: string | null;
   region: string | null;
+  postalCode: string | null;
 } {
-  if (typeof address === "string") return { text: str(address), locality: null, region: null };
+  if (typeof address === "string") {
+    return { text: str(address), locality: null, region: null, postalCode: null };
+  }
   const node = Array.isArray(address) ? address.find(isObj) : address;
-  if (!isObj(node)) return { text: null, locality: null, region: null };
+  if (!isObj(node)) return { text: null, locality: null, region: null, postalCode: null };
+  // addressRegion often holds the licence-plate code on Turkish sites; render
+  // the province name so the address does not read "Kadıköy, 34, 34724".
+  const rawRegion = str(node.addressRegion);
+  const region = resolveTrProvince(rawRegion)?.name ?? rawRegion;
   const parts = [
     str(node.streetAddress),
     str(node.addressLocality),
-    str(node.addressRegion),
+    region,
     str(node.postalCode),
   ].filter((p): p is string => p !== null);
   return {
     text: parts.length > 0 ? parts.join(", ") : null,
     locality: str(node.addressLocality),
-    region: str(node.addressRegion),
+    region: rawRegion,
+    postalCode: str(node.postalCode),
   };
 }
 
@@ -556,15 +564,28 @@ export function buildFacts(input: BuildFactsInput): Facts {
     }
   }
 
-  // district/city from JSON-LD postal address when present
+  // district/city from JSON-LD postal address when present. Turkish sites
+  // routinely put the licence-plate province code in addressRegion ("34")
+  // and the postal code encodes the same number in its first two digits, so
+  // both are resolved to a province name before falling back to locality.
   let district: string | null = null;
   let city: string | null = null;
-  if (jsonldAddr.region) {
-    city = jsonldAddr.region;
+  const regionCity = resolveTrProvince(jsonldAddr.region);
+  if (regionCity) {
+    city = regionCity.name;
     district = jsonldAddr.locality;
-    sources.city = "jsonld:addressRegion";
+    sources.city = `jsonld:addressRegion${regionCity.fromPlateCode ? " (plate code)" : ""}`;
     if (district) sources.district = "jsonld:addressLocality";
-  } else if (jsonldAddr.locality) {
+  } else if (jsonldAddr.postalCode) {
+    const postalCity = resolveTrProvince(jsonldAddr.postalCode.slice(0, 2));
+    if (postalCity?.fromPlateCode) {
+      city = postalCity.name;
+      district = jsonldAddr.locality;
+      sources.city = "jsonld:postalCode (plate code)";
+      if (district) sources.district = "jsonld:addressLocality";
+    }
+  }
+  if (!city && jsonldAddr.locality) {
     city = jsonldAddr.locality;
     sources.city = "jsonld:addressLocality";
   }
@@ -605,4 +626,53 @@ export function buildFacts(input: BuildFactsInput): Facts {
     socialLinks,
     sources,
   };
+}
+
+/* ------------------------------------------------------------------ */
+/* Turkish province resolution                                         */
+/* ------------------------------------------------------------------ */
+
+/**
+ * Licence-plate code → province name. Turkish sites commonly store the plate
+ * code in schema.org `addressRegion` (and it is also the first two digits of
+ * every postal code), which would otherwise surface as a city literally
+ * named "34".
+ */
+const TR_PROVINCES_BY_PLATE_CODE: Record<number, string> = {
+  1: "Adana", 2: "Adıyaman", 3: "Afyonkarahisar", 4: "Ağrı", 5: "Amasya",
+  6: "Ankara", 7: "Antalya", 8: "Artvin", 9: "Aydın", 10: "Balıkesir",
+  11: "Bilecik", 12: "Bingöl", 13: "Bitlis", 14: "Bolu", 15: "Burdur",
+  16: "Bursa", 17: "Çanakkale", 18: "Çankırı", 19: "Çorum", 20: "Denizli",
+  21: "Diyarbakır", 22: "Edirne", 23: "Elazığ", 24: "Erzincan", 25: "Erzurum",
+  26: "Eskişehir", 27: "Gaziantep", 28: "Giresun", 29: "Gümüşhane",
+  30: "Hakkâri", 31: "Hatay", 32: "Isparta", 33: "Mersin", 34: "İstanbul",
+  35: "İzmir", 36: "Kars", 37: "Kastamonu", 38: "Kayseri", 39: "Kırklareli",
+  40: "Kırşehir", 41: "Kocaeli", 42: "Konya", 43: "Kütahya", 44: "Malatya",
+  45: "Manisa", 46: "Kahramanmaraş", 47: "Mardin", 48: "Muğla", 49: "Muş",
+  50: "Nevşehir", 51: "Niğde", 52: "Ordu", 53: "Rize", 54: "Sakarya",
+  55: "Samsun", 56: "Siirt", 57: "Sinop", 58: "Sivas", 59: "Tekirdağ",
+  60: "Tokat", 61: "Trabzon", 62: "Tunceli", 63: "Şanlıurfa", 64: "Uşak",
+  65: "Van", 66: "Yozgat", 67: "Zonguldak", 68: "Aksaray", 69: "Bayburt",
+  70: "Karaman", 71: "Kırıkkale", 72: "Batman", 73: "Şırnak", 74: "Bartın",
+  75: "Ardahan", 76: "Iğdır", 77: "Yalova", 78: "Karabük", 79: "Kilis",
+  80: "Osmaniye", 81: "Düzce",
+};
+
+/**
+ * Resolves a raw `addressRegion` / postal-code prefix to a province name.
+ * Returns null when the value is empty or a number outside 1-81 (which is
+ * not a plate code and not a usable city name either).
+ */
+export function resolveTrProvince(
+  raw: string | null | undefined,
+): { name: string; fromPlateCode: boolean } | null {
+  const value = raw?.trim();
+  if (!value) return null;
+  if (/^\d{1,2}$/.test(value)) {
+    const name = TR_PROVINCES_BY_PLATE_CODE[Number.parseInt(value, 10)];
+    return name ? { name, fromPlateCode: true } : null;
+  }
+  // Any other all-numeric value is not a province designator.
+  if (/^\d+$/.test(value)) return null;
+  return { name: value, fromPlateCode: false };
 }

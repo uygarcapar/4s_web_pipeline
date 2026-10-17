@@ -1,3 +1,5 @@
+import { rmSync } from "node:fs";
+import { join } from "node:path";
 import { eq } from "drizzle-orm";
 import {
   openStore,
@@ -10,8 +12,16 @@ import {
 } from "@pipeline/core";
 import { dbPath, runsRoot } from "../paths.js";
 
-/** Reset failed stages to pending so `run` re-enters at the first failure. */
-export async function retryCommand(domain: string): Promise<void> {
+/**
+ * Reset stages to pending so `run` re-enters at the first one.
+ * By default only failed/stuck stages are reset; `--stage <name>` forces a
+ * re-run of that stage and everything after it (its artifacts are removed
+ * too, otherwise the idempotency check would skip it again).
+ */
+export async function retryCommand(
+  domain: string,
+  options: { stage?: string } = {},
+): Promise<void> {
   const store = openStore({ dbPath: dbPath() });
   const state = readRunState(domain, runsRoot());
   if (!state) {
@@ -19,12 +29,29 @@ export async function retryCommand(domain: string): Promise<void> {
     process.exitCode = 1;
     return;
   }
+
   let reset = 0;
-  for (const stage of STAGES) {
-    const s = state.stages[stage];
-    if (s.status === "failed" || s.status === "running") {
+  if (options.stage) {
+    const from = STAGES.indexOf(options.stage as (typeof STAGES)[number]);
+    if (from === -1) {
+      console.error(`Unknown stage '${options.stage}'. Valid: ${STAGES.join(", ")}`);
+      process.exitCode = 1;
+      return;
+    }
+    for (const stage of STAGES.slice(from)) {
+      const s = state.stages[stage];
+      if (s.status === "pending") continue;
       state.stages[stage] = { status: "pending", attempts: s.attempts };
+      rmSync(join(runsRoot(), domain, stage), { recursive: true, force: true });
       reset++;
+    }
+  } else {
+    for (const stage of STAGES) {
+      const s = state.stages[stage];
+      if (s.status === "failed" || s.status === "running") {
+        state.stages[stage] = { status: "pending", attempts: s.attempts };
+        reset++;
+      }
     }
   }
   state.status = "queued";
