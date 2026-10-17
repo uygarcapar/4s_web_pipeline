@@ -5,13 +5,14 @@ import { auditStage } from "./audit.js";
 import { verifyStage } from "./verify.js";
 import { notifyStage } from "./notify.js";
 import { deployStage } from "./deploy.js";
-import { notImplementedStage } from "./not-implemented.js";
+import { planStage } from "./plan.js";
+import { generateStage } from "./generate.js";
 
 export const stageRegistry: Record<Stage, StageModule & { notImplemented?: boolean }> = {
   crawl: crawlStage,
   audit: auditStage,
-  plan: notImplementedStage("plan"),
-  generate: notImplementedStage("generate"),
+  plan: planStage,
+  generate: generateStage,
   verify: verifyStage,
   notify: notifyStage,
   deploy: deployStage,
