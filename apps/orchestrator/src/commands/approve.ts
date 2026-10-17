@@ -5,7 +5,7 @@ import { dbPath } from "../paths.js";
 /**
  * Approval gate (Ek B): move selected leads from the latest pending batch
  * into the queue. Selection is 1-based over the batch's leads ordered by
- * tier then review count — the same order shown in the Telegram summary
+ * tier then review count — the same order shown in the WhatsApp summary
  * and the admin panel.
  */
 export async function approveCommand(

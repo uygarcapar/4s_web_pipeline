@@ -2,7 +2,7 @@
  * Stage 0 — lead discovery (Ek A). Implemented in Milestone 4:
  * Places API Text Search with field mask → hard filters → aggregator
  * blocklist → website-activity scoring → cheap heuristics → PSI for
- * candidates → leads/*.csv + approvals batch + Telegram summary.
+ * candidates → leads/*.csv + approvals batch + WhatsApp summary.
  */
 export async function discoverCommand(options: {
   sector: string;
