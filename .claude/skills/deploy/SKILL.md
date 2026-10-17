@@ -6,7 +6,9 @@ allowed-tools: Read, Bash(pnpm run *), Bash(vercel *), Bash(curl -I *), Grep
 argument-hint: [domain]
 ---
 
-Deploy stage for `runs/$ARGUMENTS/`. Hard precondition: the
+Deploy stage for `runs/$ARGUMENTS/`. MANUAL-ONLY (docs/DECISIONS.md D1):
+never part of the automatic run chain — the operator invokes
+`pipeline deploy <domain>` explicitly. Hard precondition: the
 `.pipeline/verify-passed` marker must exist — the deploy-gate hook blocks
 `vercel` otherwise. Do not look for ways around the gate.
 

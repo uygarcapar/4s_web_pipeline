@@ -6,7 +6,7 @@ describe("pipeline CLI", () => {
     const out = execFileSync("npx", ["tsx", "src/cli.ts", "--help"], {
       encoding: "utf8",
     });
-    for (const cmd of ["discover", "approve", "queue", "run", "status", "retry", "cancel"]) {
+    for (const cmd of ["discover", "approve", "queue", "run", "preview", "deploy", "status", "retry", "cancel"]) {
       expect(out).toContain(cmd);
     }
   });

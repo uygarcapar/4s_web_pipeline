@@ -50,9 +50,12 @@ Playwright · Lighthouse 13 / LHCI 0.15 · Crawlee.
 ## Stage model
 
 `discover → approve → queue → crawl → audit → plan → generate → verify →
-deploy → notify`. Deterministic stages (crawl, audit measurement, verify,
-deploy, notify, discover) are plain TypeScript; LLM stages (plan, generate,
-fix loop) are budget-capped fresh sessions. Every stage is idempotent: skip
+notify`. `deploy` is MANUAL-ONLY (`pipeline deploy <domain>`, docs/
+DECISIONS.md D1): sites finish locally, the operator is notified after
+verify and reviews with `pipeline preview <domain>`. Deterministic stages
+(crawl, audit measurement, verify, deploy, notify, discover) are plain
+TypeScript; LLM stages (plan, generate, fix loop) are budget-capped fresh
+sessions. Every stage is idempotent: skip
 if its artifact exists; write `runs/<domain>/state.json` + an events row on
 every transition. Fix loop ≤ 3 iterations, then BLOCKED.md + escalation.
 

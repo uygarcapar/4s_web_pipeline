@@ -6,6 +6,7 @@ import { queueAddCommand } from "./commands/queue.js";
 import { runCommand } from "./commands/run.js";
 import { statusCommand } from "./commands/status.js";
 import { retryCommand, cancelCommand } from "./commands/retry-cancel.js";
+import { deployCommand, previewCommand } from "./commands/deploy-preview.js";
 
 const program = new Command();
 
@@ -40,6 +41,18 @@ program
   .description("Process the queue: crawl → audit → plan → generate → verify → deploy → notify")
   .option("--domain <domain>", "run a single queued domain")
   .action(runCommand);
+
+program
+  .command("preview")
+  .description("Serve a finished site locally for operator review")
+  .argument("<domain>")
+  .action(previewCommand);
+
+program
+  .command("deploy")
+  .description("Manually deploy a verified site to Vercel (never automatic; see docs/DECISIONS.md D1)")
+  .argument("<domain>")
+  .action(deployCommand);
 
 program
   .command("status")

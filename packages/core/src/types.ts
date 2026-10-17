@@ -10,10 +10,24 @@ export const STAGES = [
   "plan",
   "generate",
   "verify",
-  "deploy",
   "notify",
+  "deploy",
 ] as const;
 export type Stage = (typeof STAGES)[number];
+
+/**
+ * Stages the `run` command executes automatically. `deploy` is manual-only
+ * (docs/DECISIONS.md D1): sites finish locally, the operator is notified
+ * after verify, and Vercel deploys happen only via `pipeline deploy <domain>`.
+ */
+export const AUTO_STAGES = [
+  "crawl",
+  "audit",
+  "plan",
+  "generate",
+  "verify",
+  "notify",
+] as const satisfies readonly Stage[];
 
 export type StageStatus =
   | "pending"

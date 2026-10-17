@@ -15,6 +15,9 @@ import { dbPath, runsRoot } from "../paths.js";
  * creates runs/<domain>/state.json and stops — the stage implementations
  * land in Milestones 2–3. Each stage will be idempotent (skip if its
  * artifact exists) and write state.json + an events row on every transition.
+ *
+ * The automatic chain is AUTO_STAGES (crawl → audit → plan → generate →
+ * verify → notify). `deploy` is manual-only — see docs/DECISIONS.md D1.
  */
 export async function runCommand(options: { domain?: string }): Promise<void> {
   const store = openStore({ dbPath: dbPath() });
@@ -46,6 +49,6 @@ export async function runCommand(options: { domain?: string }): Promise<void> {
   }
 
   console.log(`Run initialized for ${next.domain} (state: runs/${next.domain}/state.json).`);
-  console.log("Stages are not implemented yet (crawl/audit/verify/deploy/notify land in Milestone 2, plan/generate in Milestone 3).");
+  console.log("Stages are not implemented yet (crawl/audit/verify/notify land in Milestone 2, plan/generate in Milestone 3; deploy is manual-only).");
   process.exitCode = 1;
 }
