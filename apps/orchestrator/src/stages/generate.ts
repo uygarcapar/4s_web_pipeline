@@ -1,4 +1,12 @@
-import { cpSync, existsSync, mkdirSync, readFileSync, symlinkSync, writeFileSync } from "node:fs";
+import {
+  cpSync,
+  existsSync,
+  mkdirSync,
+  readdirSync,
+  readFileSync,
+  symlinkSync,
+  writeFileSync,
+} from "node:fs";
 import { join } from "node:path";
 import type { StageContext, StageModule } from "./types.js";
 import { runLlmSession } from "../llm/session.js";
@@ -21,6 +29,8 @@ export const generateStage: StageModule = {
     }
     const siteDir = join(ctx.runDir, "generate");
     copyTemplate(ctx, siteDir);
+    const assetCount = stageCrawlAssets(ctx, siteDir);
+    ctx.log(`${assetCount} crawl photograph(s) staged in public/images/crawl/`);
 
     const factsPath = join(ctx.runDir, "audit", "facts.json");
     const prompt = `Fill the Next.js template at ${siteDir} for this client.
@@ -32,10 +42,12 @@ Read first:
 - ${factsPath} — verbatim ground truth (name, phone, address, hours).
 - ${join(ctx.runDir, "crawl", "content.json")} — the client's own Turkish text.
   The section specs quote it; this is the full source if you need more.
-- ${join(ctx.runDir, "crawl", "asset-manifest.json")} — photographs downloaded
-  from the current site, with pixel dimensions and source URLs. Copy the ones
-  the specs name into ${siteDir}/public/images/ and use them. Placeholders are
-  only for sections where the crawl found no suitable photograph.
+- ${join(siteDir, "public", "images", "crawl", "manifest.json")} — the
+  photographs from the current site, ALREADY COPIED into the site. Each entry
+  has pixel width/height, the original source URL, and \`public_path\` — the
+  exact string to put in site.config.ts (e.g. "/images/crawl/3-image.jpg").
+  Do not try to copy or create image files; they are in place. Placeholders
+  under /images/ are only for sections the crawl found no photograph for.
 - ${join(ctx.repoRoot, "template", "design-rules.md")} and ${join(ctx.repoRoot, "template", "build-rules.md")} — hard rules. §7 (content reuse) and §8 (density) matter most here.
 - The vendored \`ui-ux-pro-max\` skill at ${join(ctx.repoRoot, ".claude", "skills", "ui-ux-pro-max")}
   for per-section layout and spacing decisions, and
@@ -48,7 +60,7 @@ Edit ONLY these paths:
 - ${siteDir}/site.config.ts
 - ${siteDir}/src/sections/**
 - ${siteDir}/src/styles/tokens.css
-- ${siteDir}/public/images/** (copy in the crawl photographs you use)
+(public/images/ is already populated — reference the files, do not add any)
 
 Rules that will be checked mechanically after you finish:
 - Every value in facts.json is verbatim. Do not invent or alter a phone number, address, opening hour, service name or price. A fact that is absent must not be claimed.
@@ -56,11 +68,12 @@ Rules that will be checked mechanically after you finish:
 - Turkish user-facing copy with real ş/ğ/ı/İ/ç/ö/ü. Code and comments in English.
 - Phone and WhatsApp links only via telHref/waHref from src/lib/format.ts; currency via formatTRY, dates via formatDateTR, uppercase via upperTR.
 - next/image only, never <img>. No arbitrary hex in sections — the brand comes from --brand-h / --brand-c in tokens.css.
-- Use the REAL photographs from asset-manifest.json, including staff portraits
-  (operator decision, design-rules.md §7). Copy them into public/images/ and
-  reference them with next/image at their true width/height. The hero takes the
-  largest usable photograph. Keep the manifest alongside the site so the
-  provenance of each image survives.
+- Use the REAL photographs, including staff portraits (operator decision,
+  design-rules.md §7). Reference them by their \`public_path\` from
+  public/images/crawl/manifest.json and give next/image their true
+  width/height from the same entry. The hero takes the largest usable
+  photograph. Every image path you write is checked against the filesystem
+  afterwards: a path with no file behind it fails the stage.
 - Every section renders real body content, not a list of labels: a service
   shows its description, a team member their title, an FAQ entry its answer.
   If a section has no source content, drop it from site.config.ts rather than
@@ -102,6 +115,15 @@ When tsc is clean, reply with a one-paragraph summary of what you built.`;
       return { ok: false, error: `fact verification failed: ${detail}`, costUsd: result.costUsd };
     }
     ctx.log("facts verified: all present, no template placeholders left");
+
+    const missingImages = verifyImagePaths(siteDir);
+    if (missingImages.length > 0) {
+      return {
+        ok: false,
+        error: `referenced images do not exist: ${missingImages.join("; ")}`,
+        costUsd: result.costUsd,
+      };
+    }
 
     writeFileSync(join(siteDir, ".generate-done"), new Date().toISOString() + "\n");
     return { ok: true, costUsd: result.costUsd, data: { turns: result.numTurns } };
@@ -147,4 +169,69 @@ function copyTemplate(ctx: StageContext, siteDir: string): void {
   pkg.name = `client-${ctx.domain.replace(/[^a-z0-9-]/g, "-")}`;
   writeFileSync(pkgPath, JSON.stringify(pkg, null, 2) + "\n");
   ctx.log(`template copied to ${siteDir}`);
+}
+
+/**
+ * Copy the crawl's photographs into the site's public directory before the
+ * session starts.
+ *
+ * The model cannot do this itself: binary files do not survive Read/Write,
+ * and giving a generate session shell access to copy them would widen its
+ * tool surface for no benefit. When it was asked to copy them anyway it
+ * wrote correct filenames into site.config.ts with no files behind them,
+ * the browser 404'd on every image, and Lighthouse's errors-in-console
+ * audit took the whole verify gate down.
+ */
+function stageCrawlAssets(ctx: StageContext, siteDir: string): number {
+  const assetsDir = join(ctx.runDir, "crawl", "assets");
+  const manifestPath = join(ctx.runDir, "crawl", "asset-manifest.json");
+  if (!existsSync(assetsDir) || !existsSync(manifestPath)) return 0;
+
+  const target = join(siteDir, "public", "images", "crawl");
+  mkdirSync(target, { recursive: true });
+  cpSync(assetsDir, target, { recursive: true });
+
+  // Keep provenance next to the images so it survives into the demo, and
+  // give the session a manifest whose paths are the ones it must reference.
+  const manifest = JSON.parse(readFileSync(manifestPath, "utf8")) as {
+    file: string;
+    width: number | null;
+    height: number | null;
+  }[];
+  const withPublicPaths = manifest.map((entry) => ({
+    ...entry,
+    public_path: `/images/crawl/${entry.file}`,
+  }));
+  writeFileSync(
+    join(target, "manifest.json"),
+    JSON.stringify(withPublicPaths, null, 2) + "\n",
+  );
+  return manifest.length;
+}
+
+/**
+ * Every image path a generated site references must exist on disk. A missing
+ * file is invisible to tsc and to the build, and only surfaces as a console
+ * 404 that fails Lighthouse — far from its cause.
+ */
+export function verifyImagePaths(siteDir: string): string[] {
+  const missing: string[] = [];
+  const sources = [
+    join(siteDir, "site.config.ts"),
+    ...readdirSync(join(siteDir, "src", "sections"), { withFileTypes: true })
+      .filter((d) => d.isDirectory())
+      .map((d) => join(siteDir, "src", "sections", d.name, "index.tsx")),
+  ].filter((p) => existsSync(p));
+
+  for (const file of sources) {
+    const text = readFileSync(file, "utf8");
+    for (const match of text.matchAll(/["'`](\/images\/[^"'`]+)["'`]/g)) {
+      const rel = match[1];
+      if (!rel) continue;
+      if (!existsSync(join(siteDir, "public", rel))) {
+        missing.push(`${rel} (referenced in ${file.replace(siteDir + "/", "")})`);
+      }
+    }
+  }
+  return [...new Set(missing)];
 }
