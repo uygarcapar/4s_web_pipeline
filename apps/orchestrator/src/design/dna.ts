@@ -62,15 +62,22 @@ const DEFAULT_TEMPERAMENT: Temperament[] = ["quiet", "clinical", "warm"];
  * the DNA picks one, so the structure varies along with the colour
  * (design-rules.md §10.2).
  */
+/**
+ * Only archetypes the template can actually render. Listing an aspirational
+ * one here does not produce variety — the registry falls back to the section
+ * default and the site quietly comes out looking like every other one, which
+ * is the exact failure this table exists to prevent. Keep in step with
+ * `template/src/sections/registry.ts`.
+ */
 export const ARCHETYPES = {
-  hero: ["photo-full", "seam-bottom", "seam-side", "poster"],
-  services: ["rail-pinned", "stack", "grid"],
-  team: ["sticky-swap", "grid", "rail"],
-  gallery: ["mosaic", "rail", "stack"],
-  faq: ["list", "split"],
-  contact: ["columns", "statement"],
-  hours: ["table", "inline"],
-  testimonials: ["quote-swap", "stack"],
+  hero: ["photo-full", "default"],
+  services: ["rail-pinned", "default"],
+  team: ["sticky-swap", "default"],
+  gallery: ["default"],
+  faq: ["default"],
+  contact: ["default"],
+  hours: ["default"],
+  testimonials: ["default"],
 } as const satisfies Record<string, readonly string[]>;
 
 export type SectionType = keyof typeof ARCHETYPES;

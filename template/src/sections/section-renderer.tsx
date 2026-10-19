@@ -9,7 +9,9 @@ export function SectionRenderer({ config }: { config: SiteConfig }) {
   return (
     <>
       {config.sections.map((section) => {
-        const Section = getSectionComponent(section.type);
+        // `variant` carries the layout archetype the design stage chose for
+        // this client (docs/DECISIONS.md D6).
+        const Section = getSectionComponent(section.type, section.variant);
         return <Section key={section.id} section={section} config={config} />;
       })}
     </>

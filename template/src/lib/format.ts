@@ -80,6 +80,19 @@ export function telHref(phoneE164: string): string {
 }
 
 /**
+ * The number as a Turkish reader expects to see it:
+ * `"+902165655585"` → `"0216 565 55 85"`.
+ *
+ * E.164 is what the `tel:` href needs; nobody reads a phone number that way.
+ * The grouping is the national convention — area code, then 3-2-2.
+ */
+export function formatPhoneTR(phoneE164: string): string {
+  const national = phoneE164.replace(/^\+90/, "");
+  if (national.length !== 10) return phoneE164;
+  return `0${national.slice(0, 3)} ${national.slice(3, 6)} ${national.slice(6, 8)} ${national.slice(8)}`;
+}
+
+/**
  * Builds a WhatsApp click-to-chat URL from an E.164 number (wa.me expects no
  * plus sign): `waHref("+905321234567", "Merhaba")` →
  * `"https://wa.me/905321234567?text=Merhaba"`.

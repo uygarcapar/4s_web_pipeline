@@ -51,7 +51,8 @@ export const heroSectionSchema = z
   .object({
     ...sectionBase,
     type: z.literal("hero"),
-    variant: z.enum(["default", "centered"]).optional(),
+    /** Layout archetype, chosen per site by the design stage (D6). */
+    variant: z.enum(["default", "centered", "photo-full", "seam-bottom"]).optional(),
     headline: z.string().min(1),
     subheadline: z.string().min(1).optional(),
     ctaPrimary: ctaSchema,
@@ -64,7 +65,8 @@ export const servicesSectionSchema = z
   .object({
     ...sectionBase,
     type: z.literal("services"),
-    variant: z.enum(["default", "list"]).optional(),
+    /** Layout archetype, chosen per site by the design stage (D6). */
+    variant: z.enum(["default", "list", "rail-pinned", "stack"]).optional(),
     title: z.string().min(1).optional(),
     items: z
       .array(
@@ -73,10 +75,47 @@ export const servicesSectionSchema = z
             title: z.string().min(1),
             description: z.string().min(1),
             icon: z.string().min(1).optional(),
+            /**
+             * A photograph of the work, from the crawl. Optional because a
+             * business may have written about a service without ever
+             * photographing it — and a card with no picture is better than
+             * one with a stock placeholder (design-rules.md §9).
+             */
+            image: imageSchema.optional(),
           })
           .strict(),
       )
       .min(1),
+  })
+  .strict();
+
+export const teamSectionSchema = z
+  .object({
+    ...sectionBase,
+    type: z.literal("team"),
+    /** Layout archetype, chosen per site by the design stage (D6). */
+    variant: z.enum(["default", "sticky-swap", "grid"]).optional(),
+    title: z.string().min(1),
+    intro: z.string().min(1).optional(),
+    members: z
+      .array(
+        z
+          .object({
+            name: z.string().min(1),
+            /**
+             * The person's own title, taken verbatim from their page on the
+             * old site. Never inferred from a photograph and never invented:
+             * getting this wrong misstates a real person's qualifications
+             * (design-rules.md §9).
+             */
+            role: z.string().min(1),
+            bio: z.string().min(1).optional(),
+            photo: imageSchema.optional(),
+          })
+          .strict(),
+      )
+      .min(1)
+      .max(12),
   })
   .strict();
 
@@ -161,6 +200,7 @@ export const hoursSectionSchema = z
 export const sectionSchema = z.discriminatedUnion("type", [
   heroSectionSchema,
   servicesSectionSchema,
+  teamSectionSchema,
   gallerySectionSchema,
   testimonialsSectionSchema,
   faqSectionSchema,
@@ -253,6 +293,7 @@ export type OpeningHoursEntry = z.infer<typeof openingHoursEntrySchema>;
 
 export type HeroSection = z.infer<typeof heroSectionSchema>;
 export type ServicesSection = z.infer<typeof servicesSectionSchema>;
+export type TeamSection = z.infer<typeof teamSectionSchema>;
 export type GallerySection = z.infer<typeof gallerySectionSchema>;
 export type TestimonialsSection = z.infer<typeof testimonialsSectionSchema>;
 export type FaqSection = z.infer<typeof faqSectionSchema>;
