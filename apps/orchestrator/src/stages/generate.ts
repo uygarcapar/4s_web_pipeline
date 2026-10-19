@@ -1,4 +1,5 @@
 import {
+  copyFileSync,
   cpSync,
   existsSync,
   mkdirSync,
@@ -32,12 +33,27 @@ export const generateStage: StageModule = {
     const assetCount = stageCrawlAssets(ctx, siteDir);
     ctx.log(`${assetCount} crawl photograph(s) staged in public/images/crawl/`);
 
+    // The palette and the type pairing are decisions the design stage already
+    // made from this client's own photographs and sector, and checked against
+    // the fingerprint ledger (D6). They are copied in rather than described
+    // to the model: a model asked to choose a palette reaches for the same
+    // one every time, which is the sameness the ledger exists to prevent.
+    const staged = stageDesign(ctx, siteDir);
+    if (!staged) {
+      return { ok: false, error: "design/tokens.css missing (design stage must run first)" };
+    }
+    ctx.log("design tokens and fonts staged from the design stage");
+
     const factsPath = join(ctx.runDir, "audit", "facts.json");
     const prompt = `Fill the Next.js template at ${siteDir} for this client.
 
 Read first:
 - ${join(planDir, "design-plan.md")} — the design you are implementing. Follow it; the "one bold element" must survive into the build.
 - ${join(planDir, "sitemap.json")} — the exact sections and their order.
+- ${join(ctx.runDir, "design", "design.json")} — this client's design DNA:
+  the palette derived from their own photographs, their type pairing, the
+  layout archetype per section, and which section carries the pinned
+  hand-off and which the text transformation.
 - ${join(planDir, "sections")}/ — one spec per section.
 - ${factsPath} — verbatim ground truth (name, phone, address, hours).
 - ${join(ctx.runDir, "crawl", "content.json")} — the client's own Turkish text.
@@ -59,15 +75,20 @@ Read first:
 Edit ONLY these paths:
 - ${siteDir}/site.config.ts
 - ${siteDir}/src/sections/**
-- ${siteDir}/src/styles/tokens.css
 (public/images/ is already populated — reference the files, do not add any)
+
+Do NOT edit src/styles/tokens.css or src/lib/fonts.ts. Both are generated:
+the palette was derived from this client's own photographs and the type
+pairing was chosen for their sector and checked against the design
+fingerprint ledger, so that two businesses in the same trade cannot be
+handed the same-looking site. Use the tokens that are there.
 
 Rules that will be checked mechanically after you finish:
 - Every value in facts.json is verbatim. Do not invent or alter a phone number, address, opening hour, service name or price. A fact that is absent must not be claimed.
 - No value from the reference clinic may survive: "Moda Diş Kliniği", +905551234567, info@modadisklinigi.example and similar must all be gone.
 - Turkish user-facing copy with real ş/ğ/ı/İ/ç/ö/ü. Code and comments in English.
 - Phone and WhatsApp links only via telHref/waHref from src/lib/format.ts; currency via formatTRY, dates via formatDateTR, uppercase via upperTR.
-- next/image only, never <img>. No arbitrary hex in sections — the brand comes from --brand-h / --brand-c in tokens.css.
+- next/image only, never <img>. No arbitrary hex and no colour of your own in sections: use the paper-*/ink-*/accent tokens from tokens.css, and the type steps (t-display, t-h2, t-h2-col, t-h3, t-lead, t-body, meta, btn-label). A section that invents a size or a colour breaks the scale the whole site is built on.
 - Use the REAL photographs, including staff portraits (operator decision,
   design-rules.md §7). Reference them by their \`public_path\` from
   public/images/crawl/manifest.json and give next/image their true
@@ -78,9 +99,13 @@ Rules that will be checked mechanically after you finish:
   shows its description, a team member their title, an FAQ entry its answer.
   If a section has no source content, drop it from site.config.ts rather than
   padding it with invented copy.
-- Set the brand hue and chroma from design-plan.md, and the fonts in src/app/layout.tsx are fixed — if the plan names different typefaces, note it in your final message rather than editing layout.tsx.
+- Each section's \`variant\` in site.config.ts must be the archetype named for
+  it in design.json. That is the layout this client was assigned; changing it
+  puts them back on the same structure as every other site in their trade.
+- If design.json or the tokens look wrong for this business, say so in your
+  final message rather than working around them.
 
-Work in this order: site.config.ts first (it drives everything), then each section component, then tokens.css. After each meaningful edit run \`pnpm exec tsc --noEmit\` in ${siteDir} and fix what it reports.
+Work in this order: site.config.ts first (it drives everything), then each section component. After each meaningful edit run \`pnpm exec tsc --noEmit\` in ${siteDir} and fix what it reports.
 
 When tsc is clean, reply with a one-paragraph summary of what you built.`;
 
@@ -234,4 +259,28 @@ export function verifyImagePaths(siteDir: string): string[] {
     }
   }
   return [...new Set(missing)];
+}
+
+/**
+ * Copy the design stage's artefacts into the site: the token scale derived
+ * from this client's photographs, and the font module for the pairing chosen
+ * for their sector.
+ *
+ * Deterministic for the same reason the photographs are staged deterministically
+ * — the model has no tool that can produce either correctly, and asking it to
+ * try is how a site ends up with a palette that belongs to nobody.
+ *
+ * Returns false if the design stage has not run.
+ */
+function stageDesign(ctx: StageContext, siteDir: string): boolean {
+  const designDir = join(ctx.runDir, "design");
+  const tokens = join(designDir, "tokens.css");
+  const fonts = join(designDir, "fonts.ts");
+  if (!existsSync(tokens) || !existsSync(fonts)) return false;
+
+  mkdirSync(join(siteDir, "src", "styles"), { recursive: true });
+  mkdirSync(join(siteDir, "src", "lib"), { recursive: true });
+  copyFileSync(tokens, join(siteDir, "src", "styles", "tokens.css"));
+  copyFileSync(fonts, join(siteDir, "src", "lib", "fonts.ts"));
+  return true;
 }

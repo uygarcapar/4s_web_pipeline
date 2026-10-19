@@ -1,5 +1,4 @@
 import type { Metadata } from "next";
-import { Inter, Lora } from "next/font/google";
 import type { CSSProperties } from "react";
 
 import { ConsentBanner, CONSENT_PREPAINT_SCRIPT } from "@/components/consent-banner";
@@ -7,34 +6,12 @@ import { PreviewBanner } from "@/components/preview-banner";
 import { SiteFooter } from "@/components/site-footer";
 import { StickyCta } from "@/components/sticky-cta";
 import { buildLocalBusinessJsonLd } from "@/lib/jsonld";
+import { fontVariables } from "@/lib/fonts";
 import { buildMetadata } from "@/lib/seo";
+import { SmoothScroll, SCROLL_INIT_SCRIPT } from "@/components/smooth-scroll";
 import { siteConfig } from "~config";
 
 import "./globals.css";
-
-/*
- * Fonts: a serif heading face and a sans body face, both loaded with the
- * "latin-ext" subset so Turkish characters (ğ, ş, İ, ...) render correctly.
- * The CSS variables are consumed by src/styles/tokens.css (--font-heading /
- * --font-sans Tailwind tokens).
- */
-const headingFont = Lora({
-  variable: "--font-heading",
-  subsets: ["latin", "latin-ext"],
-  // Static instances only. Without `weight`, next/font ships the full
-  // variable font (~192 KB for both families), which delayed the text LCP
-  // past the 2.5 s gate. The template uses semibold headings and regular
-  // body copy; add a weight here only when a section actually needs it.
-  weight: ["600"],
-  display: "swap",
-});
-
-const bodyFont = Inter({
-  variable: "--font-body",
-  subsets: ["latin", "latin-ext"],
-  weight: ["400", "600"],
-  display: "swap",
-});
 
 export const metadata: Metadata = buildMetadata(siteConfig);
 
@@ -44,7 +21,7 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
   return (
     <html
       lang="tr"
-      className={`${headingFont.variable} ${bodyFont.variable} h-full antialiased`}
+      className={`${fontVariables} h-full antialiased`}
       /*
        * Brand wiring: tokens.css derives the whole --color-brand-* OKLCH ramp
        * from --brand-h / --brand-c. Overriding those two custom properties
@@ -66,6 +43,15 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
          * on <html>: the script mutates the root dataset before React hydrates.
          */}
         <script dangerouslySetInnerHTML={{ __html: CONSENT_PREPAINT_SCRIPT }} />
+        {/*
+         * Scroll restoration, claimed before anything paints. The browser
+         * restores the previous offset on reload while the page height is
+         * still being decided by pins that have not been measured, so a
+         * refresh lands in the middle of a pinned section — somewhere
+         * different every time. An effect is too late: by the time React
+         * hydrates the browser has already scrolled.
+         */}
+        <script dangerouslySetInnerHTML={{ __html: SCROLL_INIT_SCRIPT }} />
       </head>
       <body className="flex min-h-full flex-col">
         <script
@@ -73,9 +59,11 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
           dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
         />
         <PreviewBanner />
-        {/* pb-16 keeps the mobile sticky CTA bar from covering content. */}
-        <div className="flex flex-1 flex-col pb-16 md:pb-0">{children}</div>
-        <SiteFooter config={siteConfig} />
+        <SmoothScroll>
+          {/* pb-16 keeps the mobile sticky CTA bar from covering content. */}
+          <div className="flex flex-1 flex-col pb-16 md:pb-0">{children}</div>
+          <SiteFooter config={siteConfig} />
+        </SmoothScroll>
         <StickyCta config={siteConfig} />
         <ConsentBanner />
       </body>

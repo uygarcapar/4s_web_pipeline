@@ -26,12 +26,21 @@ export const planStage: StageModule = {
     const planDir = join(ctx.runDir, "plan");
     const screenshotDir = join(ctx.runDir, "crawl", "screenshots");
     const designRules = join(ctx.repoRoot, "template", "design-rules.md");
+    const designJson = join(ctx.runDir, "design", "design.json");
+    if (!existsSync(designJson)) {
+      return { ok: false, error: "design/design.json missing (design stage must run first)" };
+    }
 
     const prompt = `You are planning a rebuilt website for a Turkish small business.
 
 Inputs you MUST read before writing anything:
 - ${designRules} — the hard design rules. §2 (generic-AI clusters), §5 (Turkey),
   §7 (content reuse) and §8 (density and hierarchy) all constrain this plan.
+- ${designJson} — this client's design DNA, already decided: palette
+  (derived from their own photographs), type pairing, density, the layout
+  archetype for each section, which section carries the pinned hand-off and
+  which the text transformation, and the headline grammar to write the hero
+  in. Treat these as given.
 - ${join(ctx.runDir, "crawl", "content.json")} — the CLIENT'S OWN TEXT: per-page
   content blocks, detected FAQ pairs and headings. This is the copy the rebuilt
   site uses. Read it properly; a plan that ignores it produces a thin site.
@@ -57,6 +66,11 @@ Produce exactly these artifacts, in this order:
    - Layout: an ASCII wireframe per page and one sentence of alignment guidance.
    - The one bold element: the single memorable thing on this site. Everything else stays quiet.
    - A "generic check" section: compare your plan against the five clusters in design-rules.md §2, say which parts matched, and what you changed.
+   - Do NOT choose a palette or typefaces. Both are already decided in
+     design.json: the palette was derived from this client's own photographs
+     and the pairing was checked against the design fingerprint ledger, so
+     that two businesses in the same trade cannot end up with the same-looking
+     site (design-rules.md §10). Describe how you are USING them.
    Ground the design in THIS business — a dental clinic in Kadıköy must not look like a generic agency template.
 
 2. ${join(planDir, "sitemap.json")} — write this LAST. Shape:
@@ -77,6 +91,8 @@ Produce exactly these artifacts, in this order:
    empty testimonials block is worse than no testimonials block.
 
 3. ${join(planDir, "sections")}/<id>.md — one spec per section in your sitemap.
+   Each section's spec names its archetype from design.json, which becomes
+   its \`variant\` in site.config.ts.
    Each spec states: the section's purpose, which facts.json fields it consumes
    (name them), the chosen variant, and — the important part — THE ACTUAL
    TURKISH COPY, lifted from content.json. Quote the source text and give the

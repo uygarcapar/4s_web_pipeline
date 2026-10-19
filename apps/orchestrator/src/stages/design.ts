@@ -8,6 +8,7 @@ import { recentDesigns, recordDesign, sectionsFromFacts } from "../design/ledger
 import { takeInventory } from "../design/inventory.js";
 import { foldForMatch } from "../design/fold.js";
 import { renderTokens } from "../design/tokens.js";
+import { renderFonts } from "../design/fonts.js";
 
 /**
  * Derive the site's design DNA before any copy or markup exists.
@@ -87,6 +88,7 @@ export const designStage: StageModule = {
       JSON.stringify({ sector, sections, ...dna }, null, 2) + "\n",
     );
     writeFileSync(join(outDir, "tokens.css"), renderTokens(dna));
+    writeFileSync(join(outDir, "fonts.ts"), renderFonts(dna));
 
     return {
       ok: true,
