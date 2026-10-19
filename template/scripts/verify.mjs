@@ -35,6 +35,7 @@ import path from "node:path";
 const CWD = process.cwd();
 const DIGEST_PATH = path.join(CWD, "verify-digest.md");
 const LINKS_PORT = 3102;
+const GEOMETRY_PORT = 3103;
 const MAX_BUFFER = 64 * 1024 * 1024;
 
 // Make sure children use the same node as this script (node >= 22 required;
@@ -433,6 +434,62 @@ async function gateLinks() {
 
 /* ------------------------------------------------------------------ */
 /* Digest + marker                                                     */
+
+/* ------------------------------------------------------------------ */
+/* Gate 7: geometry (design-rules.md §12)                              */
+/* ------------------------------------------------------------------ */
+/**
+ * Overflow, tap targets, text overlapping text, reload stability and
+ * anchor landing — across the full width matrix. Cheaper and far more
+ * reliable to decide by script than by model, and every item here is
+ * something that shipped broken once on the hand-built reference site
+ * before being caught by eye.
+ */
+async function gateGeometry() {
+  const started = Date.now();
+  const base = `http://localhost:${GEOMETRY_PORT}`;
+  const server = spawn("pnpm", ["exec", "next", "start", "-p", String(GEOMETRY_PORT)], {
+    cwd: CWD,
+    env: ENV,
+    detached: true,
+    stdio: "ignore",
+  });
+  const killServer = () => {
+    try {
+      process.kill(-server.pid, "SIGTERM");
+    } catch {
+      try {
+        server.kill("SIGTERM");
+      } catch {
+        /* already gone */
+      }
+    }
+  };
+
+  try {
+    if (!(await waitForServer(base, 60_000))) {
+      record("geometry", "fail", (Date.now() - started) / 1000, [
+        `next start -p ${GEOMETRY_PORT} did not become ready within 60s`,
+      ]);
+      return false;
+    }
+
+    const { chromium } = await import("playwright");
+    const { checkGeometry } = await import("./geometry.mjs");
+    const problems = await checkGeometry({ chromium, url: base });
+    const seconds = (Date.now() - started) / 1000;
+
+    if (problems.length === 0) {
+      record("geometry", "pass", seconds);
+      return true;
+    }
+    record("geometry", "fail", seconds, cap(problems, 25));
+    return false;
+  } finally {
+    killServer();
+  }
+}
+
 /* ------------------------------------------------------------------ */
 function writeDigest(allGreen) {
   const icon = { pass: "✅", fail: "❌", warn: "⚠️", skip: "⏭" };
@@ -508,6 +565,7 @@ async function main() {
     ["playwright", gatePlaywright],
     ["lhci", () => gateLhci().ok],
     ["links", gateLinks],
+    ["geometry", gateGeometry],
   ];
 
   for (const [name, step] of steps) {
