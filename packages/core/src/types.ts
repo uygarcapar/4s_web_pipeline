@@ -7,6 +7,11 @@
 export const STAGES = [
   "crawl",
   "audit",
+  // `design` derives the site's DNA — palette, type pairing, section
+  // archetypes, motion signature — before any copy or markup exists, so that
+  // two clients in the same sector cannot come out as the same site
+  // (docs/DECISIONS.md D6, template/design-rules.md §10).
+  "design",
   "plan",
   "generate",
   "verify",
@@ -23,6 +28,7 @@ export type Stage = (typeof STAGES)[number];
 export const AUTO_STAGES = [
   "crawl",
   "audit",
+  "design",
   "plan",
   "generate",
   "verify",

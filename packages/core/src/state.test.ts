@@ -10,6 +10,7 @@ import {
   writeRunState,
 } from "./state.js";
 import { openStore, recordEvent, syncRunToDb, schema } from "./db/index.js";
+import { STAGES } from "./types.js";
 
 describe("domainFromUrl", () => {
   it("strips www and protocol", () => {
@@ -82,7 +83,10 @@ describe("sqlite store", () => {
     expect(runs).toHaveLength(1);
     expect(runs[0]?.currentStage).toBe("crawl");
     const stages = store.select().from(schema.stages).all();
-    expect(stages).toHaveLength(7);
+    // One row per stage. Derived from STAGES rather than hard-coded, so
+    // adding a stage (design, 2026-10-19) does not make this assertion stale
+    // without telling us anything real.
+    expect(stages).toHaveLength(STAGES.length);
     const events = store.select().from(schema.events).all();
     expect(events[0]?.type).toBe("stage:start");
   });

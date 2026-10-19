@@ -97,3 +97,82 @@ Template fixes made while calibrating (all kept):
   hydration and became a ~3.3 s LCP element).
 - Fonts pinned to the weights actually used instead of full variable faces.
 - Total page weight 873 KB → 375 KB; script 610 KB → 164 KB.
+
+## D5 — Design language adopted from the hand-built reference (2026-10-19)
+
+**Decision (operator):** the generated-site design language is the one proven
+by hand at `~/diskent-landing`, not the template's original output. Approved
+after three review rounds; the brief was Aventura Dental Arts' scroll
+choreography plus 4ourstack.com and speaktable.com's typography and colour.
+
+Settled invariants — these are quality floor, identical on every client site:
+
+- **Motion**: Lenis smooth scroll driven by `gsap.ticker`, ScrollTrigger for
+  everything. Scroll must *change* the page, not merely translate it: at
+  least one pinned scrub where two elements trade places, and at least one
+  place where the text itself changes (word-by-word reveal or in-place swap).
+- **Type**: one shared six-step scale, no section inventing its own size. A
+  grotesk display needs weight 700–800 *and* negative tracking; 400 at display
+  size reads timid. Body ≥ 17 px, small caps meta ≥ 13 px.
+- **Colour**: one hue family. The dark ground is the paper hue pushed to
+  near-black, tinted toward the accent. At most one non-neutral accent, used
+  only for hover/focus — never as a surface. The photographs are the chroma.
+- **Turkish typography**: display line masks need padding for descenders and
+  for the İ dot. Cropping them silently renames the business ("Dişkent" →
+  "Diskent"). `text-transform: uppercase` inside `lang="tr"` is correct and
+  is the only casing mechanism allowed in CSS.
+- **Interface floor**: every interactive target ≥ 44 px on both axes; a phone
+  number never wraps; `scroll-margin-top` on every anchor target; no
+  horizontal overflow at any width; `prefers-reduced-motion` disables every
+  timeline while leaving all content visible.
+- **Above the fold**: hours, address, a pressable phone number and a CTA. The
+  award-winning references omit these; an SMB site cannot.
+
+Verified across 375/390/430/844-landscape/768/820/1023/1024/1280.
+
+## D6 — Generated sites must not be copies of each other (2026-10-19)
+
+**Decision (operator):** adopting one design language must not produce one
+site repeated per client. Sameness has four distinct failure modes —
+structural, chromatic, typographic and rhetorical — and each needs its own
+remedy. Variation is **derived from the client's own material**, never
+random: random variation produces incoherent sites, derived variation
+produces sites that differ because the businesses differ.
+
+- Palette is extracted from the client's own photographs (Dişkent's dark
+  ground came from the turquoise of their treatment chair).
+- The section set follows which facts actually exist, not a fixed list.
+- Layout archetype and motion signature are chosen per section from a kit of
+  variants; density follows crawled content volume.
+- A **design fingerprint** is recorded per run and a new run may not reuse a
+  recent fingerprint in the same sector. This is the hard guarantee; the
+  derivation above is what makes the result coherent rather than merely
+  different.
+
+Status: recorded, not yet implemented. Supersedes the "same template per
+client" assumption in PLAN.md's generate stage.
+
+## D7 — design-rules.md amended over the protect-tests hook (2026-10-19)
+
+**Decision (operator, after being shown the conflict):** `template/design-rules.md`
+is a protected quality-gate file and the hook correctly refused the write. It
+was amended anyway, deliberately, because the file as written **rejected the
+design language the operator had just approved**:
+
+- Old DJ3 failed any "tracked-out ALL-CAPS eyebrow label". The approved
+  language uses uppercase eyebrows. DJ3 now tests what was actually wrong:
+  letter-spacing above 0.08em, or an eyebrow that adds nothing the heading
+  does not already say.
+- Old DJ10 failed when "more than one section animates on scroll". The
+  approved language is built on scroll-driven motion. DJ10 now fails the real
+  defect: fade-and-slide-up being the *only* motion, with no pinned hand-off
+  and no text transformation anywhere.
+- Generic-cluster 5 no longer lists the uppercase eyebrow.
+
+Added: §4 type scale (six steps, display/body ≈ 6:1), §5 one-hue-family
+colour derived from the client's photographs, §6 Turkish typography including
+the line-mask descender rule, §10 variation axes and the design fingerprint,
+DJ16–DJ17, and §12 automated geometry checks.
+
+The previous file is preserved in git history. Any further change to this file
+needs the same explicit approval.

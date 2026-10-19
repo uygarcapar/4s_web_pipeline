@@ -121,3 +121,26 @@ export const costs = sqliteTable("costs", {
   numTurns: integer("num_turns"),
   createdAt: text("created_at").notNull(),
 });
+
+/**
+ * One row per generated site's design DNA. This is the ledger that makes
+ * "sites must not be copies of each other" a guarantee rather than a hope
+ * (docs/DECISIONS.md D6, template/design-rules.md §10.4): the design stage
+ * reads recent rows for the same sector and refuses to emit a fingerprint
+ * that is already there.
+ */
+export const designs = sqliteTable("designs", {
+  id: integer("id").primaryKey({ autoIncrement: true }),
+  domain: text("domain").notNull(),
+  sector: text("sector").notNull(),
+  fingerprint: text("fingerprint").notNull(),
+  paletteName: text("palette_name").notNull(),
+  paletteHue: integer("palette_hue").notNull(),
+  typePairId: text("type_pair_id").notNull(),
+  density: text("density").notNull(),
+  headlineGrammar: text("headline_grammar").notNull(),
+  /** JSON: the per-section archetype choices and the motion signature. */
+  archetypes: text("archetypes").notNull(),
+  motion: text("motion").notNull(),
+  createdAt: text("created_at").notNull(),
+});

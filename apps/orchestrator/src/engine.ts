@@ -14,6 +14,7 @@ import {
 import { repoRoot, runsRoot } from "./paths.js";
 import type { StageContext, StageModule } from "./stages/types.js";
 import { stageRegistry } from "./stages/index.js";
+import { createProgressNotifier, type ProgressNotifier } from "./notify/progress.js";
 
 export interface EngineResult {
   domain: string;
@@ -32,10 +33,13 @@ export async function runPipeline(input: {
   url: string;
   source: "discover" | "manual";
   store: Store;
+  /** Injected in tests; defaults to the configured channel (Telegram). */
+  progress?: ProgressNotifier;
 }): Promise<EngineResult> {
   const { domain, url, source, store } = input;
   const root = repoRoot();
   const runDir = join(runsRoot(), domain);
+  const progress = input.progress ?? createProgressNotifier();
 
   const state: RunState =
     readRunState(domain, runsRoot()) ?? createRunState({ domain, url, source });
@@ -43,6 +47,7 @@ export async function runPipeline(input: {
   writeRunState(state, runsRoot());
   syncRunToDb(store, state);
   recordEvent(store, { domain, type: "run:start", message: `run started for ${domain}` });
+  progress.runStarted(domain, url);
 
   for (const stageName of AUTO_STAGES) {
     const module: StageModule & { notImplemented?: boolean } = stageRegistry[stageName];
@@ -86,6 +91,8 @@ export async function runPipeline(input: {
         message: `halted before ${stageName}: not implemented yet (Milestone 3)`,
       });
       console.log(`Halted before '${stageName}' (Milestone 3). Progress so far is saved.`);
+      progress.runHalted(domain, stageName);
+      await progress.flush();
       return { domain, outcome: "halted", failedStage: stageName };
     }
 
@@ -106,6 +113,7 @@ export async function runPipeline(input: {
     writeRunState(state, runsRoot());
     syncRunToDb(store, state);
     recordEvent(store, { domain, stage: stageName, type: "stage:start", message: `${stageName} started` });
+    progress.stageStarted(domain, stageName);
 
     let result;
     try {
@@ -128,6 +136,8 @@ export async function runPipeline(input: {
         type: "stage:fail",
         message: `${stageName} failed: ${result.error ?? "unknown"}`,
       });
+      progress.stageFailed(domain, stageName, result.error ?? "bilinmeyen hata");
+      await progress.flush();
       return { domain, outcome: "failed", failedStage: stageName };
     }
 
@@ -143,6 +153,7 @@ export async function runPipeline(input: {
       message: `${stageName} passed`,
       ...(result.data ? { data: result.data } : {}),
     });
+    progress.stagePassed(domain, stageName, result.data);
   }
 
   state.status = "completed";
@@ -150,5 +161,8 @@ export async function runPipeline(input: {
   writeRunState(state, runsRoot());
   syncRunToDb(store, state);
   recordEvent(store, { domain, type: "run:complete", message: `run completed for ${domain}` });
+  // The notify stage already sent the "site is ready" message; this only waits
+  // for the per-stage sends still in flight.
+  await progress.flush();
   return { domain, outcome: "completed" };
 }

@@ -14,6 +14,22 @@ export type Store = BetterSQLite3Database<typeof schema> & {
  * schema starts churning, switch to drizzle-kit generated migrations.
  */
 const DDL = `
+CREATE TABLE IF NOT EXISTS designs (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  domain TEXT NOT NULL,
+  sector TEXT NOT NULL,
+  fingerprint TEXT NOT NULL,
+  palette_name TEXT NOT NULL,
+  palette_hue INTEGER NOT NULL,
+  type_pair_id TEXT NOT NULL,
+  density TEXT NOT NULL,
+  headline_grammar TEXT NOT NULL,
+  archetypes TEXT NOT NULL,
+  motion TEXT NOT NULL,
+  created_at TEXT NOT NULL
+);
+CREATE INDEX IF NOT EXISTS idx_designs_sector ON designs(sector, created_at);
+CREATE INDEX IF NOT EXISTS idx_designs_domain ON designs(domain);
 CREATE TABLE IF NOT EXISTS runs (
   domain TEXT PRIMARY KEY,
   url TEXT NOT NULL,
