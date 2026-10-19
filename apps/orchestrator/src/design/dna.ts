@@ -70,9 +70,14 @@ const DEFAULT_TEMPERAMENT: Temperament[] = ["quiet", "clinical", "warm"];
  * `template/src/sections/registry.ts`.
  */
 export const ARCHETYPES = {
-  hero: ["photo-full", "default"],
-  services: ["rail-pinned", "default"],
-  team: ["sticky-swap", "default"],
+  // Sections rebuilt in the approved design language. "default" is
+  // deliberately NOT an option here: leaving it in made the choice a coin
+  // flip, and a client who lost the toss silently got the old template back.
+  hero: ["photo-full"],
+  services: ["rail-pinned"],
+  team: ["sticky-swap"],
+  // Not yet rebuilt — these still render through the template's original
+  // component. Listing "default" keeps that explicit rather than implied.
   gallery: ["default"],
   faq: ["default"],
   contact: ["default"],
@@ -199,19 +204,30 @@ export function chooseMotion(input: { sections: SectionType[]; seed: number }): 
  */
 export function fingerprintOf(input: {
   paletteName: string;
+  /** Source hue, bucketed. Two clinics can both be "mavi" and still look nothing alike. */
+  paletteHue?: number;
   typePairId: string;
   archetypes: Partial<Record<SectionType, string>>;
   motion: MotionSignature;
+  /** The hero's sentence shape — the loudest text on the site. */
+  headlineGrammar?: string;
 }): string {
   const archetypes = Object.keys(input.archetypes)
     .sort()
     .map((k) => `${k}:${input.archetypes[k as SectionType]}`)
     .join(",");
+  // 12° buckets: finer than the colour-name bands, coarse enough that two
+  // sites a couple of degrees apart still count as the same palette and one
+  // of them is forced to change.
+  const hueBucket =
+    input.paletteHue === undefined ? "-" : String(Math.round(input.paletteHue / 12));
   const payload = [
     input.paletteName,
+    hueBucket,
     input.typePairId,
     archetypes,
     `${input.motion.handoff}>${input.motion.textTransform}>${input.motion.lateral ?? "-"}`,
+    input.headlineGrammar ?? "-",
   ].join("|");
   return createHash("sha256").update(payload).digest("hex").slice(0, 16);
 }
@@ -242,11 +258,14 @@ export function composeDna(input: {
     const typePair = chooseTypePair({ sector: input.sector, seed, avoid: takenPairs });
     const archetypes = chooseArchetypes({ sections: input.sections, seed });
     const motion = chooseMotion({ sections: input.sections, seed });
+    const headlineGrammar = pick(HEADLINE_GRAMMARS, seed, 11);
     const fingerprint = fingerprintOf({
       paletteName: input.palette.name,
+      paletteHue: input.palette.hue,
       typePairId: typePair.id,
       archetypes,
       motion,
+      headlineGrammar,
     });
 
     if (taken.has(fingerprint) && attempt < attempts - 1) {
@@ -260,7 +279,7 @@ export function composeDna(input: {
       density,
       archetypes,
       motion,
-      headlineGrammar: pick(HEADLINE_GRAMMARS, seed, 11),
+      headlineGrammar,
       fingerprint,
       rejected,
     };
