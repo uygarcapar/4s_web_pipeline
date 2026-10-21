@@ -362,13 +362,45 @@ still has its own local `DirectionRanges`. A3 replaces the stub with real
 direction files parsed by `directionSchema`, and that is the moment the local
 type goes — swapping it now would mean rewriting `checks.ts` twice.
 
+## A3 — the direction catalog (PR open, **awaiting operator review**)
+
+The four directions of §4.3 as real files under
+`apps/orchestrator/src/design/directions/`, parsed by `directionSchema` at
+module load, with 16 reference screenshots committed under
+`data/directions/<id>/refs/`. `stub.ts` is deleted; `checks.ts` and the judge
+now take core's `Direction`.
+
+A3 ends in an operator review of the reference picks, so this one stops
+before merge: **`docs/A3-reference-candidates.md`**.
+
+**The measured ranking was wrong in three of four directions.** I scored all
+56 usable corpus sites against each direction's ranges, then opened the
+leaders. `butter.video` topped quiet-luxury because a **cookie banner** filled
+the lower half of its screenshot and read as "dark". `overworldaudio` is an
+*enter with sound* splash gate with no page structure.
+`leoparpeix` ranked 2nd for editorial-serif on a serif flag that matched a
+font *name*. `odysseeclinic` topped editorial-serif but is plainly
+quiet-luxury — and is an aesthetics clinic, the direction's stated intent.
+The ranking is a filter, not a verdict, which matters before §14 intake
+treats a score as a decision.
+
+`directionSchema` gained `refs` (≥3). §4.1 defines the directory and A3's
+acceptance requires the count, but §4.2 had no field for it — amended the
+same way `motion.required` was in A2.
+
+Honest gap: **editorial-serif's reference set is the weakest of the four.**
+The corpus is award sites and calm serif pages rarely win awards, so all four
+picks there are measurement-only. It is also the direction most SMB leads
+will land in. Flagged for decision rather than quietly accepted.
+
+Workspace: typecheck 0, lint 0, 193 tests (155 orchestrator + 29 core + 9
+template). 11 new catalog tests, including one that fails if two directions
+collapse to the same weight/motion/colour fingerprint — four names for one
+language would defeat the point.
+
 ## Next
 
-A3: the four directions from §4.3 as real files, plus 3–5 reference
-screenshots each in `data/directions/<id>/refs/`. Q1 is answered, so it is
-unblocked; it ends in an operator review of the reference picks (RUNBOOK §2),
-so that session stops before merge.
-
-Then A4 (`tokens.ts`, spec → `tokens.css`) and A5 (self-hosted fonts, free
+A4 (`tokens.ts`, spec → `tokens.css`) and A5 (self-hosted fonts, free
 open-licence only per Q2). Phase B refactors the archetypes to read only
-tokens, which is where K8 finally closes.
+tokens, which is where K8 finally closes — until then a direction with
+`heroEntrance: false` still cannot pass DJ10.

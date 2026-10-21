@@ -12,7 +12,7 @@
  * stage and the acceptance test call exactly the same decision function with
  * the same shape of input.
  */
-import type { DirectionRanges, MotionSignature } from "./stub.js";
+import type { Direction, MotionSignature } from "@pipeline/core";
 
 /** What DJ16 needs, read off the built page. */
 export interface TypeMeasurement {
@@ -53,7 +53,7 @@ const em = (v: number): string => `${v >= 0 ? "" : "−"}${Math.abs(v).toFixed(3
  */
 export function checkDj16(
   m: TypeMeasurement,
-  direction: DirectionRanges,
+  direction: Direction,
 ): CheckResult {
   const { displayWeights, displayTracking, scaleRatio } = direction.type;
   const problems: string[] = [];
@@ -102,9 +102,11 @@ export function checkDj16(
  */
 export function checkDj10(
   m: MotionMeasurement,
-  direction: DirectionRanges,
+  direction: Direction,
 ): CheckResult {
-  const { profiles, required, allowed, heroEntrance, smoothScroll } =
+  // `signatures` is the PERMITTED list (D10 §4.2); `required` is the subset a
+  // page must carry. The schema guarantees required ⊆ signatures.
+  const { profiles, required, signatures: allowed, heroEntrance, smoothScroll } =
     direction.motion;
   const profile = profiles[0] ?? "calm";
   const expressive = profile === "editorial" || profile === "kinetic";
@@ -141,15 +143,6 @@ export function checkDj10(
 }
 
 /**
- * Read in the page, by the judge stage. Mirrors the corpus harvester's
- * approach (`src/corpus/harvest.ts`): the largest rendered heading is the
- * display step and the first substantial paragraph is the body, because the
- * cascade and the clamp() both resolve where the text is painted.
- *
- * Returns null when the page has no measurable display/body pair, so the
- * judge can report DJ16 as indeterminate rather than inventing a failure.
- */
-/**
  * Read in the page: is smooth scroll installed? Same detection the corpus
  * harvester uses (`src/corpus/harvest.ts`, `profileMotion`), so a direction
  * and a measured reference site are judged by the same probe.
@@ -164,6 +157,15 @@ export function measureSmoothScrollInPage(): boolean {
   );
 }
 
+/**
+ * Read in the page, by the judge stage. Mirrors the corpus harvester's
+ * approach (`src/corpus/harvest.ts`): the largest rendered heading is the
+ * display step and the first substantial paragraph is the body, because the
+ * cascade and the clamp() both resolve where the text is painted.
+ *
+ * Returns null when the page has no measurable display/body pair, so the
+ * judge can report DJ16 as indeterminate rather than inventing a failure.
+ */
 export function measureTypeInPage(): TypeMeasurement | null {
   const px = (v: string): number => Number.parseFloat(v) || 0;
 

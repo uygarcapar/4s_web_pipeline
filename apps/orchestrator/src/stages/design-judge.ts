@@ -10,7 +10,7 @@ import {
   measureTypeInPage,
   type MotionMeasurement,
 } from "../design/directions/checks.js";
-import { resolveDirection } from "../design/directions/stub.js";
+import { resolveDirection } from "../design/directions/index.js";
 
 /**
  * Binary design rubric pass (DJ1–DJ18 in template/design-rules.md §11).

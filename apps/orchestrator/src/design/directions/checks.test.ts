@@ -9,7 +9,11 @@ import {
   type MotionMeasurement,
   type TypeMeasurement,
 } from "./checks.js";
-import { EDITORIAL_SERIF, KINETIC_BOLD, resolveDirection } from "./stub.js";
+import {
+  editorialSerif as EDITORIAL_SERIF,
+  kineticBold as KINETIC_BOLD,
+  resolveDirection,
+} from "./index.js";
 import { HARD_FAIL_IDS } from "../../stages/design-judge.js";
 
 /**
@@ -137,7 +141,7 @@ describe("checkDj10 — absence", () => {
   it("allows what the direction permits but does not require", () => {
     const r = checkDj10({ ...CALM, signatures: ["pinned-handoff"] }, {
       ...EDITORIAL_SERIF,
-      motion: { ...EDITORIAL_SERIF.motion, allowed: ["pinned-handoff"] },
+      motion: { ...EDITORIAL_SERIF.motion, signatures: ["pinned-handoff"] },
     });
     expect(r.pass, r.evidence).toBe(true);
   });
@@ -147,7 +151,7 @@ describe("checkDj10 — absence", () => {
       { ...CALM, signatures: ["text-transformation"], heroEntrance: true },
       {
         ...KINETIC_BOLD,
-        motion: { ...KINETIC_BOLD.motion, allowed: ["pinned-handoff"] },
+        motion: { ...KINETIC_BOLD.motion, signatures: ["pinned-handoff"], required: ["pinned-handoff"] },
       },
     );
     expect(r.pass).toBe(false);
@@ -157,14 +161,14 @@ describe("checkDj10 — absence", () => {
 });
 
 /**
- * `required` ⊆ `allowed` or the direction contradicts itself: DJ10 would
+ * `required` ⊆ `signatures` or the direction contradicts itself: DJ10 would
  * demand a signature and fail the page for carrying it.
  */
-describe("stub directions are self-consistent", () => {
+describe("catalog directions are self-consistent", () => {
   it("requires nothing it does not also allow", () => {
     for (const d of [KINETIC_BOLD, EDITORIAL_SERIF]) {
       const contradictory = d.motion.required.filter(
-        (s) => !d.motion.allowed.includes(s),
+        (s) => !d.motion.signatures.includes(s),
       );
       expect(contradictory, `${d.id} requires what it disables`).toEqual([]);
     }
