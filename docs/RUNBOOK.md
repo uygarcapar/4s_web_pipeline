@@ -6,8 +6,8 @@ vardır ya da Claude Code'a verilecek **tek bir prompt**.
 
 İşaretler: 🧑 = sen (korumalı dosya ya da karar) · 🤖 = Claude Code
 
-Durum: **Faz A bitti**, **B1** de bitti. Operatör bekleyen bir şey yok.
-Sıradaki **B2**. Faz B'nin asıl yükü B4: her arketipte senin `/library`
+Durum: **Faz A bitti**; B1 ve B2 de bitti (**K8 kapandı**). Operatör
+bekleyen bir şey yok. Sıradaki **B3**. Faz B'nin asıl yükü B4: her arketipte senin `/library`
 incelemenle bitiyor (`pnpm --filter @pipeline/library dev`, :3106).
 
 ---
@@ -154,9 +154,9 @@ Ayrıntı: `docs/STATUS.md` → "A0b".
 | # | Görev | Kim | Not |
 |---|---|---|---|
 | ✅ | **B1** `/library` route | — | merged · `apps/library` ayrı uygulama (gerekçe STATUS'ta) · `pnpm --filter @pipeline/library dev`, :3106 |
-| 5 | **B2** token-only refactor + K8 | 🤖 | sıradaki |
-| 7 | **B3** statement/visit/closing/marquee | 🤖 | bir kısmı zaten var — önce envanter |
-| 8 | **B4** arketipler, **tek tek** | 🤖 + 🧑 | aşağıya bak |
+| ✅ | **B2** token-only refactor + K8 | — | merged · **K8 kapandı**: calm fixture Lenis'siz, entrance'sız, pin'siz render ediyor · her iki fixture'da verify 0 |
+| 5 | **B3** statement/visit/closing/marquee | 🤖 | sıradaki · bir kısmı zaten var — önce envanter (`/library` 11 arketip gösteriyor) |
+| 6 | **B4** arketipler, **tek tek** | 🤖 + 🧑 | aşağıya bak |
 
 B4 döngüsü, her arketip için:
 

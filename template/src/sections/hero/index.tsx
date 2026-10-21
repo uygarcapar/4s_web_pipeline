@@ -86,7 +86,7 @@ export function Hero({ section, config }: HeroProps) {
             width={1200}
             height={900}
             priority
-            className="w-full rounded-2xl object-cover shadow-lg ring-1 ring-brand-200"
+            className="w-full rounded-[var(--radius)] object-cover shadow-lg ring-1 ring-brand-200"
           />
         )}
       </div>

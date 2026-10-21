@@ -8,6 +8,7 @@ import gsap from "gsap";
 import { resolveCta } from "@/lib/cta";
 import { formatPhoneTR, telHref } from "@/lib/format";
 import { heroEntrance, motionAllowed, pinnedHandoff, splitChars } from "@/lib/motion";
+import { usesHeroEntrance, usesScrollChoreography } from "@/lib/motion-policy";
 import type { HeroSection, SiteConfig } from "@/lib/schema";
 
 /**
@@ -45,13 +46,18 @@ export function HeroPhotoFull({
       const lineEls = gsap.utils.toArray<HTMLElement>(".hero-line", root.current);
       const chars = lineEls.map((line) => splitChars(line, "char hero-char"));
 
-      heroEntrance({
-        chars: chars.flat(),
-        meta: ".hero-meta",
-        photo: ".hero-photo-inner",
-      });
+      // Both are the direction's call, not this archetype's (D10 §3.2).
+      // Running them unconditionally was the other half of K8: a `calm`
+      // direction declared `heroEntrance: false` and got one anyway.
+      if (usesHeroEntrance(config)) {
+        heroEntrance({
+          chars: chars.flat(),
+          meta: ".hero-meta",
+          photo: ".hero-photo-inner",
+        });
+      }
 
-      if (root.current) {
+      if (root.current && usesScrollChoreography(config)) {
         pinnedHandoff({
           trigger: root.current,
           chars,
@@ -62,7 +68,7 @@ export function HeroPhotoFull({
         });
       }
     },
-    { scope: root },
+    { scope: root, dependencies: [config] },
   );
 
   return (

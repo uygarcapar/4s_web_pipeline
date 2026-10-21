@@ -50,7 +50,7 @@ export function Hours({ section, config }: HoursProps) {
       <h2 className="font-heading text-3xl font-semibold text-foreground">
         {section.title ?? "Çalışma Saatleri"}
       </h2>
-      <table className="mt-8 w-full border-separate border-spacing-0 overflow-hidden rounded-xl border border-brand-100 text-left text-base">
+      <table className="mt-8 w-full border-separate border-spacing-0 overflow-hidden rounded-[var(--radius)] border border-brand-100 text-left text-base">
         <caption className="sr-only">Haftalık çalışma saatleri</caption>
         <tbody>
           {config.openingHours.map((entry) => (

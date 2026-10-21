@@ -28,7 +28,7 @@ export function Faq({ section }: FaqProps) {
           {section.items.map((item) => (
             <details
               key={item.question}
-              className="group rounded-xl border border-brand-100 bg-card px-5 py-4 open:pb-5"
+              className="group rounded-[var(--radius)] border border-brand-100 bg-card px-5 py-4 open:pb-5"
             >
               {/*
                 §7: the row is a 44px tap target. `-my-2.5` gives back the

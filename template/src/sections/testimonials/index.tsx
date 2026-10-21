@@ -24,7 +24,7 @@ export function Testimonials({ section }: TestimonialsProps) {
         {section.items.map((item) => (
           <figure
             key={item.author}
-            className="flex flex-col justify-between gap-4 rounded-xl border border-brand-100 bg-card p-6"
+            className="flex flex-col justify-between gap-4 rounded-[var(--radius)] border border-brand-100 bg-card p-6"
           >
             <blockquote className="text-base text-foreground">
               “{item.quote}”

@@ -340,6 +340,30 @@ export const siteConfigSchema = z
       })
       .strict(),
     sellsOnline: z.boolean(),
+    /**
+     * The direction's motion flags, copied here by the design stage from
+     * `design.json` (DECISIONS D10 §4.2).
+     *
+     * They live on the config because the template reads the config and
+     * nothing else: `layout.tsx` has to know whether to mount Lenis before
+     * it renders, and a hero has to know whether to animate on load. Reading
+     * `design.json` at runtime would make a client site depend on a pipeline
+     * artifact that is not shipped with it.
+     *
+     * A direction that declares `smoothScroll: false` and still gets Lenis
+     * is the K8 failure: the direction is selected, recorded, and then
+     * ignored, with DJ10 correctly failing a page nobody changed.
+     */
+    motion: z
+      .object({
+        profile: z.enum(["still", "calm", "editorial", "kinetic"]),
+        heroEntrance: z.boolean(),
+        smoothScroll: z.boolean(),
+      })
+      .strict()
+      // Defaulted so a config written before D10 still parses as what it
+      // actually was: the kinetic language every earlier run was built in.
+      .default({ profile: "kinetic", heroEntrance: true, smoothScroll: true }),
     sections: z.array(sectionSchema).min(1),
   })
   .strict()

@@ -10,6 +10,7 @@ import { buildLocalBusinessJsonLd } from "@/lib/jsonld";
 import { fontVariables } from "@/lib/fonts";
 import { buildMetadata } from "@/lib/seo";
 import { SmoothScroll, SCROLL_INIT_SCRIPT } from "@/components/smooth-scroll";
+import { usesSmoothScroll } from "@/lib/motion-policy";
 import { siteConfig } from "~config";
 
 import "./globals.css";
@@ -18,6 +19,13 @@ export const metadata: Metadata = buildMetadata(siteConfig);
 
 export default function RootLayout({ children }: LayoutProps<"/">) {
   const jsonLd = buildLocalBusinessJsonLd(siteConfig);
+  const main = (
+    <>
+      {/* pb-16 keeps the mobile sticky CTA bar from covering content. */}
+      <div className="flex flex-1 flex-col pb-16 md:pb-0">{children}</div>
+      <SiteFooter config={siteConfig} />
+    </>
+  );
 
   return (
     <html
@@ -61,11 +69,19 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
         />
         <PreviewBanner />
         <SiteNav config={siteConfig} />
-        <SmoothScroll>
-          {/* pb-16 keeps the mobile sticky CTA bar from covering content. */}
-          <div className="flex flex-1 flex-col pb-16 md:pb-0">{children}</div>
-          <SiteFooter config={siteConfig} />
-        </SmoothScroll>
+        {/*
+          Lenis only when the direction asks for it (DECISIONS D10 §3.2).
+          Wrapping every site unconditionally was K8: a `still` or `calm`
+          direction shipped smooth scroll it had declared off, and DJ10
+          failed a page that was built exactly as instructed. A direction
+          without it also loses the Lenis bundle, which is the other reason
+          §3.2 made it a flag.
+        */}
+        {usesSmoothScroll(siteConfig) ? (
+          <SmoothScroll>{main}</SmoothScroll>
+        ) : (
+          main
+        )}
         <StickyCta config={siteConfig} />
         <ConsentBanner />
       </body>
