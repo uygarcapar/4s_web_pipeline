@@ -86,11 +86,14 @@ When a verify gate fails on performance, consult the matching rule file in
   display/body families, plus an optional monospace accent** used only for
   `.meta`, `.btn-label` and index numbers.
   Which faces a site may use is the direction's decision, not a global one
-  (docs/D10-design-variation.md §3.2, §4). The self-hosted face list is pending the
-  licence decision — D10 §13 Q2 — and until it is taken, a face may only be
-  self-hosted after its licence is confirmed to cover commercial use across
-  unlimited client domains AND its Turkish coverage is confirmed by rendering
-  ş ğ ı İ ç ö ü Ş Ğ Ç Ö Ü, not by trusting a catalogue page (D10 §11).
+  (docs/D10-design-variation.md §3.2, §4). Self-hosted faces are free
+  open-licence faces only (OFL and comparable): no foundry licence is bought,
+  so a per-domain or pageview-capped licence disqualifies a face — the
+  pipeline ships one site per client across unlimited domains and nobody
+  reviews a licence per run (D10 §13 Q2, settled 2026-10-22). A face is
+  self-hosted only after its licence is confirmed AND its Turkish coverage is
+  confirmed by rendering ş ğ ı İ ç ö ü Ş Ğ Ç Ö Ü, not by trusting a
+  catalogue page (D10 §11).
 - `SITE_PREVIEW=1` behavior (noindex, Basic-Auth, draft band) must never be
   weakened by generated code.
 - Fix loop: max 3 iterations fed by `verify-digest.md`; then write BLOCKED.md
