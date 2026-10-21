@@ -10,6 +10,13 @@
         "--viewport-size",
         "1440x900"
       ]
+    },
+    "firecrawl": {
+      "command": "sh",
+      "args": [
+        "-c",
+        "export FIRECRAWL_API_KEY=\"$(sed -n 's/^FIRECRAWL_API_KEY=//p' .env 2>/dev/null | tail -1)\"; exec npx -y firecrawl-mcp@3"
+      ]
     }
   }
 }

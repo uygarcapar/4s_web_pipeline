@@ -1,7 +1,7 @@
 import { createHash } from "node:crypto";
 import { mkdirSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
-import { Configuration, PlaywrightCrawler } from "crawlee";
+import { Configuration, PlaywrightCrawler, Sitemap } from "crawlee";
 import { chromium, devices } from "playwright";
 import type { StageContext, StageModule, StageResult } from "./types.js";
 import {
@@ -10,10 +10,12 @@ import {
   findAddressCandidates,
   findHoursCandidates,
   findPhoneCandidates,
+  findUnmappedHoursCandidates,
   hasMojibake,
   isTooSmallImage,
   normalizeUrl,
   originalAssetUrl,
+  servicesFromContentBlocks,
   readImageDimensions,
   slugForUrl,
   type ContentBlock,
@@ -27,11 +29,33 @@ const MAX_SCREENSHOT_PAGES = 10;
 const MAX_ASSETS = 60;
 const MAX_ASSET_CANDIDATES = 300;
 const MAX_ASSET_BYTES = 5 * 1024 * 1024;
-/** Below this, an image is an icon/spacer/tracking pixel, not photography. */
-const MIN_ASSET_BYTES = 10_000;
+/**
+ * Below this, an image is an icon/spacer/tracking pixel, not photography.
+ *
+ * 2 KB, not 10 KB: the byte test runs before the pixel test and vetoes it, and
+ * a well-compressed WebP photograph is routinely under 10 KB. On the first
+ * real salon site this threw away twelve of the client's own service
+ * photographs — 424x240 at 7 KB, 450x200 at 5.6 KB — and left most of the
+ * services section with empty cards. Genuine spacers and tracking pixels sit
+ * far below 2 KB; anything above it is judged on MIN_ASSET_LONG_EDGE instead.
+ */
+const MIN_ASSET_BYTES = 2_000;
 const MIN_ASSET_LONG_EDGE = 200;
 const MAX_VISIBLE_TEXT = 20_000;
 const NAV_TIMEOUT_SECS = 30;
+
+/**
+ * Paths that are never a public content page: API routes, auth/login screens,
+ * admin areas and cart/checkout funnels. A client-side-routed site often links
+ * these from its header; the crawl is read-only and has no business rendering
+ * a sign-in form (CLAUDE.md: never submits forms, never enters login fields).
+ */
+const EXCLUDED_PATH_RE =
+  /(?:^|\/)(?:api|auth|signin|sign-in|login|logout|giris|giriş|admin|wp-admin|wp-login|worker|hesabim|hesabım|sepet|cart|checkout|odeme|ödeme)(?:\/|$)/i;
+
+/** Sitemaps list assets and feeds too; only HTML pages are crawl targets. */
+const NON_PAGE_EXT_RE =
+  /\.(?:png|jpe?g|webp|avif|gif|svg|ico|bmp|pdf|xml|txt|json|csv|zip|rar|mp[34]|webm|mov|css|js|woff2?|ttf|eot)$/i;
 
 interface PageExtraction {
   url: string;
@@ -50,6 +74,9 @@ interface PageExtraction {
   whatsappHrefs: string[];
   mailtoHrefs: string[];
   mapsIframeSrcs: string[];
+  /** Absolute http(s) anchor targets; the facts stage mines social profiles. */
+  links: string[];
+  og: { siteName: string | null; title: string | null; locale: string | null };
   jsonLd: unknown[];
   fontFamilies: string[];
   cssCustomProps: string[];
@@ -59,6 +86,8 @@ interface PageExtraction {
   viewportMetaPresent: boolean;
   phoneCandidates: PhoneCandidates;
   hoursCandidates: string[];
+  /** Time ranges published without a day mapping; never auto-mapped to days. */
+  hoursUnmappedCandidates: string[];
   addressCandidates: string[];
   mojibake: boolean;
   /** Paths relative to runs/<domain>/, null when not captured. */
@@ -137,6 +166,8 @@ async function runCrawl(ctx: StageContext): Promise<StageResult> {
 
   const pages: PageExtraction[] = [];
   const usedSlugs = new Set<string>();
+  const seenUrls = new Set<string>();
+  const startHostname = new URL(ctx.url).hostname;
   let desktopShots = 0;
 
   // Keep Crawlee's storage out of the repo root: in-memory client whose
@@ -170,6 +201,24 @@ async function runCrawl(ctx: StageContext): Promise<StageResult> {
         // Read-only extraction; this stage never submits forms or types.
         const raw = await page.evaluate(collectPageData);
         const pageUrl = normalizeUrl(raw.url) ?? request.url;
+
+        // A link can redirect into an excluded area (e.g. /worker ->
+        // /api/auth/signin): judge the URL we actually landed on, not the one
+        // we enqueued, so no sign-in screen is ever recorded as a page.
+        if (!isCrawlablePageUrl(pageUrl, startHostname)) {
+          ctx.log(`skipped non-content page: ${pageUrl}`);
+          return;
+        }
+
+        // Two seeds can land on one page (a sitemap lists the bare hostname
+        // while the start URL carries "www.", and both redirect to the same
+        // place). Dedupe on the final URL so the page is recorded once.
+        if (seenUrls.has(pageUrl)) {
+          ctx.log(`skipped duplicate page: ${pageUrl}`);
+          return;
+        }
+        seenUrls.add(pageUrl);
+
         const slug = uniqueSlug(slugForUrl(pageUrl), usedSlugs);
 
         let desktopShot: string | null = null;
@@ -198,6 +247,8 @@ async function runCrawl(ctx: StageContext): Promise<StageResult> {
           whatsappHrefs: raw.whatsappHrefs,
           mailtoHrefs: raw.mailtoHrefs,
           mapsIframeSrcs: raw.mapsIframeSrcs,
+          links: raw.links,
+          og: raw.og,
           jsonLd: raw.jsonLd,
           fontFamilies: raw.fontFamilies,
           cssCustomProps: raw.cssCustomProps,
@@ -207,6 +258,7 @@ async function runCrawl(ctx: StageContext): Promise<StageResult> {
           viewportMetaPresent: raw.viewportMetaPresent,
           phoneCandidates: findPhoneCandidates(raw.visibleText),
           hoursCandidates: findHoursCandidates(raw.visibleText),
+          hoursUnmappedCandidates: findUnmappedHoursCandidates(raw.visibleText),
           addressCandidates: findAddressCandidates(raw.visibleText),
           mojibake: hasMojibake(textAndTitle),
           screenshots: { desktop: desktopShot, mobile: null },
@@ -218,7 +270,11 @@ async function runCrawl(ctx: StageContext): Promise<StageResult> {
           contentBlocks: raw.contentBlocks.length,
         });
 
-        await enqueueLinks({ strategy: "same-hostname" });
+        await enqueueLinks({
+          strategy: "same-hostname",
+          transformRequestFunction: (req) =>
+            isCrawlablePageUrl(req.url, startHostname) ? req : false,
+        });
       },
       failedRequestHandler: ({ request }, err) => {
         ctx.log(`page failed: ${request.url}: ${errorMessage(err)}`);
@@ -227,7 +283,8 @@ async function runCrawl(ctx: StageContext): Promise<StageResult> {
     config,
   );
 
-  await crawler.run([ctx.url]);
+  const seedUrls = await discoverSeedUrls(ctx.url, userAgent, ctx.log);
+  await crawler.run(seedUrls);
 
   if (pages.length === 0) {
     return {
@@ -260,11 +317,14 @@ async function runCrawl(ctx: StageContext): Promise<StageResult> {
   );
 
   // The client's own copy, merged cross-page: the plan and generate stages
-  // reuse this text verbatim instead of inventing new Turkish.
+  // reuse this text verbatim instead of inventing new Turkish. `services`
+  // carries individual services rather than service pages, so a business
+  // that lists all of them on one page still gets a services section.
   const content = buildContentArtifact(pages);
+  const services = servicesFromContentBlocks(pages);
   writeFileSync(
     join(crawlDir, "content.json"),
-    JSON.stringify(content, null, 2) + "\n",
+    JSON.stringify({ ...content, services }, null, 2) + "\n",
   );
 
   // The idempotency artifact is written last so a partial run is retried.
@@ -292,6 +352,88 @@ async function runCrawl(ctx: StageContext): Promise<StageResult> {
   };
 }
 
+/**
+ * Is this a URL the crawl should fetch as a content page? Same hostname
+ * (www-insensitive), http(s), not an asset, not an API/auth/admin path.
+ */
+function isCrawlablePageUrl(candidate: string, hostname: string): boolean {
+  let u: URL;
+  try {
+    u = new URL(candidate);
+  } catch {
+    return false;
+  }
+  if (u.protocol !== "https:" && u.protocol !== "http:") return false;
+  const bare = (h: string): string => h.replace(/^www\./, "");
+  if (bare(u.hostname) !== bare(hostname)) return false;
+  if (NON_PAGE_EXT_RE.test(u.pathname)) return false;
+  if (EXCLUDED_PATH_RE.test(u.pathname)) return false;
+  return true;
+}
+
+/** `Sitemap:` directives declared in robots.txt (RFC 9309 §2.2.3). */
+async function sitemapsFromRobots(
+  startUrl: string,
+  userAgent: string,
+): Promise<string[]> {
+  const robotsUrl = new URL("/robots.txt", startUrl).toString();
+  const res = await fetch(robotsUrl, { headers: { "user-agent": userAgent } });
+  if (!res.ok) return [];
+  const body = await res.text();
+  return [...body.matchAll(/^[ \t]*sitemap:[ \t]*(\S+)/gim)].map((m) => m[1]!);
+}
+
+/**
+ * Seed URLs for the crawl. Anchor discovery alone loses most of a
+ * client-side-routed site — a Next.js/React header renders router buttons,
+ * not `<a href>`, so `enqueueLinks` sees almost nothing and the fact-bearing
+ * pages (contact, hours, prices) are never visited. The sitemap the site
+ * already advertises is therefore read first: robots.txt `Sitemap:`
+ * directives, falling back to the conventional locations. Start URL first,
+ * then same-hostname content pages, capped at MAX_PAGES.
+ */
+async function discoverSeedUrls(
+  startUrl: string,
+  userAgent: string,
+  log: StageContext["log"],
+): Promise<string[]> {
+  const hostname = new URL(startUrl).hostname;
+  const seeds = new Set<string>([startUrl]);
+
+  try {
+    const declared = await sitemapsFromRobots(startUrl, userAgent).catch(
+      () => [] as string[],
+    );
+    let found = declared.length > 0 ? await Sitemap.load(declared) : { urls: [] };
+    if (found.urls.length === 0) {
+      found = await Sitemap.tryCommonNames(startUrl);
+    }
+    let skipped = 0;
+    for (const url of found.urls) {
+      if (!isCrawlablePageUrl(url, hostname)) {
+        skipped += 1;
+        continue;
+      }
+      // Adopt the start URL's www-ness so a sitemap listing the bare
+      // hostname does not enqueue a second request for the same page.
+      const canonical = new URL(url);
+      canonical.hostname = hostname;
+      seeds.add(canonical.toString());
+    }
+    log(
+      `sitemap discovery: ${found.urls.length} urls listed, ` +
+        `${seeds.size - 1} crawlable, ${skipped} skipped (asset/api/auth)`,
+      { declaredSitemaps: declared },
+    );
+  } catch (err) {
+    log(
+      `sitemap discovery failed, falling back to anchors only: ${errorMessage(err)}`,
+    );
+  }
+
+  return [...seeds].slice(0, MAX_PAGES);
+}
+
 /** Merged signals across all crawled pages (input for audit/facts). */
 function mergeSignals(
   ctx: StageContext,
@@ -313,6 +455,7 @@ function mergeSignals(
     mailto_hrefs: flat((p) => p.mailtoHrefs),
     maps_iframe_srcs: flat((p) => p.mapsIframeSrcs),
     hours_candidates: flat((p) => p.hoursCandidates),
+    hours_unmapped_candidates: flat((p) => p.hoursUnmappedCandidates),
     address_candidates: flat((p) => p.addressCandidates),
     jsonld: pages.flatMap((p) => p.jsonLd),
     fonts: flat((p) => p.fontFamilies),

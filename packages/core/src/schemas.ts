@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { ISSUE_CATEGORIES } from "./types.js";
+import { ISSUE_CATEGORIES, STAGES } from "./types.js";
 
 /** Zod mirrors of the artifact types — used to validate LLM/stage output. */
 
@@ -54,6 +54,8 @@ export const factsSchema = z
         })
         .strict(),
     ),
+    /** Hours published without a day mapping, verbatim (DECISIONS D8). */
+    hoursNote: z.string().min(1).nullable(),
     services: z.array(z.string()),
     prices: z.array(
       z.object({ service: z.string(), priceTry: z.number() }).strict(),
@@ -89,9 +91,10 @@ export const runStateSchema = z
       "failed",
       "cancelled",
     ]),
-    currentStage: z
-      .enum(["crawl", "audit", "plan", "generate", "verify", "deploy", "notify"])
-      .nullable(),
+    // Derived from STAGES rather than restated: the hand-written list had
+    // drifted and was missing "design", so every run that reached that stage
+    // wrote a state.json this schema then refused to read back.
+    currentStage: z.enum(STAGES).nullable(),
     stages: z.record(z.string(), stageStateSchema),
     previewUrl: z.url().optional(),
     vercelProjectId: z.string().optional(),

@@ -1,0 +1,1205 @@
+{
+  "sites": 59,
+  "ranked": [
+    [
+      "nav",
+      41
+    ],
+    [
+      "grid",
+      38
+    ],
+    [
+      "hero",
+      36
+    ],
+    [
+      "menu",
+      35
+    ],
+    [
+      "footer",
+      34
+    ],
+    [
+      "cursor",
+      33
+    ],
+    [
+      "stat",
+      31
+    ],
+    [
+      "video",
+      30
+    ],
+    [
+      "card",
+      28
+    ],
+    [
+      "pin",
+      25
+    ],
+    [
+      "intro",
+      23
+    ],
+    [
+      "cta",
+      20
+    ],
+    [
+      "sticky",
+      19
+    ],
+    [
+      "reveal",
+      16
+    ],
+    [
+      "canvas",
+      16
+    ],
+    [
+      "slider",
+      14
+    ],
+    [
+      "panel",
+      14
+    ],
+    [
+      "horizontal",
+      13
+    ],
+    [
+      "number",
+      13
+    ],
+    [
+      "split",
+      13
+    ],
+    [
+      "marquee",
+      11
+    ],
+    [
+      "accordion",
+      11
+    ],
+    [
+      "feature",
+      11
+    ],
+    [
+      "burger",
+      10
+    ],
+    [
+      "quote",
+      10
+    ],
+    [
+      "parallax",
+      9
+    ],
+    [
+      "modal",
+      9
+    ],
+    [
+      "gallery",
+      8
+    ],
+    [
+      "swiper",
+      8
+    ],
+    [
+      "banner",
+      8
+    ],
+    [
+      "carousel",
+      8
+    ],
+    [
+      "tile",
+      7
+    ],
+    [
+      "faq",
+      7
+    ],
+    [
+      "testimonial",
+      5
+    ],
+    [
+      "newsletter",
+      5
+    ],
+    [
+      "tabs",
+      4
+    ],
+    [
+      "rail",
+      4
+    ],
+    [
+      "counter",
+      4
+    ],
+    [
+      "drag",
+      4
+    ],
+    [
+      "noise",
+      3
+    ],
+    [
+      "ticker",
+      3
+    ],
+    [
+      "partners",
+      3
+    ],
+    [
+      "logos",
+      3
+    ],
+    [
+      "timeline",
+      3
+    ],
+    [
+      "lightbox",
+      3
+    ],
+    [
+      "grain",
+      2
+    ],
+    [
+      "pricing",
+      2
+    ],
+    [
+      "marquee-track",
+      2
+    ],
+    [
+      "magnetic",
+      2
+    ],
+    [
+      "accordion-item",
+      2
+    ],
+    [
+      "curtain",
+      1
+    ],
+    [
+      "scramble",
+      1
+    ],
+    [
+      "process",
+      1
+    ],
+    [
+      "logo-wall",
+      1
+    ],
+    [
+      "drawer",
+      1
+    ],
+    [
+      "ribbon",
+      1
+    ],
+    [
+      "showcase",
+      1
+    ],
+    [
+      "clients",
+      1
+    ],
+    [
+      "outro",
+      1
+    ]
+  ],
+  "perSite": [
+    {
+      "url": "https://www.cartier.com/en-fr/lechoeurdespierres",
+      "tokens": []
+    },
+    {
+      "url": "https://belgradearbor.rs/en",
+      "tokens": [
+        "menu",
+        "cursor",
+        "grid",
+        "sticky",
+        "pin",
+        "parallax",
+        "intro",
+        "hero",
+        "video",
+        "reveal",
+        "slider",
+        "gallery",
+        "nav",
+        "horizontal",
+        "stat"
+      ]
+    },
+    {
+      "url": "https://format.obys.agency/",
+      "tokens": [
+        "curtain",
+        "nav",
+        "card",
+        "horizontal",
+        "tile",
+        "pin",
+        "footer"
+      ]
+    },
+    {
+      "url": "https://signal-a.studio/",
+      "tokens": [
+        "menu",
+        "scramble",
+        "hero",
+        "video",
+        "cursor",
+        "horizontal",
+        "number",
+        "card",
+        "grid",
+        "footer",
+        "marquee",
+        "slider",
+        "swiper",
+        "accordion",
+        "testimonial"
+      ]
+    },
+    {
+      "url": "https://www.offforum.com/",
+      "tokens": [
+        "video",
+        "cursor"
+      ]
+    },
+    {
+      "url": "https://heronaiapp.com/",
+      "tokens": [
+        "hero",
+        "cursor",
+        "banner",
+        "grid",
+        "menu",
+        "cta",
+        "marquee",
+        "intro",
+        "swiper",
+        "horizontal",
+        "number",
+        "sticky",
+        "card",
+        "stat",
+        "faq",
+        "footer"
+      ]
+    },
+    {
+      "url": "https://ascension.pegassi.be/",
+      "tokens": [
+        "grain",
+        "hero",
+        "grid",
+        "cursor",
+        "noise",
+        "panel",
+        "menu"
+      ]
+    },
+    {
+      "url": "https://huyml.co/",
+      "tokens": [
+        "cursor",
+        "card",
+        "nav"
+      ]
+    },
+    {
+      "url": "https://overworldaudio.com/",
+      "tokens": [
+        "cta",
+        "reveal",
+        "nav",
+        "stat",
+        "menu",
+        "hero"
+      ]
+    },
+    {
+      "url": "https://neutomni.com/",
+      "tokens": [
+        "tile",
+        "grid",
+        "nav",
+        "menu",
+        "stat",
+        "burger",
+        "footer",
+        "cta",
+        "hero",
+        "video",
+        "process",
+        "reveal",
+        "sticky",
+        "card",
+        "pin",
+        "horizontal",
+        "panel",
+        "swiper",
+        "slider",
+        "pricing",
+        "faq",
+        "number",
+        "testimonial",
+        "tabs"
+      ]
+    },
+    {
+      "url": "https://nickho-motorsports.nl/",
+      "tokens": [
+        "sticky",
+        "slider",
+        "swiper",
+        "number",
+        "nav",
+        "menu",
+        "cursor",
+        "logo-wall",
+        "split",
+        "stat",
+        "burger",
+        "tile",
+        "hero",
+        "rail",
+        "parallax",
+        "grid",
+        "reveal",
+        "quote",
+        "card",
+        "canvas",
+        "horizontal",
+        "video",
+        "gallery",
+        "footer"
+      ]
+    },
+    {
+      "url": "https://lpas.com/",
+      "tokens": [
+        "hero",
+        "grid",
+        "nav",
+        "stat",
+        "menu",
+        "pin",
+        "video",
+        "card",
+        "intro",
+        "footer"
+      ]
+    },
+    {
+      "url": "https://www.mariavasilyeva.com/",
+      "tokens": [
+        "nav",
+        "intro"
+      ]
+    },
+    {
+      "url": "https://www.odysseeclinic.com.au/",
+      "tokens": [
+        "cursor",
+        "grid",
+        "nav",
+        "sticky",
+        "hero",
+        "intro",
+        "carousel",
+        "pin",
+        "feature",
+        "footer"
+      ]
+    },
+    {
+      "url": "https://drone.riotters.com/",
+      "tokens": [
+        "canvas",
+        "grid",
+        "cursor",
+        "hero",
+        "video",
+        "intro",
+        "stat",
+        "sticky",
+        "pin",
+        "nav"
+      ]
+    },
+    {
+      "url": "https://twks.ch/en",
+      "tokens": [
+        "nav",
+        "grid",
+        "menu",
+        "cursor",
+        "panel",
+        "marquee",
+        "marquee-track",
+        "accordion",
+        "slider",
+        "hero",
+        "cta",
+        "newsletter",
+        "video"
+      ]
+    },
+    {
+      "url": "https://santionispirits.com/",
+      "tokens": []
+    },
+    {
+      "url": "https://tengilemalamala.com/",
+      "tokens": [
+        "menu",
+        "panel",
+        "nav",
+        "hero",
+        "video",
+        "parallax",
+        "grid",
+        "card",
+        "quote",
+        "gallery",
+        "counter",
+        "marquee",
+        "cta",
+        "drawer",
+        "newsletter",
+        "ticker",
+        "footer",
+        "accordion",
+        "banner",
+        "stat"
+      ]
+    },
+    {
+      "url": "https://www.cominvi.com.mx/",
+      "tokens": [
+        "grid",
+        "nav",
+        "menu",
+        "hero",
+        "card",
+        "video",
+        "intro",
+        "stat",
+        "number",
+        "cta",
+        "slider",
+        "canvas",
+        "sticky",
+        "testimonial",
+        "partners",
+        "footer"
+      ]
+    },
+    {
+      "url": "https://milledollars.fr/",
+      "tokens": [
+        "cursor",
+        "nav",
+        "grid",
+        "number"
+      ]
+    },
+    {
+      "url": "https://edolus.com/",
+      "tokens": [
+        "canvas"
+      ]
+    },
+    {
+      "url": "http://jesperlandberg.com/",
+      "tokens": [
+        "card",
+        "cursor",
+        "pin"
+      ]
+    },
+    {
+      "url": "https://www.butter.video/",
+      "tokens": [
+        "cursor",
+        "nav",
+        "menu",
+        "split",
+        "hero",
+        "ticker",
+        "logos",
+        "timeline",
+        "stat",
+        "video",
+        "grid",
+        "pin",
+        "card",
+        "feature",
+        "cta",
+        "carousel",
+        "slider",
+        "gallery",
+        "footer"
+      ]
+    },
+    {
+      "url": "https://realevate.agency/",
+      "tokens": [
+        "counter",
+        "number",
+        "card",
+        "panel",
+        "grid",
+        "nav",
+        "menu",
+        "hero",
+        "marquee",
+        "reveal",
+        "footer",
+        "burger"
+      ]
+    },
+    {
+      "url": "https://sobha-privy-collection.com/",
+      "tokens": [
+        "intro",
+        "reveal",
+        "sticky",
+        "menu",
+        "parallax",
+        "video",
+        "ribbon",
+        "counter",
+        "slider",
+        "card",
+        "carousel",
+        "pin",
+        "quote",
+        "cursor",
+        "stat",
+        "footer",
+        "modal"
+      ]
+    },
+    {
+      "url": "https://coloniazacamil.com/",
+      "tokens": [
+        "pin",
+        "stat",
+        "video",
+        "intro"
+      ]
+    },
+    {
+      "url": "https://www.meermohsin.me/",
+      "tokens": [
+        "cta",
+        "menu",
+        "nav",
+        "modal",
+        "card",
+        "number",
+        "stat",
+        "cursor",
+        "hero",
+        "intro",
+        "rail",
+        "pin",
+        "gallery",
+        "grid",
+        "slider",
+        "canvas",
+        "split",
+        "panel",
+        "footer"
+      ]
+    },
+    {
+      "url": "https://bleibtgleich.dev/",
+      "tokens": [
+        "grid",
+        "nav",
+        "split",
+        "menu",
+        "intro",
+        "hero",
+        "reveal",
+        "canvas",
+        "tile",
+        "stat",
+        "card",
+        "feature",
+        "footer",
+        "sticky",
+        "magnetic",
+        "cursor"
+      ]
+    },
+    {
+      "url": "https://www.moto-card.com/",
+      "tokens": [
+        "card",
+        "marquee",
+        "nav",
+        "burger",
+        "menu",
+        "hero",
+        "video",
+        "pin",
+        "canvas",
+        "sticky",
+        "number",
+        "reveal",
+        "grid",
+        "faq",
+        "accordion",
+        "panel",
+        "footer",
+        "tile",
+        "stat"
+      ]
+    },
+    {
+      "url": "https://thetiebreak.merci-michel.com/",
+      "tokens": []
+    },
+    {
+      "url": "https://pensatori-irrazionali.com/",
+      "tokens": [
+        "stat",
+        "menu",
+        "burger",
+        "cursor",
+        "panel",
+        "nav",
+        "grid",
+        "hero",
+        "video",
+        "swiper",
+        "horizontal",
+        "quote",
+        "split",
+        "cta",
+        "showcase",
+        "footer"
+      ]
+    },
+    {
+      "url": "https://gilhuybrecht.com/",
+      "tokens": [
+        "grid",
+        "cursor",
+        "intro",
+        "video"
+      ]
+    },
+    {
+      "url": "https://boc.studio/",
+      "tokens": [
+        "canvas",
+        "grid",
+        "sticky",
+        "marquee",
+        "intro",
+        "marquee-track",
+        "nav",
+        "reveal",
+        "tile",
+        "burger",
+        "video",
+        "cursor"
+      ]
+    },
+    {
+      "url": "https://www.lxlcreative.co.uk/",
+      "tokens": [
+        "nav",
+        "number",
+        "menu",
+        "panel",
+        "accordion",
+        "accordion-item",
+        "cursor",
+        "drag",
+        "hero",
+        "stat",
+        "video",
+        "card",
+        "pin",
+        "grid",
+        "feature",
+        "sticky",
+        "testimonial",
+        "split",
+        "footer",
+        "lightbox",
+        "timeline"
+      ]
+    },
+    {
+      "url": "https://noho.ink/",
+      "tokens": [
+        "stat",
+        "intro",
+        "nav",
+        "menu",
+        "burger",
+        "panel",
+        "card",
+        "cursor",
+        "hero",
+        "grid",
+        "quote",
+        "gallery",
+        "footer",
+        "tabs",
+        "pin",
+        "faq",
+        "reveal"
+      ]
+    },
+    {
+      "url": "https://lisa.locomotive.ca/en",
+      "tokens": [
+        "modal",
+        "footer",
+        "nav",
+        "menu",
+        "cta",
+        "video"
+      ]
+    },
+    {
+      "url": "https://www.aspensearch.com/",
+      "tokens": [
+        "grid",
+        "sticky",
+        "hero",
+        "split",
+        "stat",
+        "clients",
+        "testimonial",
+        "cursor",
+        "card",
+        "banner"
+      ]
+    },
+    {
+      "url": "https://www.warmnfuzzy.tv/",
+      "tokens": [
+        "reveal",
+        "intro",
+        "nav",
+        "hero",
+        "ticker",
+        "card",
+        "canvas",
+        "feature",
+        "footer",
+        "noise",
+        "banner"
+      ]
+    },
+    {
+      "url": "https://white-desert.com/",
+      "tokens": [
+        "menu",
+        "cursor",
+        "horizontal",
+        "grid",
+        "nav",
+        "cta",
+        "footer",
+        "accordion",
+        "hero",
+        "banner",
+        "video",
+        "reveal",
+        "intro",
+        "quote",
+        "parallax",
+        "card",
+        "pin",
+        "panel",
+        "sticky",
+        "modal",
+        "newsletter"
+      ]
+    },
+    {
+      "url": "https://leoparpeix.com/",
+      "tokens": [
+        "grid",
+        "nav",
+        "menu",
+        "cursor",
+        "video"
+      ]
+    },
+    {
+      "url": "https://www.usavionix.com/",
+      "tokens": [
+        "nav",
+        "cursor",
+        "cta",
+        "stat",
+        "sticky",
+        "grid",
+        "logos",
+        "hero"
+      ]
+    },
+    {
+      "url": "https://www.seasats.com/",
+      "tokens": [
+        "nav",
+        "stat",
+        "menu",
+        "number",
+        "hero",
+        "outro",
+        "canvas",
+        "intro",
+        "tabs",
+        "gallery",
+        "panel",
+        "slider",
+        "swiper",
+        "horizontal",
+        "feature",
+        "footer"
+      ]
+    },
+    {
+      "url": "https://cerebrium.ai/",
+      "tokens": [
+        "canvas",
+        "hero",
+        "menu",
+        "nav",
+        "pin",
+        "pricing",
+        "accordion",
+        "sticky",
+        "grid",
+        "cursor",
+        "video",
+        "split",
+        "rail",
+        "card",
+        "feature",
+        "panel",
+        "stat",
+        "swiper",
+        "horizontal",
+        "footer"
+      ]
+    },
+    {
+      "url": "https://why.zero.university/",
+      "tokens": [
+        "cursor",
+        "stat",
+        "nav",
+        "pin"
+      ]
+    },
+    {
+      "url": "https://unitedcarriers.com/",
+      "tokens": [
+        "modal",
+        "horizontal",
+        "accordion",
+        "accordion-item",
+        "footer",
+        "grid",
+        "cursor",
+        "rail",
+        "menu",
+        "marquee",
+        "pin",
+        "stat",
+        "number",
+        "hero",
+        "counter",
+        "feature",
+        "drag",
+        "canvas",
+        "split",
+        "intro",
+        "video",
+        "partners",
+        "faq",
+        "cta",
+        "banner"
+      ]
+    },
+    {
+      "url": "https://illoca.unseen.co/",
+      "tokens": [
+        "grid",
+        "nav",
+        "modal",
+        "cursor",
+        "stat",
+        "pin",
+        "card",
+        "accordion",
+        "footer",
+        "grain"
+      ]
+    },
+    {
+      "url": "https://www.gionatannese.com/",
+      "tokens": [
+        "nav",
+        "cursor"
+      ]
+    },
+    {
+      "url": "https://www.trevornoah.com/",
+      "tokens": [
+        "nav",
+        "modal",
+        "menu",
+        "burger",
+        "footer",
+        "hero",
+        "intro",
+        "reveal",
+        "card",
+        "marquee",
+        "carousel",
+        "split",
+        "stat",
+        "cta",
+        "grid",
+        "quote",
+        "canvas"
+      ]
+    },
+    {
+      "url": "https://www.paulkalkbrenner.net/",
+      "tokens": [
+        "stat",
+        "nav",
+        "menu",
+        "cursor",
+        "hero",
+        "marquee",
+        "drag",
+        "parallax",
+        "panel",
+        "feature",
+        "noise",
+        "grid",
+        "reveal",
+        "pin",
+        "lightbox",
+        "video",
+        "newsletter",
+        "tile",
+        "footer"
+      ]
+    },
+    {
+      "url": "https://www.era-residence.com/",
+      "tokens": [
+        "grid",
+        "split",
+        "card",
+        "modal",
+        "menu",
+        "nav",
+        "cta",
+        "hero",
+        "tabs",
+        "reveal",
+        "pin",
+        "magnetic",
+        "intro",
+        "slider",
+        "quote",
+        "parallax",
+        "horizontal",
+        "video",
+        "marquee",
+        "gallery",
+        "accordion",
+        "footer"
+      ]
+    },
+    {
+      "url": "https://brand.squarespace.com/",
+      "tokens": [
+        "menu",
+        "grid",
+        "footer",
+        "carousel",
+        "stat",
+        "video",
+        "banner"
+      ]
+    },
+    {
+      "url": "https://aardvarkbookclub.com/",
+      "tokens": [
+        "nav",
+        "split",
+        "menu",
+        "footer",
+        "hero",
+        "intro",
+        "stat",
+        "canvas",
+        "slider",
+        "cta",
+        "pin",
+        "card",
+        "sticky",
+        "faq",
+        "accordion",
+        "number",
+        "quote",
+        "parallax"
+      ]
+    },
+    {
+      "url": "https://hobro.digital/",
+      "tokens": [
+        "footer"
+      ]
+    },
+    {
+      "url": "https://decathlonyestalgia.com/",
+      "tokens": [
+        "feature",
+        "nav",
+        "menu",
+        "burger",
+        "grid",
+        "pin",
+        "hero",
+        "timeline",
+        "video",
+        "intro",
+        "split",
+        "canvas",
+        "footer",
+        "sticky",
+        "cta",
+        "card",
+        "slider",
+        "swiper",
+        "horizontal",
+        "cursor",
+        "carousel",
+        "drag",
+        "parallax"
+      ]
+    },
+    {
+      "url": "https://stateofaidesign.com/",
+      "tokens": [
+        "cursor",
+        "nav",
+        "menu",
+        "cta",
+        "hero",
+        "intro",
+        "video",
+        "partners",
+        "logos",
+        "grid",
+        "sticky",
+        "carousel",
+        "stat"
+      ]
+    },
+    {
+      "url": "https://www.sharplink.com/",
+      "tokens": [
+        "nav",
+        "burger",
+        "menu",
+        "hero",
+        "video",
+        "reveal",
+        "cta",
+        "grid",
+        "footer",
+        "pin",
+        "card",
+        "banner",
+        "feature",
+        "carousel",
+        "slider",
+        "faq",
+        "newsletter",
+        "canvas"
+      ]
+    },
+    {
+      "url": "https://kononenkogroup.com/",
+      "tokens": []
+    },
+    {
+      "url": "https://otsuka-air.jp/",
+      "tokens": []
+    },
+    {
+      "url": "https://www.oimachi.co/",
+      "tokens": [
+        "stat",
+        "nav",
+        "modal",
+        "menu",
+        "video",
+        "pin",
+        "hero",
+        "quote",
+        "lightbox",
+        "grid",
+        "footer",
+        "cta"
+      ]
+    }
+  ]
+}

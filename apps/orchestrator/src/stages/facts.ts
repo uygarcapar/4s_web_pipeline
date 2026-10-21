@@ -39,6 +39,8 @@ export interface ExtractedSignals {
   waHrefs: string[];
   mailtos: string[];
   hoursCandidates: string[];
+  /** Time ranges published without a day mapping (never auto-mapped). */
+  hoursUnmappedCandidates: string[];
   addressCandidates: string[];
   jsonld: unknown[];
   fonts: string[];
@@ -71,6 +73,9 @@ export function readExtracted(raw: unknown): ExtractedSignals | null {
     waHrefs: strArray(pick(raw, "waHrefs", "whatsappHrefs", "whatsapp_hrefs")),
     mailtos: strArray(pick(raw, "mailtos", "mailtoHrefs", "mailto_hrefs")),
     hoursCandidates: strArray(pick(raw, "hoursCandidates", "hours_candidates")),
+    hoursUnmappedCandidates: strArray(
+      pick(raw, "hoursUnmappedCandidates", "hours_unmapped_candidates"),
+    ),
     addressCandidates: strArray(pick(raw, "addressCandidates", "address_candidates")),
     jsonld: Array.isArray(raw.jsonld) ? raw.jsonld : [],
     fonts: strArray(raw.fonts),
@@ -589,6 +594,19 @@ export function buildFacts(input: BuildFactsInput): Facts {
     city = jsonldAddr.locality;
     sources.city = "jsonld:addressLocality";
   }
+  if ((!city || !district) && address) {
+    const fromAddress = trLocalityFromAddress(address);
+    if (fromAddress) {
+      if (!city) {
+        city = fromAddress.city;
+        sources.city = "derived:addressTail";
+      }
+      if (!district && fromAddress.district) {
+        district = fromAddress.district;
+        sources.district = "derived:addressTail";
+      }
+    }
+  }
 
   let mapsEmbedQuery = mapsQueryFromIframes(extracted?.mapsIframes ?? []);
   if (mapsEmbedQuery) {
@@ -607,6 +625,21 @@ export function buildFacts(input: BuildFactsInput): Facts {
     if (openingHours.length > 0) sources.openingHours = "extracted.hoursCandidates";
   }
 
+  // Hours published without a day mapping stay a verbatim note: the site
+  // states "10.00-19.30" and never which days, so no openingHours entry can
+  // be derived from it without inventing the mapping (DECISIONS D8).
+  let hoursNote: string | null = null;
+  if (openingHours.length === 0) {
+    const published = (extracted?.hoursUnmappedCandidates ?? [])
+      .map((value) => value.trim())
+      .filter((value) => value.length > 0)
+      .sort((a, b) => a.length - b.length)[0];
+    if (published) {
+      hoursNote = published;
+      sources.hoursNote = "extracted.hoursUnmappedCandidates";
+    }
+  }
+
   const socialLinks = socialLinksFromPages(pages);
   if (socialLinks.length > 0) sources.socialLinks = "pages:links";
 
@@ -621,6 +654,7 @@ export function buildFacts(input: BuildFactsInput): Facts {
     city,
     mapsEmbedQuery,
     openingHours,
+    hoursNote,
     services: [],
     prices: [],
     socialLinks,
@@ -663,6 +697,47 @@ const TR_PROVINCES_BY_PLATE_CODE: Record<number, string> = {
  * Returns null when the value is empty or a number outside 1-81 (which is
  * not a plate code and not a usable city name either).
  */
+/** Province name (Turkish-lowercased) → canonical spelling. */
+const TR_PROVINCE_BY_NORMALIZED_NAME: ReadonlyMap<string, string> = new Map(
+  Object.values(TR_PROVINCES_BY_PLATE_CODE).map((name) => [
+    name.toLocaleLowerCase("tr-TR"),
+    name,
+  ]),
+);
+
+/**
+ * District and province read off the tail of a Turkish address. Addresses are
+ * conventionally written "... <postal> <neighbourhood>/<district>/<province>"
+ * (slash- or comma-separated), so the last segment that is a real province
+ * name gives the city and the segment before it gives the district. Only used
+ * when the site publishes no JSON-LD postal address — without this, a site
+ * whose address plainly ends "Küçükçekmece/İstanbul" still yields a null
+ * district and city, which the template schema then rejects.
+ */
+export function trLocalityFromAddress(
+  address: string,
+): { district: string | null; city: string } | null {
+  const segments = address
+    .split(/[/,]/)
+    .map((part) => part.replace(/\b\d{5}\b/g, "").trim())
+    .filter((part) => part.length > 0);
+
+  for (let i = segments.length - 1; i >= 0; i -= 1) {
+    const canonical = TR_PROVINCE_BY_NORMALIZED_NAME.get(
+      segments[i]!.toLocaleLowerCase("tr-TR"),
+    );
+    if (!canonical) continue;
+    const previous = i > 0 ? segments[i - 1]! : null;
+    const district =
+      previous !== null &&
+      previous.toLocaleLowerCase("tr-TR") !== canonical.toLocaleLowerCase("tr-TR")
+        ? previous
+        : null;
+    return { district, city: canonical };
+  }
+  return null;
+}
+
 export function resolveTrProvince(
   raw: string | null | undefined,
 ): { name: string; fromPlateCode: boolean } | null {

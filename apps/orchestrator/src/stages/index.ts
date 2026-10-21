@@ -2,6 +2,7 @@ import type { Stage } from "@pipeline/core";
 import type { StageModule } from "./types.js";
 import { crawlStage } from "./crawl.js";
 import { auditStage } from "./audit.js";
+import { briefStage } from "./brief.js";
 import { designStage } from "./design.js";
 import { verifyStage } from "./verify.js";
 import { notifyStage } from "./notify.js";
@@ -12,6 +13,7 @@ import { generateStage } from "./generate.js";
 export const stageRegistry: Record<Stage, StageModule & { notImplemented?: boolean }> = {
   crawl: crawlStage,
   audit: auditStage,
+  brief: briefStage,
   design: designStage,
   plan: planStage,
   generate: generateStage,

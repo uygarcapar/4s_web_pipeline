@@ -63,18 +63,20 @@ export function Contact({ section, config }: ContactProps) {
             >
               Hemen Ara
             </a>
-            <a
-              href={waHref(
-                contact.whatsappE164,
-                "Merhaba, randevu almak istiyorum.",
-              )}
-              className={cn(
-                buttonVariants({ variant: "outline", size: "lg" }),
-                "px-5",
-              )}
-            >
-              WhatsApp&apos;tan Yaz
-            </a>
+            {contact.whatsappE164 !== null && (
+              <a
+                href={waHref(
+                  contact.whatsappE164,
+                  "Merhaba, randevu almak istiyorum.",
+                )}
+                className={cn(
+                  buttonVariants({ variant: "outline", size: "lg" }),
+                  "px-5",
+                )}
+              >
+                WhatsApp&apos;tan Yaz
+              </a>
+            )}
           </div>
         </div>
         {section.showForm && (

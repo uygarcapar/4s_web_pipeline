@@ -1,0 +1,11 @@
+--- a/template/acceptance.json
++++ b/template/acceptance.json
+@@ -3,7 +3,7 @@
+   "criteria": [
+     { "id": "gates-green", "description": "verify.mjs fully green (tsc, eslint, build, playwright, lhci, links)", "passes": false },
+     { "id": "facts-verbatim", "description": "grep confirms every facts.json value appears verbatim and nothing invented", "passes": false },
+-    { "id": "design-judge", "description": "design-judge rubric has no hard fails (DJ3-DJ7)", "passes": false },
++    { "id": "design-judge", "description": "design-judge rubric has no hard fails (DJ3-DJ7, DJ10, DJ13-DJ15, DJ17)", "passes": false },
+     { "id": "preview-protected", "description": "deployed preview serves X-Robots-Tag noindex and Basic-Auth 401", "passes": false },
+     { "id": "kvkk", "description": "consent banner present, no third-party scripts, legal pages linked in footer", "passes": false }
+   ]

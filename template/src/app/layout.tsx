@@ -4,6 +4,7 @@ import type { CSSProperties } from "react";
 import { ConsentBanner, CONSENT_PREPAINT_SCRIPT } from "@/components/consent-banner";
 import { PreviewBanner } from "@/components/preview-banner";
 import { SiteFooter } from "@/components/site-footer";
+import { SiteNav } from "@/components/site-nav";
 import { StickyCta } from "@/components/sticky-cta";
 import { buildLocalBusinessJsonLd } from "@/lib/jsonld";
 import { fontVariables } from "@/lib/fonts";
@@ -59,6 +60,7 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
           dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
         />
         <PreviewBanner />
+        <SiteNav config={siteConfig} />
         <SmoothScroll>
           {/* pb-16 keeps the mobile sticky CTA bar from covering content. */}
           <div className="flex flex-1 flex-col pb-16 md:pb-0">{children}</div>

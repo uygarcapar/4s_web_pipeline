@@ -197,8 +197,42 @@ export const hoursSectionSchema = z
   })
   .strict();
 
+/**
+ * One sentence the business wrote about itself, verbatim.
+ *
+ * `text` may be trimmed at punctuation but never rewritten — the reference
+ * build's own note is the rule: "the clinic's own sentence from its Biz Kimiz
+ * page, trimmed only at the comma. No claim here is ours."
+ * (template/pattern-library.md §2.1)
+ */
+export const statementSectionSchema = z
+  .object({
+    ...sectionBase,
+    type: z.literal("statement"),
+    variant: z.enum(["word-reveal"]).optional(),
+    text: z.string().min(40),
+  })
+  .strict();
+
+/**
+ * Address, hours and a pressable number as one section rather than three.
+ * Renders entirely from `config.contact`, `config.openingHours` and
+ * `config.hoursNote`; it carries no copy of its own beyond an optional title
+ * (template/pattern-library.md §2.2).
+ */
+export const visitSectionSchema = z
+  .object({
+    ...sectionBase,
+    type: z.literal("visit"),
+    variant: z.enum(["rows"]).optional(),
+    title: z.string().min(1).optional(),
+  })
+  .strict();
+
 export const sectionSchema = z.discriminatedUnion("type", [
   heroSectionSchema,
+  statementSectionSchema,
+  visitSectionSchema,
   servicesSectionSchema,
   teamSectionSchema,
   gallerySectionSchema,
@@ -232,7 +266,12 @@ export const siteConfigSchema = z
     business: z
       .object({
         name: z.string().min(1),
-        legalName: z.string().min(1),
+        /**
+         * Registered trade name. Null when the business does not publish one:
+         * facts are verbatim, so an unpublished legal name stays absent
+         * rather than being guessed from the brand (DECISIONS D8).
+         */
+        legalName: z.string().min(1).nullable(),
         slogan: z.string().min(1),
       })
       .strict(),
@@ -241,7 +280,12 @@ export const siteConfigSchema = z
     contact: z
       .object({
         phoneE164: e164TRSchema,
-        whatsappE164: e164TRSchema,
+        /**
+         * Null when the business advertises no WhatsApp channel. Deriving a
+         * wa.me link from a mobile number would promise a channel nobody
+         * watches, so every WhatsApp CTA is dropped instead (DECISIONS D8).
+         */
+        whatsappE164: e164TRSchema.nullable(),
         email: z.email(),
         address: z.string().min(1),
         district: z.string().min(1),
@@ -250,7 +294,28 @@ export const siteConfigSchema = z
         mapsEmbedQuery: z.string().min(1),
       })
       .strict(),
-    openingHours: z.array(openingHoursEntrySchema).min(1).max(7),
+    /**
+     * Day-mapped hours. Empty when the business publishes hours without
+     * saying which days they apply to — inventing the mapping is exactly
+     * what the verbatim-facts rule forbids. `hoursNote` then carries the
+     * published string and the refine below keeps a site from shipping with
+     * no hours at all (DECISIONS D5 / D8).
+     */
+    openingHours: z.array(openingHoursEntrySchema).max(7),
+    /** Hours published without a day mapping, verbatim ("10.00-19.30"). */
+    hoursNote: z.string().min(1).nullable(),
+    /**
+     * The business's own social profiles, from the crawl. Carried so the
+     * rebuild does not drop a channel the old site advertised; the footer is
+     * the only place they render.
+     */
+    socialLinks: z
+      .array(
+        z
+          .object({ platform: z.string().min(1), url: z.url() })
+          .strict(),
+      )
+      .default([]),
     brand: z
       .object({
         /** OKLCH hue (0-360) driving the brand color ramp. */
@@ -277,7 +342,16 @@ export const siteConfigSchema = z
     sellsOnline: z.boolean(),
     sections: z.array(sectionSchema).min(1),
   })
-  .strict();
+  .strict()
+  .refine(
+    (config) => config.openingHours.length > 0 || config.hoursNote !== null,
+    {
+      message:
+        "hoursNote is required when openingHours is empty: a visitor must be " +
+        "able to see when the business is open (DECISIONS D5)",
+      path: ["hoursNote"],
+    },
+  );
 
 /* -------------------------------------------------------------------------- */
 /* Inferred types                                                             */
@@ -292,6 +366,8 @@ export type SectionImage = z.infer<typeof imageSchema>;
 export type OpeningHoursEntry = z.infer<typeof openingHoursEntrySchema>;
 
 export type HeroSection = z.infer<typeof heroSectionSchema>;
+export type StatementSection = z.infer<typeof statementSectionSchema>;
+export type VisitSection = z.infer<typeof visitSectionSchema>;
 export type ServicesSection = z.infer<typeof servicesSectionSchema>;
 export type TeamSection = z.infer<typeof teamSectionSchema>;
 export type GallerySection = z.infer<typeof gallerySectionSchema>;
