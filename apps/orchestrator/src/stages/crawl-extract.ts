@@ -32,6 +32,14 @@ export interface BrowserPageData {
   whatsappHrefs: string[];
   mailtoHrefs: string[];
   mapsIframeSrcs: string[];
+  /**
+   * Every absolute http(s) anchor target on the page. The facts stage reads
+   * these to find the business's social profiles; without them
+   * `facts.socialLinks` can never be populated.
+   */
+  links: string[];
+  /** Open Graph values the facts stage prefers over <title>. */
+  og: { siteName: string | null; title: string | null; locale: string | null };
   jsonLd: unknown[];
   fontFamilies: string[];
   cssCustomProps: string[];
@@ -83,6 +91,20 @@ export function collectPageData(): BrowserPageData {
       ),
     ).map((f) => f.src),
   );
+
+  const links = unique(
+    anchors
+      .map((a) => a.href)
+      .filter((h) => h.startsWith("http://") || h.startsWith("https://")),
+  ).slice(0, 400);
+
+  const metaContent = (property: string): string | null => {
+    const el = document.querySelector<HTMLMetaElement>(
+      `meta[property="${property}"], meta[name="${property}"]`,
+    );
+    const value = (el?.content ?? "").trim();
+    return value === "" ? null : value;
+  };
 
   const jsonLd: unknown[] = [];
   for (const script of Array.from(
@@ -226,6 +248,12 @@ export function collectPageData(): BrowserPageData {
     whatsappHrefs,
     mailtoHrefs,
     mapsIframeSrcs,
+    links,
+    og: {
+      siteName: metaContent("og:site_name"),
+      title: metaContent("og:title"),
+      locale: metaContent("og:locale"),
+    },
     jsonLd,
     fontFamilies,
     cssCustomProps: [...cssCustomProps],
@@ -250,15 +278,34 @@ export const TR_LANDLINE_PHONE_RE =
   /(\+90|0)?\s*\(?[2348]\d{2}\)?[\s.-]?\d{3}[\s.-]?\d{2}[\s.-]?\d{2}/g;
 
 /** Turkish weekday names and abbreviations. */
+/**
+ * A Turkish weekday name or abbreviation. The token must not be glued to
+ * another letter: JS `\b` is ASCII-only, so it fires inside Turkish words
+ * ("Çarşısı" would read as the abbreviation "Çar" and turn a street address
+ * into an opening-hours line). Unicode letter classes are used instead, and
+ * long forms are listed before the abbreviations that prefix them.
+ */
 export const TR_DAY_RE =
-  /(Pzt|Sal|Çar|Per|Cum|Cmt|Paz|Pazartesi|Salı|Çarşamba|Perşembe|Cuma|Cumartesi|Pazar)/;
+  /(?:^|[^\p{L}])(Pazartesi|Salı|Çarşamba|Perşembe|Cumartesi|Cuma|Pazar|Pzt|Sal|Çar|Per|Cmt|Cum|Paz)(?![\p{L}])/iu;
 
 /** A clock time like "09:00" or "9.30". */
 export const TIME_RE = /\d{1,2}[:.]\d{2}/;
 
-/** Turkish street-address tokens. */
+/** A time range like "10.00-19.30" or "09:00 - 18:00". */
+export const TIME_RANGE_RE =
+  /\d{1,2}[:.]\d{2}\s*[-–—/]\s*\d{1,2}[:.]\d{2}/;
+
+/** Labels an SMB site puts above its opening hours. */
+export const HOURS_LABEL_RE =
+  /(çalışma\s*saat|açılış|kapanış|saatler|mesai|hafta\s*içi|hafta\s*sonu)/i;
+
+/**
+ * Turkish street-address tokens. Case-insensitive on purpose: SMB sites write
+ * "Atakent mah. 227. sokak ... no: 2/S" as often as the title-cased form, and
+ * a case-sensitive match silently loses the whole address.
+ */
 export const ADDRESS_TOKEN_RE =
-  /(Mah\.|Mahallesi|Cad\.|Caddesi|Sok\.|Sokak|No:|Kat:)/;
+  /(Mah\.|Mahalle|Cad\.|Cadde|Sok\.|Sokak|Bulvar|Blv\.|Sitesi|Çarşı|Plaza|No:|Kat:)/i;
 
 /** UTF-8-as-Latin-1 mojibake sequences for ç/ı/ş. */
 export const MOJIBAKE_RE = /(Ã§|Ä±|ÅŸ)/;
@@ -299,6 +346,33 @@ export function findHoursCandidates(text: string): string[] {
     if (trimmed === "" || trimmed.length > 200) continue;
     if (TR_DAY_RE.test(trimmed) && TIME_RE.test(trimmed)) out.push(trimmed);
     if (out.length >= 40) break;
+  }
+  return dedupe(out);
+}
+
+/**
+ * Time ranges the site publishes WITHOUT saying which days they apply to
+ * ("Çalışma Saatleri :" / "10.00-19.30"). These must not become per-day
+ * openingHours entries — inventing the day mapping is precisely what the
+ * verbatim-facts rule forbids — but dropping them would lose the only hours
+ * the business published, so they are kept verbatim for the audit to flag.
+ * Lines that do name a weekday are left to findHoursCandidates.
+ */
+export function findUnmappedHoursCandidates(text: string): string[] {
+  const lines = text.split(/\r?\n/).map((line) => line.trim());
+  const out: string[] = [];
+  for (let i = 0; i < lines.length; i += 1) {
+    if (!HOURS_LABEL_RE.test(lines[i]!)) continue;
+    // The range sits on the label line itself or within the next two lines.
+    const last = Math.min(i + 2, lines.length - 1);
+    for (let j = i; j <= last; j += 1) {
+      const candidate = lines[j]!;
+      if (candidate === "" || candidate.length > 200) continue;
+      if (!TIME_RANGE_RE.test(candidate)) continue;
+      if (TR_DAY_RE.test(candidate)) continue;
+      out.push(candidate);
+    }
+    if (out.length >= 10) break;
   }
   return dedupe(out);
 }
@@ -390,6 +464,13 @@ export interface ContentSourcePage {
   h1: string[];
   contentBlocks: ContentBlock[];
   jsonLd: unknown[];
+}
+
+/** One service the business describes on its own site, verbatim. */
+export interface ServiceItem {
+  title: string;
+  description: string;
+  sourceUrl: string;
 }
 
 export interface ContentArtifact {
@@ -520,6 +601,53 @@ export function faqFromContentBlocks(
 }
 
 /** Cross-page content view consumed by the plan and generate stages. */
+/** An H1 that announces a services listing on a Turkish SMB site. */
+const SERVICES_HEADING_RE = /(hizmet|tedavi|uygulama|işlem|bakım)/i;
+
+const MAX_SERVICE_ITEMS = 60;
+const MIN_SERVICE_DESCRIPTION = 20;
+
+/**
+ * Services read off a page that announces them in its H1 ("Hizmetlerimiz"):
+ * each heading below the H1 is a service title and the first paragraph under
+ * it is that service's description, both copied verbatim. Sites routinely
+ * repeat the same name as an h2 and then an h3, so titles are deduped.
+ */
+export function servicesFromContentBlocks(
+  pages: ContentSourcePage[],
+): ServiceItem[] {
+  const out: ServiceItem[] = [];
+  const seen = new Set<string>();
+
+  for (const page of pages) {
+    if (!page.h1.some((heading) => SERVICES_HEADING_RE.test(heading))) continue;
+
+    let pendingTitle: string | null = null;
+    for (const block of page.contentBlocks) {
+      const headingMatch = HEADING_TAG_RE.exec(block.tag);
+      if (headingMatch?.[1] !== undefined) {
+        // h1 is the page title, not a service.
+        if (Number(headingMatch[1]) >= 2) pendingTitle = block.text.trim();
+        continue;
+      }
+      if (block.tag !== "p" || pendingTitle === null) continue;
+
+      const description = block.text.trim();
+      const title = pendingTitle;
+      pendingTitle = null;
+      if (title === "" || description.length < MIN_SERVICE_DESCRIPTION) continue;
+
+      const key = title.toLocaleLowerCase("tr-TR");
+      if (seen.has(key)) continue;
+      seen.add(key);
+
+      out.push({ title, description, sourceUrl: page.url });
+      if (out.length >= MAX_SERVICE_ITEMS) return out;
+    }
+  }
+  return out;
+}
+
 export function buildContentArtifact(
   pages: ContentSourcePage[],
 ): ContentArtifact {
