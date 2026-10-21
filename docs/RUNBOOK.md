@@ -6,9 +6,9 @@ vardır ya da Claude Code'a verilecek **tek bir prompt**.
 
 İşaretler: 🧑 = sen (korumalı dosya ya da karar) · 🤖 = Claude Code
 
-Durum: **Faz A bitti** (A1, A0, A0b, A2, A3, A4, A5). Operatör bekleyen bir
-şey yok. Sıradaki **B1** — ve Faz B'nin asıl yükü B4, her arketipte senin
-`/library` incelemenle bitiyor.
+Durum: **Faz A bitti**, **B1** de bitti. Operatör bekleyen bir şey yok.
+Sıradaki **B2**. Faz B'nin asıl yükü B4: her arketipte senin `/library`
+incelemenle bitiyor (`pnpm --filter @pipeline/library dev`, :3106).
 
 ---
 
@@ -153,8 +153,8 @@ Ayrıntı: `docs/STATUS.md` → "A0b".
 
 | # | Görev | Kim | Not |
 |---|---|---|---|
-| 5 | **B1** `/library` route | 🤖 | |
-| 6 | **B2** token-only refactor + K8 | 🤖 | |
+| ✅ | **B1** `/library` route | — | merged · `apps/library` ayrı uygulama (gerekçe STATUS'ta) · `pnpm --filter @pipeline/library dev`, :3106 |
+| 5 | **B2** token-only refactor + K8 | 🤖 | sıradaki |
 | 7 | **B3** statement/visit/closing/marquee | 🤖 | bir kısmı zaten var — önce envanter |
 | 8 | **B4** arketipler, **tek tek** | 🤖 + 🧑 | aşağıya bak |
 
