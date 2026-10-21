@@ -5,6 +5,9 @@ design rule into an **invariant** (global, hard, same on every site) or a
 **style** rule (a property of the site's direction). This records where each
 one went and why.
 
+Every §-number below refers to [docs/D10-design-variation.md](../../D10-design-variation.md);
+the decision itself is recorded as D10 in [docs/DECISIONS.md](../../DECISIONS.md).
+
 ## How to apply
 
 Four patches touch files an agent may edit; they are **already applied** on

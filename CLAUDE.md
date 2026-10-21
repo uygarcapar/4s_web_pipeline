@@ -46,10 +46,11 @@ Playwright · Lighthouse 13 / LHCI 0.15 · Crawlee.
   never Inter or Roboto as a display face. Inter is permitted as a **body**
   face only where the site's direction lists it; it is never a default,
   because reaching for it is the clearest tell that a page was not designed
-  for its owner (docs/DECISIONS.md D10 §11 C3/C4). Faces may come from
-  `next/font/google` or be self-hosted via `next/font/local`. The curated
-  pairings live in `apps/orchestrator/src/design/dna.ts` until the direction
-  catalog replaces them (D10 §4).
+  for its owner (docs/D10-design-variation.md §11 C3/C4; decision recorded in
+  docs/DECISIONS.md D10). Faces may come from `next/font/google` or be
+  self-hosted via `next/font/local`. The curated pairings live in
+  `apps/orchestrator/src/design/dna.ts` until the direction catalog replaces
+  them (docs/D10-design-variation.md §4).
   No analytics/marketing scripts in demos (KVKK).
 - `tel:`/`wa.me` hrefs must match `^(tel:\+90\d{10}|https:\/\/wa\.me\/90\d{10})`.
 - robots.txt is respected when crawling; `opted_out` leads are never

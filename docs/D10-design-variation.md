@@ -1,6 +1,6 @@
 # D10 — Design variation through a declared design space
 
-**Status:** proposed · **Date:** 2026-10-21 · **Owner:** operator (Uygar)
+**Status:** accepted — A1 merged · **Date:** 2026-10-21 · **Owner:** operator (Uygar)
 **Amends:** D5 (design-rules §3–§6 stop being global), D6 (structural
 variation), D7 (fingerprint), D4 (Google-only fonts), D9 (harvest gains a
 composition pass, §14)
@@ -18,8 +18,13 @@ study. The cause is architectural, not a prompt or model problem:
    from `diskent-landing` and enforced as gates: a fixed type scale (exact
    `clamp()` values), display weight 700–800, tracking −0.045em, a mandatory
    pinned hand-off, a mandatory text transformation, one hue family, two
-   families, `next/font/google`. DJ16 hard-checks this. Verify is therefore a
-   *similarity-to-diskent* test, and any genuinely different design fails it.
+   families, `next/font/google`. These rules are fed to `generate` and the fix
+   loop as instructions, and `TYPE_PAIRS` pins `displayWeight: 800`, so every
+   run is steered toward one site before any gate runs.
+   *(Corrected 2026-10-21 after A1 planning, finding K1: an earlier draft said
+   DJ16 hard-checks this. It does not — the judge prompt only asks DJ1–DJ15,
+   and `HARD_FAIL_IDS` contains neither DJ10, DJ16 nor DJ17. The pressure
+   toward sameness is in the instructions, not the gate.)*
 2. **The variation axes are too narrow.** §10 varies palette (from photos —
    most SMB photos are beige/grey/white), type pair (small table) and section
    archetype (small kit). Grid, alignment, density, shape language, image
@@ -94,8 +99,8 @@ Every current rule moves into exactly one bucket.
 
 | id | Change |
 |---|---|
-| DJ10 | → "Does the page's motion match the direction's motion profile, and is fade-up not the only device when the profile is `editorial` or `kinetic`?" |
-| DJ16 | → "Do display weight, tracking and display/body ratio fall inside the selected direction's ranges?" |
+| DJ10 | → "Does the page's motion match the direction's motion profile, and is fade-up not the only device when the profile is `editorial` or `kinetic`?" Checks **both directions**: every signature the profile requires is present, **and** nothing the direction disables is present (pin, lateral rail, hero entrance, smooth scroll when its flag is off). A `calm` site that still pins passes a presence-only check, which is the failure found in A1 (K8). |
+| DJ16 | → "Do display weight, tracking and display/body ratio fall inside the selected direction's ranges?" — **a deterministic check, not a judge question.** Computed styles from Playwright are compared with the direction's ranges; a model reading a screenshot cannot reliably tell weight 400 from 500. The rubric keeps the row so the digest reports it. |
 | DJ17 | → distance-based (§8), not fingerprint equality |
 | DJ18 (new) | "Is the signature section present, and does it match its direction's reference set more than the default kit?" — design note, not hard fail, until calibrated |
 
@@ -560,12 +565,24 @@ Tasks marked **[operator]** touch protected files.
 A1 → A2 → A4 → B2 → B4
 ```
 
-**A1 goes first, and nothing in Phase B starts before it is merged.** Today
-DJ16 rejects display weight 400 and DJ10 rejects a page without a pinned
-hand-off. Every `editorial-serif`, `swiss-grid` and `quiet-luxury` archetype
-built in B4 would fail verify on arrival, and the fix loop would "repair" it
-back into `kinetic-bold`. Building the library before the rule split is wasted
-work that also trains the fix loop in the wrong direction.
+**A1 goes first, and nothing in Phase B starts before it is merged.**
+`design-rules.md` is read as instructions by `generate`, `section-builder` and
+the fix loop. While it states "display 700–800, required pinned hand-off" as
+global rules, every `editorial-serif`, `swiss-grid` and `quiet-luxury`
+archetype built in B4 is built against those instructions, and the fix loop
+"repairs" anything that departs from them back toward `kinetic-bold`.
+Building the library before the rule split is wasted work that also trains
+the fix loop in the wrong direction.
+
+**Status 2026-10-21:** A1 merged (PR #1). Patches 03–06 applied in code; the
+deterministic DJ10/DJ16 checks live in
+`apps/orchestrator/src/design/directions/checks.ts`. Patches 01, 02 and 07
+(protected files) are applied by the operator.
+
+*(Corrected 2026-10-21, finding K1: the earlier wording said DJ16 rejects
+weight 400 at verify. The judge never asks DJ16, and DJ10/DJ16/DJ17 are not
+in `HARD_FAIL_IDS`. The conclusion — A1 first — stands; the mechanism is the
+instructions, not the gate.)*
 
 Off the critical path:
 
@@ -580,10 +597,24 @@ Off the critical path:
 
 ### Phase A — make variation possible
 
-- **A1 [operator]** Apply the rule split (§3) to `design-rules.md`;
-  update DJ10/DJ16/DJ17 wording and the judge tests; resolve C1–C5.
-  *Done when:* a site built with display weight 400 and no pin passes verify
-  under a direction that allows it.
+- **A0 [operator]** Make `template/tests/smoke.spec.ts` require a `wa.me`
+  link only when `facts.json` publishes a WhatsApp number (D8). Today verify
+  stops at the Playwright gate for those clients and never reaches the judge
+  (A1 finding K6). Protected test, so an operator edit. Blocks every
+  end-to-end verify, including the ship test; does not block A1.
+- **A1 [operator]** Apply the rule split (§3) to `design-rules.md`,
+  `build-rules.md`, `CLAUDE.md`, `docs/PLAN.md`; reconcile the judge range
+  (rubric table, `design-judge.ts` prompt, doc-comment and
+  `.claude/agents/design-judge.md` all say DJ1–DJ18); give the judge stage the
+  selected direction from `design.json` (default `kinetic-bold`); correct the
+  stale hard-fail list in `acceptance.json`; resolve C1–C5. `design-rules.md`,
+  `build-rules.md` and `acceptance.json` are hook-protected and are applied by
+  the operator from patches. Commit the working tree before generating the
+  patches.
+  *Done when:* a fixture `design.json` with display weight 400 and no pin
+  passes the deterministic range check under `editorial-serif` and fails
+  under `kinetic-bold`; `HARD_FAIL_IDS` matches the rubric's hard-fail list
+  exactly.
 - **A2** `directionSchema` + `designSpecSchema` + `briefSchema` in
   `packages/core`. *Done when:* `pnpm typecheck` clean, schemas exported,
   unit tests parse a valid and reject an invalid example of each.
@@ -601,7 +632,12 @@ Off the critical path:
 
 - **B1** `/library` route in `apps/admin` rendering archetype × direction.
 - **B2** Refactor existing archetypes to read only tokens (radius, rules,
-  frame, alignment, density, motion profile).
+  frame, alignment, density, motion profile). Includes closing K8: today
+  `layout.tsx` wraps every site in `SmoothScroll` and `hero/photo-full.tsx`
+  always runs the entrance, so a `calm` direction still renders both.
+  Both must read `motion.smoothScroll` / `motion.heroEntrance` from the spec.
+  *Done when:* a `calm` fixture renders without Lenis and without a hero
+  entrance, and DJ10's absence check fails a fixture that forces either on.
 - **B3** Add `statement`, `visit`, `closing`, `marquee` section types
   (pattern-library §2) with schemas and registry entries.
 - **B4** Build hero archetypes to 8, then services to 6, one per session,
@@ -661,7 +697,8 @@ Operator time is listed separately because it does not parallelise.
 | A | A3 four directions + refs | 2 | ~1 h (pick reference screenshots) |
 | A | A4 `tokens.ts` | 2 | — |
 | A | A5 self-hosted fonts + Turkish glyph test | 2 | licence decision (§13 Q2) |
-| **A** | | **8** | **~3 h** |
+| A | A0 `smoke.spec.ts` wa.me condition | — | ~30 min |
+| **A** | | **8** | **~3.5 h** |
 | B | B1 `/library` route | 2 | — |
 | B | B2 token-only refactor of existing archetypes | 3 | ~30 min |
 | B | B3 `statement`, `visit`, `closing`, `marquee` | 4 | ~30 min |
