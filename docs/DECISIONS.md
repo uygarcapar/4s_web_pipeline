@@ -314,7 +314,10 @@ Award sites are good because each commits hard to one coherent concept.
   `next/font/google`, so a direction may self-host (§11 C1). Each self-hosted
   face needs a licence permitting commercial use across unlimited client
   domains *and* a rendered Turkish glyph check — the catalogue page is not
-  evidence. Free-vs-licensed is open (§13 Q2).
+  evidence. Settled 2026-10-22 (§13 Q2): **free open-licence faces only, no
+  foundry licence is bought**, so a per-domain or pageview-capped licence
+  disqualifies a face — the pipeline deploys one site per client across
+  unlimited domains and nobody reviews the licence per run.
 - **D9** — the deliberation layer stands and gains a composition pass on
   harvest intake (§14). The brief it introduced becomes the input to
   deterministic direction selection rather than advice to a generator.

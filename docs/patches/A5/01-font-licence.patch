@@ -1,0 +1,58 @@
+Subject: [PATCH] docs(rules): settle the self-hosted font licence (D10 §13 Q2)
+
+Q2 is answered: free open-licence faces only, no foundry licence is bought.
+Both rule files still say the face list "awaits"/"is pending" that decision,
+which is now stale, and the conditional wording in build-rules ("until it is
+taken") no longer has a condition to wait on.
+
+The replacement states the rule positively and keeps the reason attached: a
+per-domain or pageview-capped licence disqualifies a face, because the
+pipeline ships one site per client across unlimited domains and nobody
+reviews a licence per run. The Turkish glyph check is unchanged — it was
+never a licence question.
+
+Both files are hook-protected, so this is an operator apply:
+
+    git apply docs/patches/A5/01-font-licence.patch
+
+Decision recorded in docs/D10-design-variation.md §13 and docs/DECISIONS.md
+D10 (amends D4).
+
+diff --git a/template/design-rules.md b/template/design-rules.md
+--- a/template/design-rules.md
++++ b/template/design-rules.md
+@@ -156,8 +156,9 @@
+   `subsets: ['latin','latin-ext']` — ş/ğ/ı/İ/ç/ö/ü must render, confirmed by
+   rendering them, not by trusting a catalogue page. At most two display/body
+   families plus an optional monospace accent. Which faces are permitted is
+-  the direction's decision (D10 §3.2, §11 C1/C3); the self-hosted face list
+-  awaits the licence decision in D10 §13 Q2.
++  the direction's decision (D10 §3.2, §11 C1/C3). Self-hosted faces are free
++  open-licence faces only — no foundry licence is bought, so a per-domain or
++  pageview-capped licence disqualifies a face (D10 §13 Q2).
+ - **Display line masks need padding on both sides.** `overflow: hidden` with
+   tight leading clips the cedilla of ş and the dot of İ — which silently
+   renames the business ("Dişkent" → "Diskent"). Pad top and bottom by ≥0.12em
+diff --git a/template/build-rules.md b/template/build-rules.md
+--- a/template/build-rules.md
++++ b/template/build-rules.md
+@@ -86,11 +86,14 @@
+   display/body families, plus an optional monospace accent** used only for
+   `.meta`, `.btn-label` and index numbers.
+   Which faces a site may use is the direction's decision, not a global one
+-  (docs/D10-design-variation.md §3.2, §4). The self-hosted face list is pending the
+-  licence decision — D10 §13 Q2 — and until it is taken, a face may only be
+-  self-hosted after its licence is confirmed to cover commercial use across
+-  unlimited client domains AND its Turkish coverage is confirmed by rendering
+-  ş ğ ı İ ç ö ü Ş Ğ Ç Ö Ü, not by trusting a catalogue page (D10 §11).
++  (docs/D10-design-variation.md §3.2, §4). Self-hosted faces are free
++  open-licence faces only (OFL and comparable): no foundry licence is bought,
++  so a per-domain or pageview-capped licence disqualifies a face — the
++  pipeline ships one site per client across unlimited domains and nobody
++  reviews a licence per run (D10 §13 Q2, settled 2026-10-22). A face is
++  self-hosted only after its licence is confirmed AND its Turkish coverage is
++  confirmed by rendering ş ğ ı İ ç ö ü Ş Ğ Ç Ö Ü, not by trusting a
++  catalogue page (D10 §11).
+ - `SITE_PREVIEW=1` behavior (noindex, Basic-Auth, draft band) must never be
+   weakened by generated code.
+ - Fix loop: max 3 iterations fed by `verify-digest.md`; then write BLOCKED.md

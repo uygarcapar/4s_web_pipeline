@@ -764,16 +764,64 @@ group any two as "the same site". Every run passes all invariants.
 
 ---
 
-## 13. Open questions for the operator
+## 13. Operator decisions — answered 2026-10-22
 
-1. Which four directions first — are the four in §4.3 right for the client
-   mix you expect, or should `warm-craft` replace one?
-2. Font licensing: free self-hosted faces only, or budget for one agency
-   licence for a foundry face?
-3. Should a client's existing brand (logo colours, logo face) be allowed to
-   override direction colour/type choices, and how strongly?
-4. Visual similarity: run embeddings locally only, or is a hosted vision
-   model acceptable for comparison?
+All four answered. Nothing in Phase A or C is waiting on the operator.
+
+**Q1 — which four directions first.** The four in §4.3 as written:
+`kinetic-bold`, `editorial-serif`, `swiss-grid`, `quiet-luxury`.
+`warm-craft` stays in the backlog and does not replace one. That spread is
+two calm profiles, one editorial and one kinetic, and it covers both ends of
+the SMB range crawled so far. **A3 is unblocked.**
+
+> Watch `quiet-luxury` in practice: it is photo-forward and needs real
+> photography to work at all, so a client with thin or stock imagery should be
+> scored away from it by the §6.2 `photoProfile` affinity rather than built in
+> it and repaired. If three clients in a row score into it and look poor,
+> `warm-craft` is the replacement — it tolerates weaker photos through collage
+> framing.
+
+**Q2 — font licensing.** Free self-hosted faces only. OFL and comparable open
+licences (Fontshare, Google faces served through `next/font/local`, other
+open variable faces). **No foundry licence is bought**, so no face may be
+self-hosted on a per-domain or pageview-capped licence — the pipeline deploys
+one site per client across unlimited domains, and a per-domain licence cannot
+be honoured by a process nobody reviews per run.
+
+This resolves the "pending the licence decision" wording in `design-rules.md`
+§6 and `build-rules.md` §4. Both are protected:
+`docs/patches/A5/01-font-licence.patch`.
+
+The Turkish coverage requirement is unchanged and is not a licence question:
+every face still has to render `ş ğ ı İ ç ö ü Ş Ğ Ç Ö Ü` with no fallback
+glyph, confirmed by rendering rather than by a catalogue page (§11). **A5 is
+unblocked**, and `ui-ux-pro-max/data/google-font-licenses.json` is the first
+place to check a candidate.
+
+**Q3 — client brand override.** Soft, hue only. The logo's hue seeds the
+direction's palette; lightness, chroma, the colour strategy and the type
+pairing all stay the direction's. The logo's own face is never adopted as a
+display or body face.
+
+The reasoning is the one D10 exists for: most SMB logos are an Arial-adjacent
+wordmark in a saturated primary, and letting that win outright is the shortest
+route back to the sameness this decision is removing. Hue alone keeps a site
+recognisably its owner's without handing the design back to a 2009 logo.
+A client hue that lands outside the direction's `maxChroma` or
+`paperLightness` is clamped into range, not allowed to widen it. **C2 takes
+this as its brand input.**
+
+**Q4 — visual similarity.** Local embeddings only. No render of a client's
+site is sent to a third party for comparison.
+
+These are prospects, not customers, at the point the pipeline measures them,
+and the project already bans analytics in demos on exactly that reasoning
+(KVKK). A small local image-embedding model is sufficient for the question
+§8.2 actually asks — "are these two pages too alike" — which is a threshold
+on a distance, not a critique. **C5 is unblocked and takes no network
+dependency**; if local similarity proves too weak at C6 calibration, the
+fallback is to lean harder on §8.1 structural distance, not to send
+screenshots out.
 
 ---
 
