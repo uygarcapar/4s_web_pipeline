@@ -6,8 +6,10 @@ vardır ya da Claude Code'a verilecek **tek bir prompt**.
 
 İşaretler: 🧑 = sen (korumalı dosya ya da karar) · 🤖 = Claude Code
 
-Durum: §0'daki operatör işlerinden yalnızca **0.4 (§13 cevapları)** kaldı ve
-Q1 A2'den sonrasını bloke ediyor. Sıradaki 🤖 görevi **A2**.
+Durum: §0'daki operatör işlerinin hepsi bitti, §13 dahil — hiçbir 🤖 görevi
+karar bekliyor değil. Sıradaki görev **A2**. Operatörde kalan tek şey
+`docs/patches/A5/01-font-licence.patch`'i uygulamak (§0.4), ve o yalnız A5'i
+etkiliyor, A2–A4'ü değil.
 
 ---
 
@@ -36,16 +38,26 @@ geçti.
 PR #4. Doğrulama sırasında geometry gate'in hiç çalışmadığı çıktı — A0b bundan
 doğdu (§2.1, PR #6).
 
-### 0.4 🧑 §13'ü cevapla — **tek kalan operatör işi**
+### 0.4 ✅ §13 cevaplandı (2026-10-22)
 
-`docs/D10-design-variation.md` §13'e cevapları yaz. Hangileri neyi bloke ediyor:
+Dördü de kapandı; Faz A ve Faz C'de operatör bekleyen hiçbir şey yok.
 
-| Soru | Bloke ettiği | Ne zamana kadar |
+| Soru | Cevap | Serbest kalan |
 |---|---|---|
-| Q1 hangi 4 direction | A3 | A2 bitmeden |
-| Q2 font lisansı | A5 | A4 bitmeden |
-| Q3 müşteri markası override | C2 | Faz C başlamadan |
-| Q4 embedding lokal mi | C5 | Faz C başlamadan |
+| Q1 hangi 4 direction | §4.3'teki dördü; `warm-craft` backlog'da | A3 |
+| Q2 font lisansı | yalnız ücretsiz self-hosted (OFL vb.), foundry lisansı alınmıyor | A5 |
+| Q3 müşteri markası override | yumuşak, **yalnız hue**; logo yüzü hiç alınmıyor | C2 |
+| Q4 embedding | yalnız lokal; müşteri render'ı dışarı çıkmıyor | C5 |
+
+Gerekçeler: `docs/D10-design-variation.md` §13.
+
+**Q2'nin bir sonucu var:** `design-rules.md` §6 ve `build-rules.md` §4'teki
+"lisans kararı bekliyor" ifadesi artık geçersiz. İkisi de korumalı, o yüzden
+yama olarak hazır — 🧑 uygula:
+
+```bash
+git apply docs/patches/A5/01-font-licence.patch
+```
 
 ---
 

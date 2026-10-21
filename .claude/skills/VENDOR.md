@@ -27,8 +27,9 @@ The `data/` payloads of `ui-ux-pro-max`, `design` and `design-system` (55
 files, 3.1 MB of CSV/JSON) are committed. They were missed on the first pass,
 which left `plan.ts` and `generate.ts` pointing a fresh clone at a skill whose
 dataset was not there — the live dependency this file exists to avoid. Includes
-`ui-ux-pro-max/data/google-font-licenses.json`, which is an input to the
-self-hosting licence question (docs/D10-design-variation.md §13 Q2).
+`ui-ux-pro-max/data/google-font-licenses.json`, which is where to check a
+candidate self-hosted face: §13 Q2 is settled as free open-licence faces only,
+so a face's licence has to be confirmed before it is vendored into a site.
 
 Deliberately NOT vendored:
 - `vercel-optimize` (vercel-labs/agent-skills): it is a cost/observability
