@@ -1,14 +1,19 @@
-# Status — branch `design-space-baseline`
+# Status
 
-Ten commits on top of `main` (`fae9276`). Written 2026-10-21.
+**A1 is closed.** PR #1 merged into `main` as `7ad5948` on 2026-10-21, and the
+operator has applied the three protected patches (`01-design-rules`,
+`02-build-rules`, `07-acceptance`), so the rule split is live in the documents
+as well as in the code. Written 2026-10-21, continued on branch `a1-close`.
 
 The run that started this: dermaguzellik.com through the pipeline locally. The
-site it produced was judged thin and templated, and the diagnosis is what the
-rest of this branch is about — the pipeline's design rules did not describe
-good design, they described **one** design, so every run converged on it and
-the fix loop repaired any deviation back toward it.
+site it produced was judged thin and templated, and the diagnosis is what this
+work is about — the pipeline's design rules did not describe good design, they
+described **one** design, so every run converged on it and the fix loop
+repaired any deviation back toward it.
 
 ## The commits, grouped
+
+Ten commits merged in PR #1, on top of `fae9276`:
 
 | # | Commit | Group | What |
 |---|---|---|---|
@@ -97,56 +102,79 @@ never added — a fresh clone got the documentation and nothing to query, so
 palette and type decisions fell back to model defaults, the exact failure the
 skill was vendored to prevent.
 
+## Closing A1 — branch `a1-close`
+
+All seven patches reverse-apply cleanly (`git apply --check -R`), which is the
+proof that every one is on disk exactly as generated and none was partially
+applied or hand-edited in transit.
+
+`checks.test.ts` parses the hard-fail sentence out of the now-patched
+`design-rules.md` rather than keeping a copy, and derives
+`DJ3, DJ4, DJ5, DJ6, DJ7, DJ10, DJ13, DJ14, DJ15, DJ17` — identical to
+`HARD_FAIL_IDS`. The three places that had drifted are now one.
+
+Also in this branch: the D10 decision recorded in `DECISIONS.md`, the v2 draft
+of the D10 document deleted in favour of `docs/D10-design-variation.md`, and
+the absence half of DJ10 implemented (below).
+
 ## Current state
 
 ```
 typecheck   0 errors    (4 projects)
 lint        0 errors    (4 projects)
-test        138 passed  (10 files)
+test        144 passed  (10 files)   — checks.test.ts 9 → 15
 template    tsc clean
 ```
 
-Working tree clean. `main` is untouched at `fae9276`.
-
-`checks.test.ts` parses the hard-fail sentence out of `design-rules.md` rather
-than keeping a copy, and it yields `DJ3–DJ7, DJ10, DJ13–DJ15, DJ17` both
-before and after patch 01 — verified by applying the patch in a scratch copy.
+`main` is at `7ad5948`; this branch is ahead of it.
 
 ## Open
 
-**1 · Three patches are not applied.** `protect-tests.sh` denies these files
-to an agent, so this is an operator action:
+**1 · K8 — the absence half of DJ10 is implemented; the template still
+disobeys.** D10 §3.3 gave K8 a home and settled what the check should be:
+DJ10 verifies *both* that every signature the profile requires is present
+**and** that nothing the direction disables is. That half now exists in
+`checks.ts` — forbidden signatures, a hero entrance when the direction's flag
+is off, and smooth scroll when its flag is off, with five tests covering the
+pages a presence-only check waved through. Smooth scroll is read off the live
+page using the same probe as the corpus harvester, not from `design.json`,
+because it is the one of the three the template installs unconditionally:
+asking the spec would report what we intended rather than what shipped.
 
-```
-git apply docs/patches/A1/01-design-rules.patch   # the §3/§4 split, DJ10/16/17/18
-git apply docs/patches/A1/02-build-rules.patch    # C1/C3 + the Turkish glyph check
-git apply docs/patches/A1/07-acceptance.patch     # the stale hard-fail list
-```
+What remains is **B2**: nothing in the template reads these flags.
+`layout.tsx` wraps every site in `SmoothScroll` and `hero/photo-full.tsx`
+always runs the entrance, so a `calm` direction renders both and DJ10 now
+*correctly fails it*. Until B2 refactors the archetypes to read only tokens,
+a direction with `heroEntrance: false` cannot pass — which is the right
+failure to have: visible and attributable, instead of a declared direction
+being silently ignored.
 
-Until then the code enforces per-direction ranges while `design-rules.md` still
-says "weight ≥ 700". The code is what runs, so nothing fails — the document
-lags. Patches 03–06 are already applied on this branch.
+**2 · Hook gap — `protect-tests.sh` only guards the Edit and Write tools.**
+`settings.json:14` registers it with `"matcher": "Edit|Write"`, so a Bash
+command never invokes it: `git apply`, `sed -i`, or a plain `>` redirection
+all write to `design-rules.md`, `build-rules.md`, `acceptance.json`,
+`lighthouserc.cjs`, `playwright.config.ts`, `budget.json` and the protected
+specs unimpeded. The patch workflow A1 used was voluntary compliance, not
+something the hook enforced.
 
-**2 · K8, live.** D10 §3.2 makes `heroEntrance` and `smoothScroll` direction
-flags, but nothing in the template reads a flag: `layout.tsx` wraps every site
-in `SmoothScroll` and `hero/photo-full.tsx` always runs the entrance. A `calm`
-direction would still render both, and `DJ10` would not catch it — it checks
-that required signatures are *present*, never that forbidden ones are *absent*.
-Phase B (B2).
+Adding `Bash` to the matcher is **not** sufficient on its own: the hook reads
+`.tool_input.file_path` and exits 0 when it is empty (line 8), and a Bash call
+has no `file_path` — so it would be invoked and then wave everything through.
+A real fix has to inspect `.tool_input.command`.
 
-**3 · The D10 document.** On disk it is `docs/D10-design-variation-2.md`. It
-does not contain the A0 task or the deterministic-DJ16 note, both of which A1
-was built to; A1 followed the instruction, and `SUMMARY.md`'s §-references
-point at the v2 file. They may need a pass when the updated document lands.
+Operator fix. The hook denies writes to `.claude/hooks/*` and
+`.claude/settings.json`, so it is out of an agent's reach, which is the
+correct arrangement — a guard an agent can rewrite is not a guard.
 
-**4 · A0, deferred by instruction.** `template/tests/smoke.spec.ts` requires a
-`wa.me` link in the mobile sticky bar, which D8 removes when a business
-publishes no WhatsApp. Verify stops at the Playwright gate before the judge
-ever runs. Protected test.
+**3 · A0 still open.** `template/tests/smoke.spec.ts` requires a `wa.me` link
+in the mobile sticky bar, which D8 removes when a business publishes no
+WhatsApp. Verify stops at the Playwright gate before the judge ever runs, so
+this blocks every end-to-end verify including the ship test. Protected test,
+operator edit (D10 §12 A0).
 
 ## Next
 
-A2 (the `DesignSpec` type and a `direction` field on `design.json`), then A3
-(the real direction catalog replacing `design/directions/stub.ts`). Phase B
-refactors the archetypes to read only tokens, which is also where K8 gets
-closed.
+A2 (`directionSchema` + `designSpecSchema` + `briefSchema` in
+`packages/core`), then A3 (the four real directions with their reference sets,
+replacing `design/directions/stub.ts`). Phase B refactors the archetypes to
+read only tokens, which is where K8 finally closes.
