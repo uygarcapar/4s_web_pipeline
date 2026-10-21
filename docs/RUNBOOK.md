@@ -6,10 +6,9 @@ vardır ya da Claude Code'a verilecek **tek bir prompt**.
 
 İşaretler: 🧑 = sen (korumalı dosya ya da karar) · 🤖 = Claude Code
 
-Durum: §0'daki operatör işlerinin hepsi bitti, §13 dahil — hiçbir 🤖 görevi
-karar bekliyor değil. Sıradaki görev **A2**. Operatörde kalan tek şey
-`docs/patches/A5/01-font-licence.patch`'i uygulamak (§0.4), ve o yalnız A5'i
-etkiliyor, A2–A4'ü değil.
+Durum: §0'daki operatör işlerinin hepsi bitti, §13 ve A5 font yaması dahil.
+Hiçbir 🤖 görevi karar bekliyor değil. Sıradaki görev **A3** — ve A3 senin
+referans seçiminle bitiyor, yani o oturum merge'den önce durur.
 
 ---
 
@@ -95,10 +94,10 @@ Oturum bitince 🧑: diff'e bak → PR → merge → bir sonraki ID.
 | ✅ | A1 | — | merged, PR #1 |
 | ✅ | A0 + hook | — | merged, PR #3 · doğrulandı PR #4 |
 | ✅ | **A0b** template kendi verify'ını geçsin | — | merged, PR #6 · §2.1 |
-| 1 | **A2** şemalar | 🤖 | sıradaki |
-| 2 | **A3** 4 direction + ref | 🤖 + 🧑 | Q1 lazım. Claude Code `data/corpus/shots/`'tan her direction için 6–8 aday önersin, **3–5'ini sen seç** |
-| 3 | **A4** `tokens.ts` | 🤖 | |
-| 4 | **A5** self-hosted font | 🤖 | Q2 lazım. Q2 gecikirse atla; kinetic-bold ve editorial-serif Google fontlarla ilerler |
+| ✅ | **A2** şemalar | — | merged · 3 şema + 22 test · D10 §4.2 düzeltildi (motion.required) |
+| 1 | **A3** 4 direction + ref | 🤖 + 🧑 | sıradaki. Claude Code `data/corpus/shots/`'tan her direction için 6–8 aday önersin, **3–5'ini sen seç** |
+| 2 | **A4** `tokens.ts` | 🤖 | |
+| 3 | **A5** self-hosted font | 🤖 | Q2 cevaplandı: yalnız ücretsiz açık lisanslı yüzler |
 
 ### 2.1 ✅ A0b — template kendi verify'ını geçiyor (PR #6)
 

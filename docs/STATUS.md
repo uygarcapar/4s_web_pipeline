@@ -322,9 +322,53 @@ gates pass for that shape, not that this client's site is shippable, and the
 marker is what the deploy hook reads. The Done-when asked for the marker; it
 is written by the default run, which is the only run that should.
 
+## A2 — the three schemas
+
+`packages/core/src/design.ts`: `briefSchema` (§6.1), `directionSchema` (§4.2),
+`designSpecSchema` (§5), exported from the package index. 22 tests, a valid
+and an invalid example of each.
+
+They live in `packages/core` because the orchestrator writes them while the
+judge, the token generator and the admin panel read them — a schema owned by
+one stage gets re-declared by the next.
+
+Shape is the cheap part; the refines are the point:
+
+- **`required` ⊆ `signatures`** on a direction. A direction requiring a
+  motion signature it also disables would make DJ10 demand the signature and
+  then fail the page for carrying it. A1 asserted this in a test; now it
+  cannot be authored.
+- **`signature.sectionIndex` within `sections`** on a spec. Otherwise the one
+  bold element per site is attached to a section that does not exist.
+- **Inverted `[min, max]` ranges rejected** — the typo that turns the sampler
+  into an empty set or an infinite loop.
+- **`version: 2` is a literal**, so a pre-D10 `design.json` is a parse failure
+  rather than a spec with silently missing fields.
+
+**D10 §4.2 amended in the same branch** (RUNBOOK §1: propose the fix rather
+than work around it). Two gaps between the sketch and §3.3:
+
+`motion.required` did not exist. §3.3 defines DJ10 as checking both halves,
+but the schema carried only the permitted list, so the required half had no
+input — which is exactly K8, a `calm` site that still pins satisfying an empty
+requirement. And `signatures` was `z.string()`; since DJ10 compares a measured
+page against the list in both directions, a typo in a direction file would
+read as "absent" and fail every page built in that direction with nothing
+pointing at the cause. It is now an enum, `MOTION_SIGNATURES`, which **A3
+extends** when a direction needs a device the first four do not use.
+
+Not done here, deliberately: `apps/orchestrator/src/design/directions/stub.ts`
+still has its own local `DirectionRanges`. A3 replaces the stub with real
+direction files parsed by `directionSchema`, and that is the moment the local
+type goes — swapping it now would mean rewriting `checks.ts` twice.
+
 ## Next
 
-A2 (`directionSchema` + `designSpecSchema` + `briefSchema` in
-`packages/core`), then A3 (the four real directions with their reference sets,
-replacing `design/directions/stub.ts`). Phase B refactors the archetypes to
-read only tokens, which is where K8 finally closes.
+A3: the four directions from §4.3 as real files, plus 3–5 reference
+screenshots each in `data/directions/<id>/refs/`. Q1 is answered, so it is
+unblocked; it ends in an operator review of the reference picks (RUNBOOK §2),
+so that session stops before merge.
+
+Then A4 (`tokens.ts`, spec → `tokens.css`) and A5 (self-hosted fonts, free
+open-licence only per Q2). Phase B refactors the archetypes to read only
+tokens, which is where K8 finally closes.
