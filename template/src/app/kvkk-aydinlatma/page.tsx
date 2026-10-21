@@ -97,14 +97,14 @@ export default function KvkkPage() {
 
       <p className="text-sm text-muted-foreground">
         Çerez kullanımına ilişkin ayrıntılar için{" "}
-        <Link href="/cerez-politikasi" className="underline underline-offset-4">
+        <Link href="/cerez-politikasi" className="-my-3 inline-flex min-h-11 items-center align-middle underline underline-offset-4">
           Çerez Politikası
         </Link>{" "}
         sayfasını inceleyebilirsiniz.
       </p>
 
       <p>
-        <Link href="/" className="underline underline-offset-4">
+        <Link href="/" className="-my-3 inline-flex min-h-11 items-center align-middle underline underline-offset-4">
           ← Ana sayfaya dön
         </Link>
       </p>

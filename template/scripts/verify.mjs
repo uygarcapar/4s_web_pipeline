@@ -38,6 +38,39 @@ const LINKS_PORT = 3102;
 const GEOMETRY_PORT = 3103;
 const MAX_BUFFER = 64 * 1024 * 1024;
 
+/**
+ * Run the gates against a committed fixture instead of this copy's own
+ * `site.config.ts`:
+ *
+ *     VERIFY_FIXTURE=fixtures/null-whatsapp.config.ts pnpm run verify
+ *
+ * The config is swapped on disk because `~config` is a build-time import —
+ * there is no runtime switch. The original is restored in `main`'s finally,
+ * including on a crash, so a failed fixture run never leaves a client's
+ * config overwritten.
+ */
+const FIXTURE = process.env.VERIFY_FIXTURE ?? "";
+const CONFIG_PATH = path.join(CWD, "site.config.ts");
+let configBackup = null;
+
+function installFixture() {
+  if (!FIXTURE) return;
+  const from = path.resolve(CWD, FIXTURE);
+  if (!existsSync(from)) {
+    console.error(`VERIFY_FIXTURE not found: ${from}`);
+    process.exit(2);
+  }
+  configBackup = readFileSync(CONFIG_PATH, "utf8");
+  writeFileSync(CONFIG_PATH, readFileSync(from, "utf8"));
+  console.log(`fixture → ${FIXTURE}`);
+}
+
+function restoreConfig() {
+  if (configBackup === null) return;
+  writeFileSync(CONFIG_PATH, configBackup);
+  configBackup = null;
+}
+
 // Make sure children use the same node as this script (node >= 22 required;
 // the default system node breaks pnpm).
 const ENV = {
@@ -239,7 +272,13 @@ function gatePlaywright() {
   rmSync(reportPath, { force: true });
 
   const args = ["exec", "playwright", "test"];
-  if (!hasVisualBaselines()) {
+  if (FIXTURE) {
+    // Visual baselines are per-client (gitignored, created on this copy's
+    // first verify), so comparing a fixture's render against the client's
+    // baseline compares two different sites. The smoke, a11y and geometry
+    // assertions are the point of a fixture run; the screenshot is not.
+    args.push("--ignore-snapshots");
+  } else if (!hasVisualBaselines()) {
     // First verify run for this client: create the per-client visual
     // baselines instead of failing on missing snapshots.
     args.push("--update-snapshots=missing");
@@ -574,25 +613,34 @@ async function main() {
     ["geometry", gateGeometry],
   ];
 
-  for (const [name, step] of steps) {
-    if (hardFailed) {
-      record(name, "skip", 0, ["skipped — earlier gate failed"]);
-      continue;
+  installFixture();
+  try {
+    for (const [name, step] of steps) {
+      if (hardFailed) {
+        record(name, "skip", 0, ["skipped — earlier gate failed"]);
+        continue;
+      }
+      let ok;
+      try {
+        ok = await step();
+      } catch (error) {
+        record(name, "fail", 0, [`unexpected error: ${error?.message ?? error}`]);
+        ok = false;
+      }
+      if (!ok) hardFailed = true;
     }
-    let ok;
-    try {
-      ok = await step();
-    } catch (error) {
-      record(name, "fail", 0, [`unexpected error: ${error?.message ?? error}`]);
-      ok = false;
-    }
-    if (!ok) hardFailed = true;
+  } finally {
+    restoreConfig();
   }
 
   const allGreen = !hardFailed;
   writeDigest(allGreen);
   if (allGreen) {
-    writeMarker();
+    // A fixture run proves the gates pass for that shape, not that this
+    // client's site is shippable — the marker the deploy hook reads must only
+    // ever come from the copy's own config.
+    if (FIXTURE) console.log("fixture run: marker not written");
+    else writeMarker();
     process.exit(0);
   }
   process.exit(1);
@@ -601,6 +649,9 @@ async function main() {
 main().catch((error) => {
   console.error(error);
   try {
+    // Before the digest: an overwritten site.config.ts is the one piece of
+    // damage a crash here could leave behind.
+    restoreConfig();
     writeDigest(false);
   } catch {
     /* best effort */

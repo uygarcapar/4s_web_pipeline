@@ -56,7 +56,7 @@ export function SiteNav({ config }: { config: SiteConfig }) {
               <li key={link.id}>
                 <a
                   href={`#${link.id}`}
-                  className="btn-label -my-3 inline-flex min-h-11 items-center whitespace-nowrap transition-opacity hover:opacity-60 focus-visible:ring-2 focus-visible:ring-paper-50 focus-visible:outline-none"
+                  className="btn-label -my-3 inline-flex min-h-11 min-w-11 items-center justify-center whitespace-nowrap transition-opacity hover:opacity-60 focus-visible:ring-2 focus-visible:ring-paper-50 focus-visible:outline-none"
                 >
                   {link.label}
                 </a>

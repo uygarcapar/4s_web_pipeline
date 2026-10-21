@@ -102,11 +102,22 @@ export function ConsentBanner() {
             a long paragraph here becomes the page's LCP element on mobile. */}
         <p className="text-sm text-foreground">
           Bu sitede yalnızca zorunlu çerezler kullanılır, izleme yapılmaz.{" "}
-          <a href="/cerez-politikasi" className="underline underline-offset-4">
+          {/*
+            §7 floor on a link that sits inside a sentence: `inline-flex` plus
+            `align-middle` keeps it in the text flow, `-my-3` gives back the
+            height it adds so the paragraph's line box is unchanged.
+          */}
+          <a
+            href="/cerez-politikasi"
+            className="-my-3 inline-flex min-h-11 items-center align-middle underline underline-offset-4"
+          >
             Çerez Politikası
           </a>{" "}
           ve{" "}
-          <a href="/kvkk-aydinlatma" className="underline underline-offset-4">
+          <a
+            href="/kvkk-aydinlatma"
+            className="-my-3 inline-flex min-h-11 items-center align-middle underline underline-offset-4"
+          >
             KVKK Aydınlatma Metni
           </a>
         </p>

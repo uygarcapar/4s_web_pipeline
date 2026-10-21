@@ -201,9 +201,11 @@ write. Probed from an agent session against `design-rules.md` and
 used the no-op `s/x/x/` deliberately: if the hook had failed open, the file
 would still be unchanged.
 
-It is conservative in both directions, and false positives are the price. Two
-hit during this verification, both from a protected *name* appearing in a
-command that merely *looked* like a write:
+It is conservative in both directions, and false positives are the price.
+Three hit during this verification, each from a protected *name* appearing in
+a command that merely *looked* like a write. **Still open as of 2026-10-22:**
+re-probed by feeding the hook a crafted `git commit -m` payload directly, and
+it still denies, so the `commit -m` case below is live.
 
 - a read-only `node -e` inspecting `playwright.config.ts` (`node -e` is in the
   write pattern),
@@ -230,47 +232,95 @@ than requiring one. Verified by running the real verify over a fixture with
 projects, including `sticky CTA bar is visible on mobile only` under `mobile`,
 which is the assertion A0 changed.
 
-Not covered by a committed fixture: the template's `site.config.ts` publishes
-a WhatsApp number, so the null branch is only exercised when a real client has
-none (dermaguzellik is one). Worth a second fixture config if you want the
-branch gated rather than spot-checked.
+Now gated rather than spot-checked: A0b adds
+`template/fixtures/null-whatsapp.config.ts`.
 
-**4 · The geometry gate had never run — and it fails.** Found while verifying
-A0. `scripts/verify.mjs:477` did `await import("playwright")`, but the bare
-package is a dependency of `apps/orchestrator`; a generated site copy only has
-`@playwright/test`, which re-exports the same launchers. So the gate died with
-`Cannot find package 'playwright'` — and because it is the **last** gate and
-fails hard, every verify exited 1 and `.pipeline/verify-passed` was never
-written, which is what the deploy hook waits for. Fixed here, one line.
+**4 · ~~The geometry gate~~ — fixed, and A0b closed what it found.** See the
+A0b section below.
 
-With the gate actually running, it reports real violations of the §7 invariant
-`44px tap targets` on the template's own fixture:
+**5 · `links` WARN is expected and permanent.** `http://localhost:3000/` is
+reported as a broken external link. It is the documented local-build fallback
+in `src/lib/seo.ts:16` when neither `SITE_URL` nor
+`VERCEL_PROJECT_PRODUCTION_URL` is set, so it is correct locally and absent in
+a deploy — but it will WARN on every local verify. A WARN does not fail the
+gate. Mentioned so it is not re-investigated.
+
+## A0b — the template passes its own verify
+
+Both runs exit 0:
 
 ```
-fold 344×882     "Hemen Ara"            129×36
-fold 344×882     "WhatsApp'tan Yaz"     179×36
-fold 344×882     "+905551234567"        105×18
-fold 344×882     FAQ summary rows       270×24
-iphone-se 375×667  same four
+pnpm run verify                                          → 0, marker written
+VERIFY_FIXTURE=fixtures/null-whatsapp.config.ts … verify  → 0, marker skipped
 ```
 
-Not fixed — these are section and token changes, outside this task. They are
-the first genuine output of a gate that has been silently absent, so the
-template has never satisfied §7 at mobile widths.
+Workspace: typecheck 0, lint 0, 159 tests (144 orchestrator + 6 core + 9 new
+template).
 
-**5 · Two softer findings from the same run.**
+**a · 44px tap targets.** The gate's report is capped at six items per
+viewport, so "four failures at 344×882" was the visible tip. Probing all
+interactive elements across the matrix found **18 distinct offenders**: the
+hero and contact CTAs (36px), the contact phone and e-mail links (18px), four
+FAQ `summary` rows (24px), the map facade button (36px), the three consent
+buttons (32px), both consent legal links (17px), and one nav link failing on
+**width** (40px, not height). Fixed:
 
-- `links` WARN: `http://localhost:3000/` is reported as a broken external
-  link. It is the documented local-build fallback in `src/lib/seo.ts:16` when
-  neither `SITE_URL` nor `VERCEL_PROJECT_PRODUCTION_URL` is set, so it is
-  correct locally and absent in a deploy — but it will WARN on every local
-  verify. Harmless; mentioned so it is not re-investigated.
-- D8 edge, `src/lib/cta.ts:17`: a `whatsapp` CTA with no published WhatsApp
-  degrades its **href** to `tel:` but keeps its **label**. On the null fixture
-  the hero still read "WhatsApp'tan Yaz" while dialling the phone. No dead
-  link, so no gate catches it, and the file's own comment says such a CTA
-  "should not be planned in that case" — but nothing enforces that. The plan
-  stage must not emit a `whatsapp` action when `whatsappE164` is null.
+| Fix | Covers |
+|---|---|
+| `min-h-11 min-w-11` on `buttonVariants`' base class | every `Button`, any size variant — min-height beats the variant's `h-*`, so the floor holds for variants a future section picks |
+| `-my-2.5 flex min-h-11 items-center` on the FAQ `summary` | 44px hit area, 24px of flow — the card's rhythm is unchanged |
+| `-my-3 inline-flex min-h-11 items-center` on the contact and consent links | the idiom `site-nav.tsx` already used |
+| `min-w-11 justify-center` on the nav links | the width axis, which §7 requires too |
+
+The geometry gate sweeps all 12 viewports 344 → 2560 by itself (`WIDTHS` in
+`scripts/geometry.mjs`), so "run the full matrix" meant confirming all twelve,
+not adding any. Zero offenders now, on every width.
+
+Two notes. The `Button` floor raises the upstream shadcn scale (`h-8` default,
+`h-9` lg, `size-8` icon), which is tuned for dense admin UI — these are client
+sites on phones, and §7 is explicit that small text in a large box is correct.
+And the two legal-page links carried the same defect but sit on
+`/kvkk-aydinlatma` and `/cerez-politikasi`, which the gate never visits (it
+only loads `/`); fixed anyway rather than left as a known violation the gate
+cannot see.
+
+**b · The D8 CTA edge, both ends.**
+
+`resolveCta` replaces `resolveCtaHref`: it returns `{href, label}` and degrades
+**both** when `whatsappE164` is null. Only the href degraded before, so the
+hero read "WhatsApp'tan Yaz" over a `tel:` href — a button promising a channel
+the business does not have, which no gate can catch, because the href is valid
+and the label is content. The degraded label is `"Hemen Ara"`, the same wording
+the sticky bar already uses, so one page never shows two words for one action.
+
+The first end is a schema refine, not a prompt line. The plan stage writes
+markdown specs; the `whatsapp` action is chosen when `generate` writes
+`site.config.ts`. So the enforceable boundary is `siteConfigSchema`, whose
+module-load `.parse()` turns a bad plan into a **build failure**: a hero CTA
+with `action: "whatsapp"` and `whatsappE164: null` is now rejected outright.
+The plan prompt also states the rule, so a planner does not waste a build
+discovering it.
+
+Nine tests in `src/lib/cta.test.ts` cover both: the degradation (including the
+explicit "never promises WhatsApp over a `tel:` href" invariant) and the
+schema rejection. `template/tests/*.spec.ts` is hook-protected, so unit tests
+live beside their source and the template gains `vitest`, matching
+`apps/orchestrator`.
+
+**c · The fixture.** `template/fixtures/null-whatsapp.config.ts` — no
+WhatsApp, no `legalName`, no day-mapped hours, so it exercises the whole D8
+degradation path rather than one flag. `VERIFY_FIXTURE=<path> pnpm run verify`
+swaps it in, runs every gate, and restores `site.config.ts` in a `finally`
+plus the top-level `catch`, so a crash cannot leave a client's config
+overwritten.
+
+Two deliberate choices there. A fixture run passes `--ignore-snapshots`:
+visual baselines are per-client and gitignored, so comparing a fixture's
+render against the client's baseline compares two different sites. And a
+fixture run does **not** write `.pipeline/verify-passed` — it proves the
+gates pass for that shape, not that this client's site is shippable, and the
+marker is what the deploy hook reads. The Done-when asked for the marker; it
+is written by the default run, which is the only run that should.
 
 ## Next
 

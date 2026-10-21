@@ -38,7 +38,7 @@ export function Contact({ section, config }: ContactProps) {
               <dd>
                 <a
                   href={telHref(contact.phoneE164)}
-                  className="text-brand-700 underline-offset-4 hover:underline"
+                  className="-my-3 inline-flex min-h-11 items-center text-brand-700 underline-offset-4 hover:underline"
                 >
                   {contact.phoneE164}
                 </a>
@@ -49,7 +49,7 @@ export function Contact({ section, config }: ContactProps) {
               <dd>
                 <a
                   href={`mailto:${contact.email}`}
-                  className="text-brand-700 underline-offset-4 hover:underline"
+                  className="-my-3 inline-flex min-h-11 items-center text-brand-700 underline-offset-4 hover:underline"
                 >
                   {contact.email}
                 </a>

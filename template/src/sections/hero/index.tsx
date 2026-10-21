@@ -1,7 +1,7 @@
 import Image from "next/image";
 
 import { buttonVariants } from "@/components/ui/button";
-import { resolveCtaHref } from "@/lib/cta";
+import { resolveCta } from "@/lib/cta";
 import type { Cta, HeroSection, SiteConfig } from "@/lib/schema";
 import { cn } from "cn";
 
@@ -19,9 +19,10 @@ function CtaLink({
   config: SiteConfig;
   kind: "primary" | "secondary";
 }) {
+  const { href, label } = resolveCta(cta, config);
   return (
     <a
-      href={resolveCtaHref(cta, config)}
+      href={href}
       className={cn(
         buttonVariants({
           variant: kind === "primary" ? "default" : "outline",
@@ -30,7 +31,7 @@ function CtaLink({
         "px-6 text-base",
       )}
     >
-      {cta.label}
+      {label}
     </a>
   );
 }
