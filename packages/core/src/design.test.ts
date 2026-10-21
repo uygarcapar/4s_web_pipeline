@@ -52,6 +52,11 @@ const DIRECTION: Direction = {
     tier: { premium: 2, mid: 1 },
     photoProfile: { "stock-heavy": 1, pro: 1 },
   },
+  refs: [
+    "data/directions/editorial-serif/refs/a.jpg",
+    "data/directions/editorial-serif/refs/b.jpg",
+    "data/directions/editorial-serif/refs/c.jpg",
+  ],
   avoid: [
     "cluster 1 — paper lightness and hue come from the photographs, never #F4F1EA + clay",
   ],
@@ -199,6 +204,11 @@ describe("directionSchema", () => {
       ...DIRECTION,
       shape: { ...DIRECTION.shape, radius: [6] },
     });
+    expect(r.success).toBe(false);
+  });
+
+  it("rejects fewer than three reference screenshots", () => {
+    const r = directionSchema.safeParse({ ...DIRECTION, refs: DIRECTION.refs.slice(0, 2) });
     expect(r.success).toBe(false);
   });
 

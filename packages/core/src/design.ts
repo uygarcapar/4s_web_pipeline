@@ -188,6 +188,16 @@ export const directionSchema = z
         photoProfile: z.record(z.string(), z.number()),
       })
       .strict(),
+    /**
+     * Reference screenshots, repo-relative, under `data/directions/<id>/refs/`
+     * (§4.1). At least three: the signature stage (§9) and DJ18 compare a
+     * built page against this set, and a direction described only in prose is
+     * the prose-rule failure D10 exists to end.
+     *
+     * Not in §4.2 as drafted, though §4.1 defines the directory and A3's
+     * acceptance requires "each lists ≥3 refs" — the field had nowhere to go.
+     */
+    refs: z.array(z.string().min(1)).min(3),
     /** Which generic clusters (§2) this direction sits near, and how it stays out. */
     avoid: z.array(z.string().min(1)),
   })

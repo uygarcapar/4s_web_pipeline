@@ -95,9 +95,9 @@ Oturum bitince 🧑: diff'e bak → PR → merge → bir sonraki ID.
 | ✅ | A0 + hook | — | merged, PR #3 · doğrulandı PR #4 |
 | ✅ | **A0b** template kendi verify'ını geçsin | — | merged, PR #6 · §2.1 |
 | ✅ | **A2** şemalar | — | merged · 3 şema + 22 test · D10 §4.2 düzeltildi (motion.required) |
-| 1 | **A3** 4 direction + ref | 🤖 + 🧑 | sıradaki. Claude Code `data/corpus/shots/`'tan her direction için 6–8 aday önersin, **3–5'ini sen seç** |
-| 2 | **A4** `tokens.ts` | 🤖 | |
-| 3 | **A5** self-hosted font | 🤖 | Q2 cevaplandı: yalnız ücretsiz açık lisanslı yüzler |
+| 🧑 | **A3** 4 direction + ref | 🤖 + 🧑 | **PR açık, merge bekliyor** — `docs/A3-reference-candidates.md` oku, her direction için 4 seçimi onayla ya da değiştir |
+| 1 | **A4** `tokens.ts` | 🤖 | |
+| 2 | **A5** self-hosted font | 🤖 | Q2 cevaplandı: yalnız ücretsiz açık lisanslı yüzler |
 
 ### 2.1 ✅ A0b — template kendi verify'ını geçiyor (PR #6)
 
