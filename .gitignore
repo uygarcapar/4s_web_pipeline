@@ -14,7 +14,22 @@ out/
 *.tsbuildinfo
 
 # Runtime data (the CLI can be invoked from any workspace dir, so match any depth)
-data/
+# `data/*` rather than `data/`: git never descends into an ignored directory,
+# so a `!data/corpus/` exception is unreachable under the broader pattern.
+data/*
+# The measured reference corpus IS committed — the design stage and the judge
+# read it, and it is harvested on the operator's command, reviewed, and
+# versioned, never regenerated per run (docs/DECISIONS.md D9).
+#
+# Measurements only. `shots/` is 5.2 MB of PNGs and every re-harvest would add
+# another binary layer to the history; the few screenshots a direction needs
+# as its reference set are copied into data/directions/<id>/refs/ instead
+# (D10 §4.1) and committed there.
+!data/corpus/
+data/corpus/*
+!data/corpus/measurements.json
+!data/corpus/vocabulary.json
+!data/directions/
 runs/
 leads/
 .pipeline/
