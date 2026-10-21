@@ -405,9 +405,48 @@ template). 11 new catalog tests, including one that fails if two directions
 collapse to the same weight/motion/colour fingerprint — four names for one
 language would defeat the point.
 
+## A4 — the spec generates the stylesheet
+
+`design/scale.ts` builds the eight-step scale from a `DesignSpec`;
+`design/spec-tokens.ts` renders the whole `tokens.css` from it. The model
+writes no token value: the scale comes from `scaleRatio` plus the direction's
+weight and tracking, the ramp from `brandH`/`brandC` + `mode` + `strategy`,
+the radius and rule weight from `shape`, the rhythm from `grid.density`.
+
+34 tests, a snapshot per direction. The four stylesheets are measurably
+different — one test fails if any two render identically, because a catalog
+that produces one stylesheet changes nothing a visitor can see.
+
+**A bug worth recording, caught by looking at the output rather than the
+tests.** The first version derived the rem cap from the ratio but left the
+fluid term as a shared `min(10.5vw, 17.5vmin)`. The cap only governs once a
+viewport is wide enough to reach it, so on a phone every direction rendered
+the *same* display size — the whole catalog collapsed to one headline on
+exactly the devices most of these visitors use. The `vw` term is now derived
+from the ratio too, bounded to 6–11vw (below 6 a headline stops reading as
+one; above 11 a long Turkish compound overflows 344px even with
+`break-word`), with the `vmin` ceiling derived from it and hard-capped so the
+hero still fits a 900px-tall viewport. The tests now assert the fluid terms
+differ, not just the caps.
+
+`scaleViolations` checks the §4 invariants that survived the split — vmin
+term present, `t-h2-col` capped in rem, uppercase tracking ≤ 0.08em,
+display/body ≥ 2.5 at the ceiling — and `renderSpecTokens` throws rather than
+writing a stylesheet that breaks them. Tested across the full measured corpus
+ratio spread, 2.9 to 7.8.
+
+Two deliberate deviations from §5, both to avoid breaking what runs today:
+
+- The file is `spec-tokens.ts`, not `tokens.ts`. `tokens.ts` holds
+  `renderTokens(dna)`, which the live design stage still calls; the spec path
+  replaces it at C3, when the sampler first produces a spec.
+- Nothing is wired into the pipeline yet. A4's acceptance is the generator
+  and its tests; wiring without a sampler would mean building the input by
+  hand at the call site.
+
 ## Next
 
-A4 (`tokens.ts`, spec → `tokens.css`) and A5 (self-hosted fonts, free
-open-licence only per Q2). Phase B refactors the archetypes to read only
-tokens, which is where K8 finally closes — until then a direction with
-`heroEntrance: false` still cannot pass DJ10.
+A5 (self-hosted fonts, free open-licence only per Q2) closes Phase A. Phase B
+refactors the archetypes to read only tokens, which is where K8 finally
+closes — until then a direction with `heroEntrance: false` still cannot pass
+DJ10.
