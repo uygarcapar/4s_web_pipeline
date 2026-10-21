@@ -1,4 +1,5 @@
 import { expect, test } from "@playwright/test";
+import siteConfig from "../site.config";
 
 /**
  * Smoke gate (build-rules.md §2, design-rules.md §5):
@@ -6,7 +7,8 @@ import { expect, test } from "@playwright/test";
  * - every tel:/wa.me href is strict E.164 (+90, 10 digits)
  * - KVKK consent banner with the three equally-styled choices
  * - footer legal pages respond 200
- * - sticky mobile CTA bar: visible on mobile, hidden on desktop
+ * - sticky mobile CTA bar: visible on mobile, hidden on desktop; it carries a
+ *   wa.me link only when the business publishes a WhatsApp number (D8)
  */
 
 const CTA_HREF_PATTERN = /^(tel:\+90\d{10}|https:\/\/wa\.me\/90\d{10})/;
@@ -73,7 +75,13 @@ test("sticky CTA bar is visible on mobile only", async ({ page }, testInfo) => {
   if (testInfo.project.name === "mobile") {
     await expect(bar).toBeVisible();
     await expect(bar.locator('a[href^="tel:"]')).toBeVisible();
-    await expect(bar.locator('a[href*="wa.me"]')).toBeVisible();
+    const whatsapp = bar.locator('a[href*="wa.me"]');
+    if (siteConfig.contact.whatsappE164 === null) {
+      // D8: no published WhatsApp, so no wa.me link may be invented.
+      await expect(whatsapp).toHaveCount(0);
+    } else {
+      await expect(whatsapp).toBeVisible();
+    }
   } else {
     await expect(bar).toBeHidden();
   }
