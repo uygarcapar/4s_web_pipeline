@@ -1,5 +1,6 @@
 /**
- * Minimal direction stub — **replaced by the real catalog in A3** (D10 §4).
+ * Minimal direction stub — **replaced by the real catalog in A3**
+ * (docs/D10-design-variation.md §4; all §-numbers below refer to that file).
  *
  * A1 only needs the fields the two range checks consume, so that is all this
  * carries: DJ16 reads the type ranges, DJ10 reads the motion profile and the
@@ -33,6 +34,17 @@ export interface DirectionRanges {
     profiles: MotionProfile[];
     /** Signatures the page MUST carry under this direction. */
     required: MotionSignature[];
+    /**
+     * Signatures this direction PERMITS (D10 §4.2 `motion.signatures`).
+     * Anything measured and absent from this list is a violation, which is the
+     * absence half of DJ10 — `required` alone cannot catch a calm site that
+     * still pins (D10 §3.3, K8). `required` must be a subset.
+     */
+    allowed: MotionSignature[];
+    /** False = a page-load hero entrance is a violation, not merely optional. */
+    heroEntrance: boolean;
+    /** False = the direction omits Lenis, for the smaller bundle. */
+    smoothScroll: boolean;
   };
 }
 
@@ -52,6 +64,9 @@ export const KINETIC_BOLD: DirectionRanges = {
   motion: {
     profiles: ["kinetic"],
     required: ["pinned-handoff", "text-transformation"],
+    allowed: ["pinned-handoff", "text-transformation"],
+    heroEntrance: true,
+    smoothScroll: true,
   },
 };
 
@@ -68,9 +83,18 @@ export const EDITORIAL_SERIF: DirectionRanges = {
     displayTracking: [-0.015, 0],
     scaleRatio: [3, 4.5],
   },
+  /**
+   * D10 §4.3: "calm — opacity/filter reveals, no pin, no lateral. Hero
+   * entrance off. Lenis on." So both modelled signatures are disabled here,
+   * not merely unrequired — a word-by-word statement is more than an opacity
+   * reveal. A3 takes the authoritative list from the catalog.
+   */
   motion: {
     profiles: ["calm"],
     required: [],
+    allowed: [],
+    heroEntrance: false,
+    smoothScroll: true,
   },
 };
 

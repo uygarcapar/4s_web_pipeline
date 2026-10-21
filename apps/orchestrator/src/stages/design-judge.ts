@@ -6,6 +6,7 @@ import { runLlmSession } from "../llm/session.js";
 import {
   checkDj10,
   checkDj16,
+  measureSmoothScrollInPage,
   measureTypeInPage,
   type MotionMeasurement,
 } from "../design/directions/checks.js";
@@ -23,7 +24,7 @@ import { resolveDirection } from "../design/directions/stub.js";
  * signatures a page carries are all readable with `getComputedStyle` — and
  * design-rules.md §12 already makes the case for deciding measurable things
  * by script. They are computed here against the run's direction
- * (docs/DECISIONS.md D10 §3.3) and merged into the answer set, so a direction
+ * (docs/D10-design-variation.md §3.3) and merged into the answer set, so a direction
  * that calls for a 400-weight display and no pin is judged on its own terms
  * instead of against the one language the constants were written from.
  *
@@ -193,9 +194,10 @@ async function measureRanges(
   ctx: StageContext,
   port: string,
 ): Promise<JudgeAnswer[]> {
-  const spec = readJson<{ direction?: string; motion?: { signatures?: string[] } }>(
-    join(ctx.runDir, "design", "design.json"),
-  );
+  const spec = readJson<{
+    direction?: string;
+    motion?: { signatures?: string[]; heroEntrance?: boolean };
+  }>(join(ctx.runDir, "design", "design.json"));
   const direction = resolveDirection(spec?.direction);
   ctx.log(`measuring DJ10/DJ16 against direction ${direction.id}`);
 
@@ -211,12 +213,18 @@ async function measureRanges(
 
     // The signatures the design stage recorded for this run are what DJ10 is
     // about; whether they survived into the markup is DJ11's question.
+    //
+    // Smooth scroll is read off the live page rather than the spec, because it
+    // is the one of these the template installs unconditionally today (K8):
+    // asking design.json would only report what we intended, not what shipped.
     const motion: MotionMeasurement = {
       signatures: (spec?.motion?.signatures ?? []).filter(
         (x): x is "pinned-handoff" | "text-transformation" =>
           x === "pinned-handoff" || x === "text-transformation",
       ),
       fadeUpOnly: false,
+      heroEntrance: spec?.motion?.heroEntrance ?? false,
+      smoothScroll: await page.evaluate(measureSmoothScrollInPage),
     };
 
     return [
