@@ -36,6 +36,11 @@ const config: SiteConfigInput = {
     { day: 6, opens: "10:00", closes: "16:00" },
     { day: 7, opens: null, closes: null },
   ],
+  /**
+   * Only used when `openingHours` is empty: the hours string the business
+   * publishes verbatim, with no day mapping inferred (DECISIONS D8).
+   */
+  hoursNote: null,
   brand: {
     hue: 220,
     chroma: 0.12,

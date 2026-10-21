@@ -17,9 +17,33 @@ const WEEKDAYS_TR: Record<number, string> = {
   7: "Pazar",
 };
 
-/** Opening hours table from config.openingHours; "compact" tightens rows. */
+/**
+ * Opening hours from config: the day-by-day table when the business publishes
+ * a day mapping, otherwise the verbatim string it does publish
+ * (config.hoursNote, e.g. "10.00-19.30"). The schema guarantees one of the
+ * two exists; neither is ever inferred from the other (DECISIONS D8).
+ * "compact" tightens the table rows.
+ */
 export function Hours({ section, config }: HoursProps) {
   const isCompact = section.variant === "compact";
+
+  if (config.openingHours.length === 0) {
+    return (
+      <section id={section.id} className="mx-auto max-w-3xl px-4 py-16">
+        <h2 className="font-heading text-3xl font-semibold text-foreground">
+          {section.title ?? "Çalışma Saatleri"}
+        </h2>
+        {config.hoursNote !== null && (
+          <p className="mt-6 text-2xl font-semibold tabular-nums text-foreground">
+            {config.hoursNote}
+          </p>
+        )}
+        {section.note !== undefined && (
+          <p className="mt-4 text-sm text-muted-foreground">{section.note}</p>
+        )}
+      </section>
+    );
+  }
 
   return (
     <section id={section.id} className="mx-auto max-w-3xl px-4 py-16">

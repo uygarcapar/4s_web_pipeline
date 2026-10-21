@@ -9,6 +9,8 @@ import { HeroPhotoFull } from "@/sections/hero/photo-full";
 import { Hours } from "@/sections/hours";
 import { MapEmbed } from "@/sections/map";
 import { Services } from "@/sections/services";
+import { Statement } from "@/sections/statement";
+import { Visit } from "@/sections/visit";
 import { ServicesRailPinned } from "@/sections/services/rail-pinned";
 import { TeamStickySwap } from "@/sections/team/sticky-swap";
 import { Testimonials } from "@/sections/testimonials";
@@ -28,6 +30,8 @@ type SectionComponent<T extends SectionType> = ComponentType<{
  */
 export const sectionRegistry: { [T in SectionType]: SectionComponent<T> } = {
   hero: Hero,
+  statement: Statement,
+  visit: Visit,
   services: Services,
   team: TeamStickySwap,
   gallery: Gallery,
@@ -53,6 +57,8 @@ const archetypeRegistry: {
   [T in SectionType]?: Record<string, SectionComponent<T>>;
 } = {
   hero: { "photo-full": HeroPhotoFull },
+  statement: { "word-reveal": Statement },
+  visit: { "rows": Visit },
   services: { "rail-pinned": ServicesRailPinned },
   team: { "sticky-swap": TeamStickySwap },
 };

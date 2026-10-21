@@ -29,11 +29,18 @@ export function buildLocalBusinessJsonLd(config: SiteConfig): Record<string, unk
       closes: entry.closes,
     }));
 
+  // Unpublished facts are omitted rather than emitted as null: a null
+  // `legalName` or an empty `openingHoursSpecification` is an invalid value
+  // Google reports as a structured-data error, and `hoursNote` cannot be
+  // expressed as an OpeningHoursSpecification without a day mapping
+  // (DECISIONS D8).
   return {
     "@context": "https://schema.org",
     "@type": config.businessType,
     name: config.business.name,
-    legalName: config.business.legalName,
+    ...(config.business.legalName !== null
+      ? { legalName: config.business.legalName }
+      : {}),
     url: getSiteUrl(),
     telephone: config.contact.phoneE164,
     email: config.contact.email,
@@ -44,6 +51,8 @@ export function buildLocalBusinessJsonLd(config: SiteConfig): Record<string, unk
       addressRegion: config.contact.city,
       addressCountry: "TR",
     },
-    openingHoursSpecification,
+    ...(openingHoursSpecification.length > 0
+      ? { openingHoursSpecification }
+      : {}),
   };
 }

@@ -36,7 +36,10 @@ export function HeroPhotoFull({
   useGSAP(
     () => {
       if (!motionAllowed()) {
-        gsap.set(".hero-caption", { opacity: 1 });
+        // The caption is the motion end-state: it repeats the subheadline
+        // that the right-hand column already shows. Revealing it here put a
+        // second, full-width copy straight across the headline. Nothing is
+        // lost by leaving it hidden — no content exists only inside it.
         return;
       }
       const lineEls = gsap.utils.toArray<HTMLElement>(".hero-line", root.current);
@@ -98,13 +101,18 @@ export function HeroPhotoFull({
         </div>
       )}
 
-      <div className="relative flex h-full flex-col justify-between gap-6 px-5 py-5 sm:px-8 sm:py-6">
-        <header className="hero-meta flex flex-wrap items-baseline justify-between gap-x-6 gap-y-1">
-          <span className="font-display text-2xl font-extrabold tracking-[-0.04em] sm:text-3xl">
-            {config.business.name}
-          </span>
-          <span className="meta text-paper-200">{config.contact.district}</span>
-        </header>
+      {/* The hero is h-svh, so layout.tsx's pb-16 — which pushes everything
+          *after* the hero clear of the mobile sticky CTA — does not move this
+          section's own bottom row. Without its own bottom padding the address
+          and the phone number sit underneath that bar, which is exactly the
+          row design-rules.md §8 requires to be readable on the first screen.
+          md:pb-6 restores the normal inset once the bar is hidden. */}
+      <div className="relative flex h-full flex-col justify-between gap-6 px-5 pt-5 pb-20 sm:px-8 sm:pt-6 md:pb-6">
+        {/* The business name and the district used to sit here. The fixed
+            site nav now carries the name on every screen, and the district
+            is in the address row below — printing both put two copies of the
+            name in the same corner, overlapping. */}
+        <div />
 
         <div className="hero-words grid items-end gap-10 lg:grid-cols-[minmax(0,1fr)_auto] lg:gap-16">
           <div>
@@ -164,7 +172,11 @@ export function HeroPhotoFull({
           </div>
         </dl>
 
+        {/* aria-hidden: this is the same sentence the column above already
+            carries, repeated as the hand-off's end state. Without it a screen
+            reader reads the subheadline twice. */}
         <p
+          aria-hidden
           data-stacked
           className="hero-caption pointer-events-none absolute inset-x-5 top-1/2 max-w-3xl -translate-y-1/2 font-display text-[clamp(1.5rem,3.6vw,3rem)] leading-[1.05] font-bold tracking-[-0.03em] text-paper-100 opacity-0 sm:inset-x-8"
         >

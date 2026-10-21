@@ -5,7 +5,7 @@ import Image from "next/image";
 import gsap from "gsap";
 import { useGSAP } from "@gsap/react";
 
-import { lateralRail, motionAllowed } from "@/lib/motion";
+import { lateralRail } from "@/lib/motion";
 import type { ServicesSection, SiteConfig } from "@/lib/schema";
 
 /**
@@ -57,17 +57,36 @@ export function ServicesRailPinned({
           <h2 id={`${section.id}-title`} className="t-h2">
             {section.title}
           </h2>
-          {motionAllowed() && (
-            <p className="meta hidden shrink-0 text-paper-400 lg:block">
-              Kaydırmaya devam edin
-            </p>
-          )}
+          {/* Hidden by CSS, not by a render-time motionAllowed() check: that
+              call reads matchMedia, which does not exist on the server, so
+              the server and the client produced different HTML and React
+              threw hydration error #418 on every page load. */}
+          <p className="meta hidden shrink-0 text-paper-400 motion-reduce:lg:hidden lg:block">
+            Kaydırmaya devam edin
+          </p>
         </div>
 
         <ul
           ref={track}
           data-rail
-          className="flex snap-x snap-mandatory gap-5 scroll-px-5 overflow-x-auto px-5 pb-4 sm:scroll-px-8 sm:px-8 lg:w-max lg:overflow-visible lg:pb-0"
+          // A scrolling region with no focusable children must itself be
+          // focusable, or a keyboard user can never reach the cards past the
+          // first (axe scrollable-region-focusable, WCAG 2.1.1). The lint
+          // rule's default whitelist is role=tabpanel only, which does not
+          // cover a named scroll region; role=group + aria-label is the
+          // documented pattern, and these cards carry no links by design so
+          // there is nothing else here to focus.
+          // eslint-disable-next-line jsx-a11y/no-noninteractive-tabindex
+          tabIndex={0}
+          role="group"
+          aria-label={section.title ?? "Hizmetler"}
+          // The wide track exists only so ScrollTrigger can translate it, so
+          // it is gated on motion-safe as well as lg. Under
+          // prefers-reduced-motion that timeline never runs, and leaving the
+          // track wide clipped every card past the third behind the section's
+          // overflow-hidden with no way to reach them; falling back to the
+          // base overflow-x-auto hands scrolling to the browser instead.
+          className="flex snap-x snap-mandatory gap-5 scroll-px-5 overflow-x-auto px-5 pb-4 focus-visible:ring-2 focus-visible:ring-paper-50 focus-visible:outline-none sm:scroll-px-8 sm:px-8 lg:motion-safe:w-max lg:motion-safe:overflow-visible lg:motion-safe:pb-0"
         >
           {section.items.map((item, i) => (
             <li
@@ -96,7 +115,14 @@ export function ServicesRailPinned({
                   </span>
                   <h3 className="t-h3">{item.title}</h3>
                 </div>
-                <p className="t-body max-w-prose pt-4 text-paper-300">
+                {/* Only below lg does the card have room to run: at lg the
+                    section is h-svh and overflow-hidden, so a 600-character
+                    description was being sliced mid-word at the fold line.
+                    Clamping ends it on a line with an ellipsis instead. The
+                    full text is never lost — it stays in content.json, and a
+                    client whose descriptions are all this long wants a
+                    different services archetype, not a taller card. */}
+                <p className="t-body max-w-prose pt-4 text-paper-300 lg:line-clamp-[9]">
                   {item.description}
                 </p>
               </article>
