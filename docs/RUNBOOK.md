@@ -1,59 +1,42 @@
 # D10 runbook — ne kaldı, sırayla
 
-A1 bitti. D10 toplam ~67 oturum; A1 bunun birincisiydi. Bu dosya geri kalanı
-için tek kaynak: her adımda ya **senin** yapacağın bir iş vardır ya da Claude
-Code'a verilecek **tek bir prompt**.
+A1, A0, hook ve A0b bitti (`main` @ `e9a1681`). D10 toplam ~67 oturum. Bu
+dosya geri kalanı için tek kaynak: her adımda ya **senin** yapacağın bir iş
+vardır ya da Claude Code'a verilecek **tek bir prompt**.
 
 İşaretler: 🧑 = sen (korumalı dosya ya da karar) · 🤖 = Claude Code
 
+Durum: §0'daki operatör işlerinden yalnızca **0.4 (§13 cevapları)** kaldı ve
+Q1 A2'den sonrasını bloke ediyor. Sıradaki 🤖 görevi **A2**.
+
 ---
 
-## 0. Şimdi — üç operatör işi (~30 dk)
+## 0. Operatör işleri
 
-### 0.1 🧑 Hook açığını kapat
+### 0.1 ✅ Hook açığı kapandı
 
-`protect-tests.sh` yalnızca Edit/Write'ı görüyor; `git apply`, `sed -i`, `>`
-ile korumalı dosyalar Bash'ten değişebiliyor. `protect-bash.sh` bunu kapatır
-(test edildi: `git apply 01-design-rules.patch`, `sed -i`, `>>`, `cp`, `tee`,
-`python -c open(..., "w")` reddedilir; `grep`, `git diff`, `git apply --check`,
-`pnpm test`, playwright çalışır).
+`protect-tests.sh` yalnızca Edit/Write'ı görüyordu; `git apply`, `sed -i`, `>`
+ile korumalı dosyalar Bash'ten değişebiliyordu. `protect-bash.sh` kapattı
+(`7ef0e77`, PR #3). Ajan oturumundan doğrulandı: `sed -i`, `>` ve korumalı
+dosyaya dokunan `git apply` reddedildi, `git apply --check -R` geçti,
+`design-rules.md` probelardan sonra bit bit aynı kaldı.
 
-Terminalde, repo kökünde:
+Açık kalan tek şey, hook'un yanlış pozitifleri — en can sıkıcısı korumalı bir
+dosya adını anan `git commit -m`. Ayrıntı: `docs/STATUS.md`, Open 2.
 
-```bash
-git checkout main && git pull && git checkout -b ops-hooks-a0
-cp ~/Downloads/protect-bash.sh .claude/hooks/protect-bash.sh
-chmod +x .claude/hooks/protect-bash.sh
-cp ~/Downloads/settings.json .claude/settings.json
-```
+### 0.2 ✅ A0 — wa.me testi (D8)
 
-### 0.2 🧑 A0 — wa.me testi (D8)
+`docs/patches/A0/01-smoke-whatsapp.patch` uygulandı (`7ef0e77`).
+`smoke.spec.ts` artık config'e bakıyor: numara yayımlanmamışsa sticky bar'da
+`wa.me` linki **olmayacak**. `whatsappE164: null` fixture'ında 14/14 test
+geçti.
 
-```bash
-mkdir -p docs/patches/A0
-cp ~/Downloads/01-smoke-whatsapp.patch docs/patches/A0/
-git apply docs/patches/A0/01-smoke-whatsapp.patch
-```
+### 0.3 ✅ Doğrulama yapıldı
 
-### 0.3 🧑 Commit et
+PR #4. Doğrulama sırasında geometry gate'in hiç çalışmadığı çıktı — A0b bundan
+doğdu (§2.1, PR #6).
 
-```bash
-git add .claude docs/patches/A0 template/tests/smoke.spec.ts docs/RUNBOOK.md
-git commit -m "chore(hooks): guard protected files from Bash; fix(tests): wa.me only when published (A0)"
-git push -u origin ops-hooks-a0
-```
-
-PR aç, merge et. Sonra Claude Code'da bir kez doğrulat:
-
-```
-Verify task A0 and the hook: run the template verify on a fixture whose
-site.config has contact.whatsappE164 = null and confirm the playwright gate
-passes. Then try `sed -i 's/x/x/' template/design-rules.md` and confirm the
-protect-bash hook denies it. Update docs/STATUS.md (hook gap closed, A0 done)
-and commit on a branch.
-```
-
-### 0.4 🧑 §13'ü cevapla
+### 0.4 🧑 §13'ü cevapla — **tek kalan operatör işi**
 
 `docs/D10-design-variation.md` §13'e cevapları yaz. Hangileri neyi bloke ediyor:
 
@@ -97,50 +80,72 @@ Oturum bitince 🧑: diff'e bak → PR → merge → bir sonraki ID.
 
 | # | Görev | Kim | Not |
 |---|---|---|---|
-| ✅ | A1 | — | merged |
-| 1 | A0 + hook | 🧑 | §0 |
-| 2 | **A0b** template kendi verify'ını geçsin | 🤖 | §2.1 — geometry gate ilk kez çalışıyor ve kırmızı |
-| 3 | **A2** şemalar | 🤖 | |
-| 4 | **A3** 4 direction + ref | 🤖 + 🧑 | Q1 lazım. Claude Code `data/corpus/shots/`'tan her direction için 6–8 aday önersin, **3–5'ini sen seç** |
-| 5 | **A4** `tokens.ts` | 🤖 | |
-| 6 | **A5** self-hosted font | 🤖 | Q2 lazım. Q2 gecikirse atla; kinetic-bold ve editorial-serif Google fontlarla ilerler |
+| ✅ | A1 | — | merged, PR #1 |
+| ✅ | A0 + hook | — | merged, PR #3 · doğrulandı PR #4 |
+| ✅ | **A0b** template kendi verify'ını geçsin | — | merged, PR #6 · §2.1 |
+| 1 | **A2** şemalar | 🤖 | sıradaki |
+| 2 | **A3** 4 direction + ref | 🤖 + 🧑 | Q1 lazım. Claude Code `data/corpus/shots/`'tan her direction için 6–8 aday önersin, **3–5'ini sen seç** |
+| 3 | **A4** `tokens.ts` | 🤖 | |
+| 4 | **A5** self-hosted font | 🤖 | Q2 lazım. Q2 gecikirse atla; kinetic-bold ve editorial-serif Google fontlarla ilerler |
 
-### 2.1 A0b — template kendi verify'ını geçsin
+### 2.1 ✅ A0b — template kendi verify'ını geçiyor (PR #6)
 
 A0 doğrulanırken çıktı: `verify.mjs` geometry gate'i `playwright` paketini
 import ediyordu, o paket `apps/orchestrator`'ın bağımlılığı. Gate hiç
-çalışmamış; son gate olduğu ve hard fail ettiği için her verify 1 ile çıkmış ve
-`.pipeline/verify-passed` hiç yazılmamış. Import düzeltildi, gate çalışıyor ve
-template'in kendi fixture'ında §7 ihlalleri buluyor.
+çalışmamıştı; son gate olduğu ve hard fail ettiği için her verify 1 ile çıkmış
+ve `.pipeline/verify-passed` hiç yazılmamıştı — yani §7 örtüşme ve dokunma
+hedefi kontrolleri bugüne kadar hiç koşmadı. Import düzeltildi, gate çalıştı ve
+template'in kendi fixture'ında kırmızı yandı.
 
-**a. §7 dokunma hedefleri.** 344×882'de raporlananlar: hero CTA'ları
-("Hemen Ara", "WhatsApp'tan Yaz") 36px, telefon linki 18px, SSS satırları
-24px. Her etkileşimli hedef iki eksende de ≥44px olacak — satır yüksekliğinin
-değişmemesi gereken yerde `min-h-11` + onu götüren negatif margin
-(design-rules §7). Sonra tam genişlik matrisini çalıştır, sadece 344'ü değil:
-`WIDTHS` 344 → 2560 arası 12 viewport.
+**a. §7 dokunma hedefleri.** Gate rapordan viewport başına altı satır
+gösteriyor, o yüzden "344×882'de dört ihlal" görünen kısmıydı: matris boyunca
+her etkileşimli öğe ölçüldüğünde **18 ayrı ihlal** çıktı — hero ve iletişim
+CTA'ları (36px), telefon ve e-posta linkleri (18px), dört SSS satırı (24px),
+harita butonu (36px), üç çerez butonu (32px), iki yasal link (17px) ve
+**genişlikten** düşen bir nav linki (40px). Zemin `buttonVariants`'ın base
+sınıfına kondu (`min-h-11 min-w-11`), çünkü `min-height` variant'ın `h-*`'ını
+yener — yani ileride bir bölümün seçeceği variant'ta da geçerli. Yüksekliği
+değişmemesi gereken satırlarda `site-nav.tsx`'in zaten kullandığı negatif
+margin deyimi. 12 viewport'un hepsinde sıfır ihlal.
 
-**b. D8 kenar durumu (`cta.ts:17`).** `whatsappE164` null iken "whatsapp"
-CTA'sı WhatsApp etiketini `tel:` href'inin üstüne basmayacak. İki uçtan da
-düzelt: plan aşaması numarası olmayan müşteride `whatsapp` action'ı hiç
-üretmeyecek, `cta.ts` ise href'le birlikte etiketi de telefon CTA'sına
-düşürecek. Her biri için bir test.
+**b. D8 kenar durumu.** `resolveCta`, `resolveCtaHref`'in yerine geçti:
+`{href, label}` döndürüyor ve numara yoksa **ikisini de** düşürüyor. Önce
+yalnızca href düşüyordu, yani hero'da "WhatsApp'tan Yaz" yazan bir buton
+`tel:`'e bağlıydı — hiçbir gate'in yakalayamadığı bir hata, çünkü href geçerli
+ve etiket içerik.
 
-**c. Fixture.** `whatsappE164 = null` olan bir fixture commit'le, böylece A0'ın
-null dalı gate'lenmiş olur, elle bakılmış olmaz.
+Diğer uç prompt satırı değil, şema refine'ı: plan aşaması markdown spec
+yazıyor, `whatsapp` action'ı `generate` `site.config.ts`'i yazarken seçiliyor.
+Dolayısıyla gerçekten zorlayabilen sınır `siteConfigSchema` — modül yükleme
+anındaki `.parse()` kötü planı **build hatasına** çeviriyor. Plan prompt'u da
+kuralı söylüyor ki planlayıcı boşa build yakmasın.
 
-*Done when:* `pnpm run verify` hem template fixture'ında hem null-WhatsApp
-fixture'ında 0 ile çıkıyor ve `.pipeline/verify-passed` yazılıyor.
-`docs/STATUS.md` güncellendi.
+**c. Fixture.** `template/fixtures/null-whatsapp.config.ts` — WhatsApp yok,
+`legalName` yok, gün eşlenmiş saat yok; tek bayrak değil, D8 düşüş yolunun
+tamamı. `VERIFY_FIXTURE=<path> pnpm run verify` fixture'ı yerine koyup bütün
+gate'leri çalıştırıyor ve `site.config.ts`'i `finally` ile üst seviye
+`catch`'te geri yazıyor — çökme bir müşterinin config'ini üzerine yazılmış
+bırakmamalı.
+
+İki bilinçli karar: fixture koşusu `--ignore-snapshots` geçiyor (görsel
+baseline'lar müşteriye özel ve gitignore'lu, fixture'ı müşterinin baseline'ıyla
+karşılaştırmak iki ayrı siteyi karşılaştırmak olur) ve
+`.pipeline/verify-passed` **yazmıyor** — o şekil için gate'lerin geçtiğini
+kanıtlar, bu müşterinin sitesinin gönderilebilir olduğunu kanıtlamaz, ve
+marker'ı deploy hook'u okuyor. Done-when marker'ı istiyordu; onu yazan
+varsayılan koşu, ki yazması gereken tek koşu o.
+
+*Sonuç:* iki koşu da 0 ile çıkıyor, workspace typecheck 0 / lint 0 / 159 test.
+Ayrıntı: `docs/STATUS.md` → "A0b".
 
 ### Faz B — kütüphane (asıl iş, ~39–45 oturum)
 
 | # | Görev | Kim | Not |
 |---|---|---|---|
-| 6 | **B1** `/library` route | 🤖 | |
-| 7 | **B2** token-only refactor + K8 | 🤖 | |
-| 8 | **B3** statement/visit/closing/marquee | 🤖 | bir kısmı zaten var — önce envanter |
-| 9 | **B4** arketipler, **tek tek** | 🤖 + 🧑 | aşağıya bak |
+| 5 | **B1** `/library` route | 🤖 | |
+| 6 | **B2** token-only refactor + K8 | 🤖 | |
+| 7 | **B3** statement/visit/closing/marquee | 🤖 | bir kısmı zaten var — önce envanter |
+| 8 | **B4** arketipler, **tek tek** | 🤖 + 🧑 | aşağıya bak |
 
 B4 döngüsü, her arketip için:
 
@@ -165,19 +170,19 @@ A2 + A4 merged ve her section tipinde en az 2 arketip olunca:
 
 | # | Görev | Kim |
 |---|---|---|
-| 10 | C1 brief | 🤖 |
-| 11 | C2 scorer + sampler | 🤖 (Q3 lazım) |
-| 12 | C3 compose | 🤖 |
-| 13 | C4 structural distance | 🤖 |
-| 14 | C5 pre-render + embedding | 🤖 (Q4 lazım) |
-| 15 | C6 kalibrasyon | 🧑 30 site çiftini etiketle (~1 saat) |
+| 9 | C1 brief | 🤖 |
+| 10 | C2 scorer + sampler | 🤖 (Q3 lazım) |
+| 11 | C3 compose | 🤖 |
+| 12 | C4 structural distance | 🤖 |
+| 13 | C5 pre-render + embedding | 🤖 (Q4 lazım) |
+| 14 | C6 kalibrasyon | 🧑 30 site çiftini etiketle (~1 saat) |
 
 ### Faz D — signature ve judge
 
 | # | Görev | Kim |
 |---|---|---|
-| 16 | D1 signature + vision döngüsü | 🤖 |
-| 17 | D2 judge referansları + few-shot | 🤖 |
+| 15 | D1 signature + vision döngüsü | 🤖 |
+| 16 | D2 judge referansları + few-shot | 🤖 |
 
 ### Ship testi 🧑
 
