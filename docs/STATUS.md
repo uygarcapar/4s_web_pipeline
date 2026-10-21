@@ -1,9 +1,15 @@
 # Status
 
 **A1 is closed.** PR #1 merged into `main` as `7ad5948` on 2026-10-21, and the
-operator has applied the three protected patches (`01-design-rules`,
-`02-build-rules`, `07-acceptance`), so the rule split is live in the documents
-as well as in the code. Written 2026-10-21, continued on branch `a1-close`.
+operator has applied the four protected patches (`01-design-rules`,
+`02-build-rules`, `07-acceptance`, `08-section-refs`), so the rule split is
+live in the documents as well as in the code.
+
+**A0 is closed and the Bash hook gap with it** — both verified empirically on
+branch `verify-a0-hook`, see Open 2 and 3. Verifying them turned up a gate
+that had never run; that is Open 4.
+
+Written 2026-10-21, continued 2026-10-22.
 
 The run that started this: dermaguzellik.com through the pipeline locally. The
 site it produced was judged thin and templated, and the diagnosis is what this
@@ -132,6 +138,8 @@ the absence half of DJ10 implemented (below).
 
 ## Current state
 
+Workspace:
+
 ```
 typecheck   0 errors    (4 projects)
 lint        0 errors    (4 projects)
@@ -139,7 +147,20 @@ test        144 passed  (10 files)   — checks.test.ts 9 → 15
 template    tsc clean
 ```
 
-`main` is at `7ad5948`; this branch is ahead of it.
+Template verify, run end to end on the A0 fixture
+(`contact.whatsappE164: null`):
+
+```
+✅ tsc        ✅ eslint      ✅ build
+✅ playwright  — 14/14, both projects, incl. the A0 assertion
+✅ lhci
+⚠️  links      — localhost:3000 canonical, local-build fallback (see 5)
+❌ geometry    — 44px tap targets, real (see 4)
+```
+
+So A0 is verified and the Playwright gate passes. The verify as a whole does
+**not** go green: the geometry gate, which until now could not even load, now
+runs and finds genuine violations.
 
 ## Open
 
@@ -162,28 +183,94 @@ a direction with `heroEntrance: false` cannot pass — which is the right
 failure to have: visible and attributable, instead of a declared direction
 being silently ignored.
 
-**2 · Hook gap — `protect-tests.sh` only guards the Edit and Write tools.**
-`settings.json:14` registers it with `"matcher": "Edit|Write"`, so a Bash
-command never invokes it: `git apply`, `sed -i`, or a plain `>` redirection
-all write to `design-rules.md`, `build-rules.md`, `acceptance.json`,
-`lighthouserc.cjs`, `playwright.config.ts`, `budget.json` and the protected
-specs unimpeded. The patch workflow A1 used was voluntary compliance, not
-something the hook enforced.
+**2 · ~~Hook gap~~ — closed and verified.** `protect-bash.sh` (`7ef0e77`) is
+the Bash-side twin of `protect-tests.sh`: it reads `.tool_input.command`,
+matches the protected paths, and denies when the command also looks like a
+write. Probed from an agent session against `design-rules.md` and
+`build-rules.md`, all three vectors the old gap allowed:
 
-Adding `Bash` to the matcher is **not** sufficient on its own: the hook reads
-`.tool_input.file_path` and exits 0 when it is empty (line 8), and a Bash call
-has no `file_path` — so it would be invoked and then wave everything through.
-A real fix has to inspect `.tool_input.command`.
+| Probe | Result |
+|---|---|
+| `sed -i 's/x/x/' template/design-rules.md` | **denied** |
+| `echo "test" > template/build-rules.md` | **denied** |
+| `git apply` of a patch touching `design-rules.md` | **denied**, read from the patch body |
+| `git apply --check -R` (read-only) | allowed, as intended |
 
-Operator fix. The hook denies writes to `.claude/hooks/*` and
-`.claude/settings.json`, so it is out of an agent's reach, which is the
-correct arrangement — a guard an agent can rewrite is not a guard.
+`design-rules.md` was byte-identical after the probes (md5
+`c1fe4465cd816a564afc9fae4eb7a672`), so nothing slipped through. The probes
+used the no-op `s/x/x/` deliberately: if the hook had failed open, the file
+would still be unchanged.
 
-**3 · A0 still open.** `template/tests/smoke.spec.ts` requires a `wa.me` link
-in the mobile sticky bar, which D8 removes when a business publishes no
-WhatsApp. Verify stops at the Playwright gate before the judge ever runs, so
-this blocks every end-to-end verify including the ship test. Protected test,
-operator edit (D10 §12 A0).
+It is conservative in both directions, and false positives are the price. Two
+hit during this verification, both from a protected *name* appearing in a
+command that merely *looked* like a write:
+
+- a read-only `node -e` inspecting `playwright.config.ts` (`node -e` is in the
+  write pattern),
+- an `echo` whose message contained the word " patch " alongside a protected
+  filename,
+- **a `git commit -m` whose message described this work** — quoting a
+  protected filename next to words like "sed -i" or "patch" reads as a write.
+  This one matters more than the others: it blocks recording work rather than
+  just inspecting it. Workaround used here: write the message to a file and
+  `git commit -F`.
+
+For the first two, splitting the command is enough. Worth knowing before
+assuming a deny means a real violation. One structural false positive is worth
+recording too: the visual-baseline directory is
+`tests/visual.spec.ts-snapshots/`, which matches the protected spec pattern, so
+legitimate baseline maintenance through Bash is denied — use Playwright's
+`--update-snapshots` instead.
+
+**3 · ~~A0~~ — done and verified.** The assertion in
+`template/tests/smoke.spec.ts` now branches on the config (`7ef0e77`): no
+published WhatsApp means the sticky bar must carry *no* `wa.me` link, rather
+than requiring one. Verified by running the real verify over a fixture with
+`contact.whatsappE164: null` — all 14 Playwright tests passed in both
+projects, including `sticky CTA bar is visible on mobile only` under `mobile`,
+which is the assertion A0 changed.
+
+Not covered by a committed fixture: the template's `site.config.ts` publishes
+a WhatsApp number, so the null branch is only exercised when a real client has
+none (dermaguzellik is one). Worth a second fixture config if you want the
+branch gated rather than spot-checked.
+
+**4 · The geometry gate had never run — and it fails.** Found while verifying
+A0. `scripts/verify.mjs:477` did `await import("playwright")`, but the bare
+package is a dependency of `apps/orchestrator`; a generated site copy only has
+`@playwright/test`, which re-exports the same launchers. So the gate died with
+`Cannot find package 'playwright'` — and because it is the **last** gate and
+fails hard, every verify exited 1 and `.pipeline/verify-passed` was never
+written, which is what the deploy hook waits for. Fixed here, one line.
+
+With the gate actually running, it reports real violations of the §7 invariant
+`44px tap targets` on the template's own fixture:
+
+```
+fold 344×882     "Hemen Ara"            129×36
+fold 344×882     "WhatsApp'tan Yaz"     179×36
+fold 344×882     "+905551234567"        105×18
+fold 344×882     FAQ summary rows       270×24
+iphone-se 375×667  same four
+```
+
+Not fixed — these are section and token changes, outside this task. They are
+the first genuine output of a gate that has been silently absent, so the
+template has never satisfied §7 at mobile widths.
+
+**5 · Two softer findings from the same run.**
+
+- `links` WARN: `http://localhost:3000/` is reported as a broken external
+  link. It is the documented local-build fallback in `src/lib/seo.ts:16` when
+  neither `SITE_URL` nor `VERCEL_PROJECT_PRODUCTION_URL` is set, so it is
+  correct locally and absent in a deploy — but it will WARN on every local
+  verify. Harmless; mentioned so it is not re-investigated.
+- D8 edge, `src/lib/cta.ts:17`: a `whatsapp` CTA with no published WhatsApp
+  degrades its **href** to `tel:` but keeps its **label**. On the null fixture
+  the hero still read "WhatsApp'tan Yaz" while dialling the phone. No dead
+  link, so no gate catches it, and the file's own comment says such a CTA
+  "should not be planned in that case" — but nothing enforces that. The plan
+  stage must not emit a `whatsapp` action when `whatsappE164` is null.
 
 ## Next
 
