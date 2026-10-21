@@ -96,8 +96,8 @@ Oturum bitince 🧑: diff'e bak → PR → merge → bir sonraki ID.
 | ✅ | **A0b** template kendi verify'ını geçsin | — | merged, PR #6 · §2.1 |
 | ✅ | **A2** şemalar | — | merged · 3 şema + 22 test · D10 §4.2 düzeltildi (motion.required) |
 | ✅ | **A3** 4 direction + ref | — | merged, PR #11 · 4 direction + 16 referans · seçimler olduğu gibi onaylandı |
-| 1 | **A4** `tokens.ts` | 🤖 | sıradaki |
-| 2 | **A5** self-hosted font | 🤖 | Q2 cevaplandı: yalnız ücretsiz açık lisanslı yüzler |
+| ✅ | **A4** `tokens.ts` | — | merged · spec → tokens.css, direction başına snapshot · §4 invariantları kodda |
+| 1 | **A5** self-hosted font | 🤖 | sıradaki · Q2 cevaplandı: yalnız ücretsiz açık lisanslı yüzler · Faz A'yı kapatır |
 
 ### 2.1 ✅ A0b — template kendi verify'ını geçiyor (PR #6)
 
