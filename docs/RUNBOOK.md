@@ -99,10 +99,39 @@ Oturum bitince 🧑: diff'e bak → PR → merge → bir sonraki ID.
 |---|---|---|---|
 | ✅ | A1 | — | merged |
 | 1 | A0 + hook | 🧑 | §0 |
-| 2 | **A2** şemalar | 🤖 | |
-| 3 | **A3** 4 direction + ref | 🤖 + 🧑 | Q1 lazım. Claude Code `data/corpus/shots/`'tan her direction için 6–8 aday önersin, **3–5'ini sen seç** |
-| 4 | **A4** `tokens.ts` | 🤖 | |
-| 5 | **A5** self-hosted font | 🤖 | Q2 lazım. Q2 gecikirse atla; kinetic-bold ve editorial-serif Google fontlarla ilerler |
+| 2 | **A0b** template kendi verify'ını geçsin | 🤖 | §2.1 — geometry gate ilk kez çalışıyor ve kırmızı |
+| 3 | **A2** şemalar | 🤖 | |
+| 4 | **A3** 4 direction + ref | 🤖 + 🧑 | Q1 lazım. Claude Code `data/corpus/shots/`'tan her direction için 6–8 aday önersin, **3–5'ini sen seç** |
+| 5 | **A4** `tokens.ts` | 🤖 | |
+| 6 | **A5** self-hosted font | 🤖 | Q2 lazım. Q2 gecikirse atla; kinetic-bold ve editorial-serif Google fontlarla ilerler |
+
+### 2.1 A0b — template kendi verify'ını geçsin
+
+A0 doğrulanırken çıktı: `verify.mjs` geometry gate'i `playwright` paketini
+import ediyordu, o paket `apps/orchestrator`'ın bağımlılığı. Gate hiç
+çalışmamış; son gate olduğu ve hard fail ettiği için her verify 1 ile çıkmış ve
+`.pipeline/verify-passed` hiç yazılmamış. Import düzeltildi, gate çalışıyor ve
+template'in kendi fixture'ında §7 ihlalleri buluyor.
+
+**a. §7 dokunma hedefleri.** 344×882'de raporlananlar: hero CTA'ları
+("Hemen Ara", "WhatsApp'tan Yaz") 36px, telefon linki 18px, SSS satırları
+24px. Her etkileşimli hedef iki eksende de ≥44px olacak — satır yüksekliğinin
+değişmemesi gereken yerde `min-h-11` + onu götüren negatif margin
+(design-rules §7). Sonra tam genişlik matrisini çalıştır, sadece 344'ü değil:
+`WIDTHS` 344 → 2560 arası 12 viewport.
+
+**b. D8 kenar durumu (`cta.ts:17`).** `whatsappE164` null iken "whatsapp"
+CTA'sı WhatsApp etiketini `tel:` href'inin üstüne basmayacak. İki uçtan da
+düzelt: plan aşaması numarası olmayan müşteride `whatsapp` action'ı hiç
+üretmeyecek, `cta.ts` ise href'le birlikte etiketi de telefon CTA'sına
+düşürecek. Her biri için bir test.
+
+**c. Fixture.** `whatsappE164 = null` olan bir fixture commit'le, böylece A0'ın
+null dalı gate'lenmiş olur, elle bakılmış olmaz.
+
+*Done when:* `pnpm run verify` hem template fixture'ında hem null-WhatsApp
+fixture'ında 0 ile çıkıyor ve `.pipeline/verify-passed` yazılıyor.
+`docs/STATUS.md` güncellendi.
 
 ### Faz B — kütüphane (asıl iş, ~39–45 oturum)
 

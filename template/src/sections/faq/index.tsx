@@ -30,7 +30,13 @@ export function Faq({ section }: FaqProps) {
               key={item.question}
               className="group rounded-xl border border-brand-100 bg-card px-5 py-4 open:pb-5"
             >
-              <summary className="cursor-pointer list-none text-base font-semibold text-foreground marker:hidden">
+              {/*
+                §7: the row is a 44px tap target. `-my-2.5` gives back the
+                20px it added, so the closed row occupies the same 24px of
+                flow as before and the card's rhythm is unchanged — the hit
+                area simply extends into the card's own py-4 padding.
+              */}
+              <summary className="-my-2.5 flex min-h-11 cursor-pointer list-none items-center text-base font-semibold text-foreground marker:hidden">
                 <span className="mr-2 inline-block text-brand-600 transition-transform group-open:rotate-90">
                   ›
                 </span>

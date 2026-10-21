@@ -72,14 +72,14 @@ export default function CookiePolicyPage() {
 
       <p className="text-sm text-muted-foreground">
         Kişisel verilerin işlenmesine ilişkin ayrıntılar için{" "}
-        <Link href="/kvkk-aydinlatma" className="underline underline-offset-4">
+        <Link href="/kvkk-aydinlatma" className="-my-3 inline-flex min-h-11 items-center align-middle underline underline-offset-4">
           KVKK Aydınlatma Metni
         </Link>
         ni inceleyebilirsiniz.
       </p>
 
       <p>
-        <Link href="/" className="underline underline-offset-4">
+        <Link href="/" className="-my-3 inline-flex min-h-11 items-center align-middle underline underline-offset-4">
           ← Ana sayfaya dön
         </Link>
       </p>

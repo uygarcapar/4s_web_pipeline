@@ -5,7 +5,7 @@ import Image from "next/image";
 import { useGSAP } from "@gsap/react";
 import gsap from "gsap";
 
-import { resolveCtaHref } from "@/lib/cta";
+import { resolveCta } from "@/lib/cta";
 import { formatPhoneTR, telHref } from "@/lib/format";
 import { heroEntrance, motionAllowed, pinnedHandoff, splitChars } from "@/lib/motion";
 import type { HeroSection, SiteConfig } from "@/lib/schema";
@@ -134,17 +134,17 @@ export function HeroPhotoFull({
             )}
             <div className="mt-7 flex flex-wrap gap-3">
               <a
-                href={resolveCtaHref(section.ctaPrimary, config)}
+                href={resolveCta(section.ctaPrimary, config).href}
                 className="btn-label inline-flex min-h-11 items-center bg-paper-50 px-7 text-ink-900 transition-colors hover:bg-accent hover:text-paper-50 focus-visible:ring-2 focus-visible:ring-paper-50 focus-visible:ring-offset-2 focus-visible:ring-offset-ink-900 focus-visible:outline-none"
               >
-                {section.ctaPrimary.label}
+                {resolveCta(section.ctaPrimary, config).label}
               </a>
               {section.ctaSecondary !== undefined && (
                 <a
-                  href={resolveCtaHref(section.ctaSecondary, config)}
+                  href={resolveCta(section.ctaSecondary, config).href}
                   className="btn-label inline-flex min-h-11 items-center border border-paper-100/70 px-7 transition-colors hover:border-paper-50 hover:bg-paper-50 hover:text-ink-900 focus-visible:ring-2 focus-visible:ring-paper-50 focus-visible:ring-offset-2 focus-visible:ring-offset-ink-900 focus-visible:outline-none"
                 >
-                  {section.ctaSecondary.label}
+                  {resolveCta(section.ctaSecondary, config).label}
                 </a>
               )}
             </div>

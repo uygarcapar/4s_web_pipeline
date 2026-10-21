@@ -111,6 +111,10 @@ Hard rules:
   titles AND their descriptions) and cite the source URL for each.
 - Staff portraits and clinic photographs from the crawl ARE used (operator
   decision, see design-rules.md §7). Name them per section.
+- A WhatsApp CTA only exists when facts.json publishes a WhatsApp number. If
+  it does not, plan a tel CTA with a tel label; do not plan a "whatsapp"
+  action and do not write a label that promises WhatsApp. siteConfigSchema
+  rejects it and the build fails (DECISIONS D8).
 - Write no site code, no TSX, no CSS. Specs only.
 
 When every artifact is written, reply with one sentence naming the bold element.`;

@@ -351,7 +351,36 @@ export const siteConfigSchema = z
         "able to see when the business is open (DECISIONS D5)",
       path: ["hoursNote"],
     },
-  );
+  )
+  /**
+   * D8: a business with no published WhatsApp number cannot have a WhatsApp
+   * CTA. `resolveCta` degrades one to the phone so no dead href ever reaches
+   * the page, but degrading is a safety net, not a licence to plan the CTA —
+   * a button whose label promises WhatsApp is wrong even when its href works.
+   *
+   * Enforced here because this is the boundary the pipeline cannot talk its
+   * way past: `generate` writes site.config.ts, and the module-load
+   * `.parse()` turns a bad plan into a build failure instead of a shipped
+   * page. No gate downstream can catch it — there is no broken link to find
+   * and the label is content.
+   */
+  .superRefine((config, ctx) => {
+    if (config.contact.whatsappE164 !== null) return;
+    config.sections.forEach((section, index) => {
+      if (section.type !== "hero") return;
+      for (const key of ["ctaPrimary", "ctaSecondary"] as const) {
+        if (section[key]?.action !== "whatsapp") continue;
+        ctx.addIssue({
+          code: "custom",
+          message:
+            `${key} uses action "whatsapp" but contact.whatsappE164 is null. ` +
+            "The business publishes no WhatsApp number, so plan a tel CTA " +
+            "instead (DECISIONS D8).",
+          path: ["sections", index, key, "action"],
+        });
+      }
+    });
+  });
 
 /* -------------------------------------------------------------------------- */
 /* Inferred types                                                             */
