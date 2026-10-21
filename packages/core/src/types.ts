@@ -7,6 +7,11 @@
 export const STAGES = [
   "crawl",
   "audit",
+  // `brief` turns the crawl's evidence into a problem statement — what this
+  // business is, who walks in, the one job the site has — so the composition
+  // answers the client instead of the sector lookup
+  // (docs/DECISIONS.md D9).
+  "brief",
   // `design` derives the site's DNA — palette, type pairing, section
   // archetypes, motion signature — before any copy or markup exists, so that
   // two clients in the same sector cannot come out as the same site
@@ -28,6 +33,7 @@ export type Stage = (typeof STAGES)[number];
 export const AUTO_STAGES = [
   "crawl",
   "audit",
+  "brief",
   "design",
   "plan",
   "generate",
@@ -171,6 +177,13 @@ export interface Facts {
   city: string | null;
   mapsEmbedQuery: string | null; // place query for Maps Embed API
   openingHours: OpeningHoursEntry[];
+  /**
+   * Hours the business publishes without saying which days they apply to
+   * ("10.00-19.30"), verbatim. Kept separate from `openingHours` because
+   * guessing the day mapping is exactly what the verbatim rule forbids;
+   * the generated site renders this string as-is (docs/DECISIONS.md D8).
+   */
+  hoursNote: string | null;
   services: string[];
   prices: { service: string; priceTry: number }[];
   socialLinks: { platform: string; url: string }[];
