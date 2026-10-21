@@ -1,5 +1,6 @@
 /**
- * Deterministic range checks for DJ10 and DJ16 (D10 §3.3).
+ * Deterministic range checks for DJ10 and DJ16
+ * (docs/D10-design-variation.md §3.3; decision recorded in DECISIONS.md D10).
  *
  * These were prompt questions answered by a vision model against a constant
  * ("weight ≥700"). Both are measurable, and design-rules.md §12 already makes
@@ -28,6 +29,10 @@ export interface MotionMeasurement {
   signatures: MotionSignature[];
   /** True when fade-and-slide-up is the page's entire motion vocabulary. */
   fadeUpOnly: boolean;
+  /** Does the page animate on load? */
+  heroEntrance: boolean;
+  /** Does the page install smooth scroll (Lenis, or CSS `scroll-behavior`)? */
+  smoothScroll: boolean;
 }
 
 export interface CheckResult {
@@ -89,23 +94,39 @@ export function checkDj16(
  * Replaces the unconditional "is there no pinned hand-off and no text
  * transformation". A `calm` or `still` direction is supposed to have neither;
  * failing it for that was the rule encoding one design language as the floor.
+ *
+ * Checks **both** directions (D10 §3.3). Presence alone was the A1 finding K8:
+ * a `calm` site that still pins, still runs a hero entrance and still ships
+ * Lenis satisfies an empty `required` list, so the direction would be declared
+ * and then quietly ignored. What a direction disables has to fail too.
  */
 export function checkDj10(
   m: MotionMeasurement,
   direction: DirectionRanges,
 ): CheckResult {
-  const profile = direction.motion.profiles[0] ?? "calm";
-  const missing = direction.motion.required.filter(
-    (s) => !m.signatures.includes(s),
-  );
+  const { profiles, required, allowed, heroEntrance, smoothScroll } =
+    direction.motion;
+  const profile = profiles[0] ?? "calm";
   const expressive = profile === "editorial" || profile === "kinetic";
   const problems: string[] = [];
 
+  const missing = required.filter((s) => !m.signatures.includes(s));
   if (missing.length > 0) {
     problems.push(`${direction.id} requires ${missing.join(" and ")}`);
   }
   if (expressive && m.fadeUpOnly) {
     problems.push(`profile ${profile} but fade-up is the only motion device`);
+  }
+
+  const forbidden = m.signatures.filter((s) => !allowed.includes(s));
+  if (forbidden.length > 0) {
+    problems.push(`${direction.id} disables ${forbidden.join(" and ")}`);
+  }
+  if (!heroEntrance && m.heroEntrance) {
+    problems.push(`${direction.id} disables the hero entrance`);
+  }
+  if (!smoothScroll && m.smoothScroll) {
+    problems.push(`${direction.id} disables smooth scroll`);
   }
 
   return {
@@ -128,6 +149,21 @@ export function checkDj10(
  * Returns null when the page has no measurable display/body pair, so the
  * judge can report DJ16 as indeterminate rather than inventing a failure.
  */
+/**
+ * Read in the page: is smooth scroll installed? Same detection the corpus
+ * harvester uses (`src/corpus/harvest.ts`, `profileMotion`), so a direction
+ * and a measured reference site are judged by the same probe.
+ *
+ * Lenis sets classes on the documentElement and `SmoothScroll` renders nothing,
+ * so the DOM is the only place this is visible from outside the bundle.
+ */
+export function measureSmoothScrollInPage(): boolean {
+  return (
+    getComputedStyle(document.documentElement).scrollBehavior === "smooth" ||
+    document.querySelector("[data-lenis], .lenis") !== null
+  );
+}
+
 export function measureTypeInPage(): TypeMeasurement | null {
   const px = (v: string): number => Number.parseFloat(v) || 0;
 

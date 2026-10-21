@@ -26,5 +26,5 @@ Rules:
 - Output ONLY JSON: `{"hardFails": [...], "notes": [...], "answers": [...]}`.
 
 DJ10 and DJ16 are **not yours to answer**. They are measured in code against
-the run's direction (docs/DECISIONS.md D10 §3.3); DJ17 is enforced in the
+the run's direction (docs/D10-design-variation.md §3.3); DJ17 is enforced in the
 design stage. Answer DJ1–DJ9, DJ11–DJ15 and DJ18 only.

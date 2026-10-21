@@ -81,7 +81,16 @@ When a verify gate fails on performance, consult the matching rule file in
 - Design tokens only via Tailwind `@theme` variables in
   `src/styles/tokens.css`; the brand is steered by `--brand-h`/`--brand-c`
   (OKLCH) — no arbitrary hex values in section code.
-- Fonts: `next/font/google`, `latin` + `latin-ext` subsets, max two families.
+- Fonts: `next/font/google` **or** `next/font/local` (self-hosted, from
+  `template/public/fonts/`), `latin` + `latin-ext` subsets. **At most two
+  display/body families, plus an optional monospace accent** used only for
+  `.meta`, `.btn-label` and index numbers.
+  Which faces a site may use is the direction's decision, not a global one
+  (docs/D10-design-variation.md §3.2, §4). The self-hosted face list is pending the
+  licence decision — D10 §13 Q2 — and until it is taken, a face may only be
+  self-hosted after its licence is confirmed to cover commercial use across
+  unlimited client domains AND its Turkish coverage is confirmed by rendering
+  ş ğ ı İ ç ö ü Ş Ğ Ç Ö Ü, not by trusting a catalogue page (D10 §11).
 - `SITE_PREVIEW=1` behavior (noindex, Basic-Auth, draft band) must never be
   weakened by generated code.
 - Fix loop: max 3 iterations fed by `verify-digest.md`; then write BLOCKED.md

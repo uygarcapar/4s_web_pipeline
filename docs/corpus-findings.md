@@ -30,7 +30,8 @@ Re-harvest is an operator decision, never a side effect of a client run
 >    WebGL/media, §9.5 contrast). Our rules stay stricter there on purpose.
 >
 > Do not use it to pick a face, a weight, a layout or a motion signature for
-> a client. Those come from a direction (D10 §4), and a direction comes from
+> a client. Those come from a direction (docs/D10-design-variation.md §4), and
+> a direction comes from
 > its reference set — specific sites chosen as a whole — never from the
 > statistics of all of them. §10's recommendations below are changes to the
 > *bounds*; they are not a recipe for a site.

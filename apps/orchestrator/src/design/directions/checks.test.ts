@@ -19,7 +19,20 @@ import { HARD_FAIL_IDS } from "../../stages/design-judge.js";
  */
 const FIXTURE: { type: TypeMeasurement; motion: MotionMeasurement } = {
   type: { displayWeight: 400, displayTracking: -0.01, displayToBodyRatio: 4.2 },
-  motion: { signatures: [], fadeUpOnly: false },
+  motion: {
+    signatures: [],
+    fadeUpOnly: false,
+    heroEntrance: false,
+    smoothScroll: true,
+  },
+};
+
+/** A calm page, as the shorthand for the absence tests to vary one field of. */
+const CALM: MotionMeasurement = {
+  signatures: [],
+  fadeUpOnly: false,
+  heroEntrance: false,
+  smoothScroll: false,
 };
 
 describe("A1 acceptance — weight 400, no pin", () => {
@@ -69,10 +82,16 @@ describe("checkDj16", () => {
   });
 });
 
-describe("checkDj10", () => {
+describe("checkDj10 — presence", () => {
   it("fails an expressive profile whose only device is fade-up", () => {
     const r = checkDj10(
-      { signatures: ["pinned-handoff", "text-transformation"], fadeUpOnly: true },
+      {
+        ...CALM,
+        signatures: ["pinned-handoff", "text-transformation"],
+        fadeUpOnly: true,
+        heroEntrance: true,
+        smoothScroll: true,
+      },
       KINETIC_BOLD,
     );
     expect(r.pass).toBe(false);
@@ -80,8 +99,75 @@ describe("checkDj10", () => {
   });
 
   it("does not demand a pin from a calm direction", () => {
-    const r = checkDj10({ signatures: [], fadeUpOnly: true }, EDITORIAL_SERIF);
+    const r = checkDj10({ ...CALM, fadeUpOnly: true }, EDITORIAL_SERIF);
     expect(r.pass, r.evidence).toBe(true);
+  });
+});
+
+/**
+ * K8 (D10 §3.3). A presence-only DJ10 passes a calm site that still pins, still
+ * runs a hero entrance and still ships Lenis, because `required` is empty —
+ * the direction gets declared and then ignored. Each branch below is a page
+ * the old check waved through.
+ */
+describe("checkDj10 — absence", () => {
+  it("fails a calm direction that still pins", () => {
+    const r = checkDj10({ ...CALM, signatures: ["pinned-handoff"] }, EDITORIAL_SERIF);
+    expect(r.pass).toBe(false);
+    expect(r.evidence).toContain("disables pinned-handoff");
+  });
+
+  it("fails a calm direction that still runs a hero entrance", () => {
+    const r = checkDj10({ ...CALM, heroEntrance: true }, EDITORIAL_SERIF);
+    expect(r.pass).toBe(false);
+    expect(r.evidence).toContain("hero entrance");
+  });
+
+  it("fails a direction whose smoothScroll flag is off when Lenis is installed", () => {
+    const still: typeof EDITORIAL_SERIF = {
+      ...EDITORIAL_SERIF,
+      id: "still-poster",
+      motion: { ...EDITORIAL_SERIF.motion, smoothScroll: false },
+    };
+    const r = checkDj10({ ...CALM, smoothScroll: true }, still);
+    expect(r.pass).toBe(false);
+    expect(r.evidence).toContain("smooth scroll");
+  });
+
+  it("allows what the direction permits but does not require", () => {
+    const r = checkDj10({ ...CALM, signatures: ["pinned-handoff"] }, {
+      ...EDITORIAL_SERIF,
+      motion: { ...EDITORIAL_SERIF.motion, allowed: ["pinned-handoff"] },
+    });
+    expect(r.pass, r.evidence).toBe(true);
+  });
+
+  it("reports the missing and the forbidden together", () => {
+    const r = checkDj10(
+      { ...CALM, signatures: ["text-transformation"], heroEntrance: true },
+      {
+        ...KINETIC_BOLD,
+        motion: { ...KINETIC_BOLD.motion, allowed: ["pinned-handoff"] },
+      },
+    );
+    expect(r.pass).toBe(false);
+    expect(r.evidence).toContain("requires pinned-handoff");
+    expect(r.evidence).toContain("disables text-transformation");
+  });
+});
+
+/**
+ * `required` ⊆ `allowed` or the direction contradicts itself: DJ10 would
+ * demand a signature and fail the page for carrying it.
+ */
+describe("stub directions are self-consistent", () => {
+  it("requires nothing it does not also allow", () => {
+    for (const d of [KINETIC_BOLD, EDITORIAL_SERIF]) {
+      const contradictory = d.motion.required.filter(
+        (s) => !d.motion.allowed.includes(s),
+      );
+      expect(contradictory, `${d.id} requires what it disables`).toEqual([]);
+    }
   });
 });
 

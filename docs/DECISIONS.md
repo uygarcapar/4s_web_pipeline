@@ -267,3 +267,80 @@ longer blocked because its owner wrote one range instead of seven.
 crawl's new `hours_unmapped_candidates` signal. Day mapping is never inferred:
 an LLM extraction of this same page returned "Mon–Sat 10:00–19:30, Sunday
 closed", none of which the page states.
+
+## D10 — Design variation through a declared design space (2026-10-21)
+
+**Decision (operator):** creativity moves out of the runtime and into a
+curated design space that is declared up front. Taste enters the system once,
+offline, as operator-approved **directions** (named design languages: token
+ranges, allowed archetypes, motion profile, font options, reference
+screenshots) and **archetypes**; at runtime the model selects from that space
+and fills it, and does not invent. Variation comes from discrete enumerated
+axes sampled per client and checked against recent runs by measured distance —
+structural and visual — rather than by hash inequality. The model keeps exactly
+one place for bespoke work per site, the signature section, guided by reference
+screenshots instead of prose rules. The quality ceiling of the pipeline becomes
+the quality of the library, which is intended: design quality is curation, and
+the pipeline's job is to scale the curation.
+
+The cause this fixes is architectural, not a prompt problem. `design-rules.md`
+§3–§6 were written from `diskent-landing` and then enforced globally, so every
+rule that made that one site good — the exact `clamp()` scale, display weight
+700–800, tracking −0.045em, a mandatory pinned hand-off, a mandatory text
+transformation, one hue family, Google fonts only — was fed to `generate` and
+the fix loop as an instruction. The 57-site corpus study did not help, because
+it produced medians, and designing toward the median produces the average site.
+Award sites are good because each commits hard to one coherent concept.
+
+**Amends:**
+
+- **D5** — the design language adopted from the hand-built reference stops
+  being global. `design-rules.md` §3–§6 split into invariants (§3.1: the
+  reduced-motion contract, transform/opacity/filter only, one declared scale,
+  Turkish typography, the geometry and facts rules — all still hard gates for
+  every site) and style (§3.2: moves into direction files). D5's language
+  survives intact as the `kinetic-bold` direction; it is no longer the floor.
+- **D6** — "generated sites must not be copies of each other" is kept but
+  re-measured. The fingerprint ledger detects inequality, and changing one
+  archetype changes the hash while the eye still sees the same site.
+  Replaced by structural + visual distance (§8), and DJ17 becomes
+  distance-based.
+- **D7** — amends the amendment. D7 added §4's fixed type scale, §5's
+  one-hue colour and DJ16–DJ17 as globals; those are exactly the rules that
+  encoded one site, and they now live per direction. D7's procedural point
+  stands: `design-rules.md` is protected and changes to it are operator edits
+  applied from patches.
+- **D4** — `next/font/google` only is widened to `next/font/local` **or**
+  `next/font/google`, so a direction may self-host (§11 C1). Each self-hosted
+  face needs a licence permitting commercial use across unlimited client
+  domains *and* a rendered Turkish glyph check — the catalogue page is not
+  evidence. Free-vs-licensed is open (§13 Q2).
+- **D9** — the deliberation layer stands and gains a composition pass on
+  harvest intake (§14). The brief it introduced becomes the input to
+  deterministic direction selection rather than advice to a generator.
+
+**Consequences:**
+
+- **Inter is no longer banned outright** (§11 C4): never a display face, and
+  permitted as a **body** face only where a direction lists it. Reaching for
+  it by default remains the clearest tell that a page was not designed for its
+  owner. "Max two families" becomes two display/body families plus an optional
+  mono accent (§11 C3).
+- **DJ10 and DJ16 stop being judge questions and become deterministic code**
+  (§3.3). Computed styles from Playwright are compared with the selected
+  direction's ranges; a model reading a screenshot cannot tell weight 400 from
+  500, and a check that produces false positives trains the fix loop to ignore
+  it — D9's constraint. DJ10 checks both halves: every signature the profile
+  requires is present, and nothing the direction disables is.
+- **`design.json` becomes a resolved, validated `DesignSpec`** (§5) that every
+  downstream stage reads; nothing re-decides style after it.
+- **`docs/corpus-findings.md` is demoted to distributions** — the legal range
+  for a direction's token ranges, never a direction. Directions come from the
+  reference sets in §4.
+- The pipeline gains offline work that is not per-run: authoring directions,
+  copying reference screenshots into `data/directions/<id>/refs/`, and
+  curating intake from new references (§14). This is operator time, by design.
+
+A1 (the rule split) is applied and merged. Full text, direction catalog,
+selection pipeline, distance metrics and the phased plan:
+[docs/D10-design-variation.md](D10-design-variation.md).
