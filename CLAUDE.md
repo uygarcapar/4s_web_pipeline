@@ -42,7 +42,12 @@ Playwright · Lighthouse 13 / LHCI 0.15 · Crawlee.
   Vercel/Telegram/WhatsApp tokens live only in the orchestrator process,
   never in model-visible Bash env.
 - No `<img>` (use `next/image`), no arbitrary hex in sections (tokens only),
-  max two font families, no analytics/marketing scripts in demos (KVKK).
+  max two font families, and never Inter or Roboto unless the client's own
+  brand uses that face — they are the default every generated page reaches
+  for and the clearest tell that a site was not designed for its owner
+  (docs/PLAN.md hard-ban list; the curated pairings live in
+  `apps/orchestrator/src/design/dna.ts`).
+  No analytics/marketing scripts in demos (KVKK).
 - `tel:`/`wa.me` hrefs must match `^(tel:\+90\d{10}|https:\/\/wa\.me\/90\d{10})`.
 - robots.txt is respected when crawling; `opted_out` leads are never
   re-contacted or re-crawled.
@@ -61,6 +66,10 @@ every transition. Fix loop ≤ 3 iterations, then BLOCKED.md + escalation.
 
 Design constraints: `template/design-rules.md`. Build/perf constraints:
 `template/build-rules.md`. Both are enforcement inputs, not suggestions.
+`template/pattern-library.md` is what the operator's own reference work
+actually does (extracted from `~/*-landing`, docs/DECISIONS.md D9) — read it
+before making a type, section or motion decision, so those findings are not
+re-derived by eye on every run.
 
 ## Compaction
 
