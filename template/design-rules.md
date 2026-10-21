@@ -54,7 +54,7 @@ this file wins.
 > (`still` / `calm` / `editorial` / `kinetic`), whether a pinned hand-off or a
 > text transformation is required, whether there is a lateral move, whether
 > the hero animates on load, and whether Lenis is loaded at all. See
-> docs/DECISIONS.md D10 §3.2 and §4. The rules below are the ones that hold
+> docs/D10-design-variation.md §3.2 and §4. The rules below are the ones that hold
 > for every site regardless of direction; they are about correctness, not
 > character.
 >
@@ -91,7 +91,7 @@ One scale per site, declared in `tokens.css`. No section invents a size.
 
 > **The scale's values are the direction's**, generated from its
 > `scaleRatio`, `displayWeights` and `displayTracking` ranges
-> (docs/DECISIONS.md D10 §3.2, §5). The eight steps below are the shape every
+> (docs/D10-design-variation.md §3.2, §5). The eight steps below are the shape every
 > site has; the numbers that used to be fixed here are not.
 >
 > Moved out: the exact `clamp()` values, "display/body ratio ≈ 6:1", and

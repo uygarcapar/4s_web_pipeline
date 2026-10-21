@@ -104,9 +104,22 @@ skill was vendored to prevent.
 
 ## Closing A1 — branch `a1-close`
 
-All seven patches reverse-apply cleanly (`git apply --check -R`), which is the
-proof that every one is on disk exactly as generated and none was partially
-applied or hand-edited in transit.
+Every patch was verified with `git apply --check -R` at the commit that
+applied it — the proof that it is on disk exactly as generated, with nothing
+partially applied or hand-edited in transit. 01–07 at `2e05c48`, 08 at
+`2ca9387`. The check is context-sensitive, so it stops holding once a later
+commit edits the same region: patch 08 rewrites lines inside 01 and 02's
+hunks, and 03–06 cover files this branch edited afterwards. That is expected,
+and the reason the verification is recorded against a commit rather than
+left as a standing claim.
+
+Patches 01, 02, 07 and 08 touch hook-protected files and were applied by the
+operator; 03–06 were applied by an agent.
+
+Every §-number in the repo now resolves: section numbers name
+`docs/D10-design-variation.md`, and `DECISIONS.md D10` is cited for the
+decision itself. Patch 08 closed the last three, inside `design-rules.md` and
+`build-rules.md`.
 
 `checks.test.ts` parses the hard-fail sentence out of the now-patched
 `design-rules.md` rather than keeping a copy, and derives
@@ -166,14 +179,7 @@ Operator fix. The hook denies writes to `.claude/hooks/*` and
 `.claude/settings.json`, so it is out of an agent's reach, which is the
 correct arrangement — a guard an agent can rewrite is not a guard.
 
-**3 · Patch 08 — three §-references left inside protected files.**
-`design-rules.md:57`, `design-rules.md:94` and `build-rules.md:89` still cite
-`docs/DECISIONS.md D10 §3.2` and similar. DECISIONS.md D10 is prose with no
-sections, so those numbers resolve nowhere; the sections live in
-`docs/D10-design-variation.md`. Both files are hook-protected, so it ships as
-`docs/patches/A1/08-section-refs.patch` — applies clean, one command.
-
-**4 · A0 still open.** `template/tests/smoke.spec.ts` requires a `wa.me` link
+**3 · A0 still open.** `template/tests/smoke.spec.ts` requires a `wa.me` link
 in the mobile sticky bar, which D8 removes when a business publishes no
 WhatsApp. Verify stops at the Playwright gate before the judge ever runs, so
 this blocks every end-to-end verify including the ship test. Protected test,

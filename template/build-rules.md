@@ -86,7 +86,7 @@ When a verify gate fails on performance, consult the matching rule file in
   display/body families, plus an optional monospace accent** used only for
   `.meta`, `.btn-label` and index numbers.
   Which faces a site may use is the direction's decision, not a global one
-  (docs/DECISIONS.md D10 §3.2, §4). The self-hosted face list is pending the
+  (docs/D10-design-variation.md §3.2, §4). The self-hosted face list is pending the
   licence decision — D10 §13 Q2 — and until it is taken, a face may only be
   self-hosted after its licence is confirmed to cover commercial use across
   unlimited client domains AND its Turkish coverage is confirmed by rendering
