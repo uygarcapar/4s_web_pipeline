@@ -1,0 +1,111 @@
+@import "tailwindcss";
+
+/*
+ * Second reading of the same measurements (template/corpus-findings.md).
+ *
+ * Site one: near-black ground, grotesk display at 400, tracking -0.01em.
+ * This one: paper ground, serif display at 700, tracking left at 0. Both sit
+ * inside the measured distribution — §2 records weights from 220 to 700 and
+ * §4 records tracking from -0.06em to +0.02em. Picking a different point in
+ * the same range is what stops two sites built from one corpus looking alike.
+ */
+
+@theme inline {
+  --font-display: var(--font-display);
+  --font-body: var(--font-body);
+  --font-mono: var(--font-mono);
+
+  --color-paper: var(--paper);
+  --color-paper-warm: var(--paper-warm);
+  --color-ink: var(--ink);
+  --color-ink-soft: var(--ink-soft);
+  --color-rule: var(--rule);
+  --color-accent: var(--brand-accent);
+}
+
+:root {
+  --paper: #f2efe8;
+  --paper-warm: #e7e2d7;
+  --ink: #16150f;
+  --ink-soft: #6a655a;
+  --rule: #cdc6b8;
+  --brand-accent: #2f4f3a;
+
+  --ease-expo: cubic-bezier(0.16, 1, 0.3, 1);
+  --ease-quint: cubic-bezier(0.22, 1, 0.36, 1);
+  --dur: 0.4s;
+
+  --section-y: clamp(6rem, 13vh, 11rem);
+}
+
+html {
+  background: var(--paper);
+  color: var(--ink);
+  scroll-behavior: smooth;
+}
+
+body {
+  font-family: var(--font-body), system-ui, sans-serif;
+  font-size: 1rem;
+  line-height: 1.6;
+  -webkit-font-smoothing: antialiased;
+}
+
+::selection {
+  background: var(--brand-accent);
+  color: var(--paper);
+}
+
+/* ---- type -----------------------------------------------------------------
+ * 700 and tracking 0: the serif carries the weight, so it needs no tightening.
+ * Site one's -0.01em suits a grotesk; a high-contrast serif set tight closes
+ * its own counters.
+ */
+.t-display {
+  font-family: var(--font-display), Georgia, serif;
+  font-size: clamp(3rem, min(10vw, 16vmin), 10rem);
+  font-weight: 700;
+  line-height: 0.94;
+  letter-spacing: 0;
+  overflow-wrap: break-word;
+}
+
+.t-h2 {
+  font-family: var(--font-display), Georgia, serif;
+  font-size: clamp(1.875rem, 4.5vw, 3.5rem);
+  font-weight: 700;
+  line-height: 1.05;
+  letter-spacing: 0;
+}
+
+.t-lead {
+  font-size: clamp(1.0625rem, 1.3vw, 1.1875rem);
+  line-height: 1.55;
+}
+
+.meta {
+  font-family: var(--font-mono), ui-monospace, monospace;
+  font-size: 0.75rem;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--ink-soft);
+}
+
+/* Each stacking card is its own sheet, so it needs a ground of its own or the
+   card beneath shows through as it slides under. */
+.sheet {
+  background: var(--paper);
+  border: 1px solid var(--rule);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html {
+    scroll-behavior: auto;
+  }
+  /* The stack becomes an ordinary column — every card keeps its place in flow
+     and nothing is left pinned on top of anything else. */
+  .stack-item {
+    position: static !important;
+    transform: none !important;
+  }
+}

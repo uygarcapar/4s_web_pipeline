@@ -1,0 +1,143 @@
+@import "tailwindcss";
+
+/*
+ * Every number here comes from template/corpus-findings.md — the measured
+ * median of 56 award-winning sites — rather than from taste. Where the corpus
+ * and our own rules disagree, the comment says which one won and why.
+ */
+
+@theme inline {
+  --font-display: var(--font-display);
+  --font-body: var(--font-body);
+  --font-mono: var(--font-mono);
+
+  --color-paper: var(--paper);
+  --color-paper-dim: var(--paper-dim);
+  --color-ink: var(--ink);
+  --color-ink-soft: var(--ink-soft);
+  --color-rule: var(--rule);
+  --color-accent: var(--brand-accent);
+}
+
+:root {
+  /* One hue family. 10 distinct painted colours is the corpus median (§9.5),
+     so this is deliberately a small palette, not a poor one. */
+  --paper: #0d0c0b;
+  --paper-dim: #16140f;
+  --ink: #f4f1ea;
+  --ink-soft: #98928a;
+  --rule: #2a2621;
+  --brand-accent: #c8502a;
+
+  /* §8.3 / §7.3 — the corpus easing vocabulary, measured from both CSS and
+     the JS bundles. `none` is not here on purpose: anything tied to scroll
+     must be linear, and that is set on the tween, not as a token. */
+  --ease-expo: cubic-bezier(0.16, 1, 0.3, 1);
+  --ease-quint: cubic-bezier(0.22, 1, 0.36, 1);
+  --dur: 0.4s; /* corpus median */
+
+  /* 4px base (§7.4) */
+  --gap: 1rem;
+  --section-y: clamp(6rem, 12vh, 10rem);
+}
+
+html {
+  background: var(--paper);
+  color: var(--ink);
+  /* 73% of the corpus honours reduced motion (§9.1); smooth scroll is the
+     one piece of motion that is safe to leave on, and it is switched off
+     below for anyone who asks. */
+  scroll-behavior: smooth;
+}
+
+body {
+  font-family: var(--font-body), system-ui, sans-serif;
+  font-size: 1rem; /* 16px — the corpus body median (§9.2), not our 15px */
+  line-height: 1.55;
+  -webkit-font-smoothing: antialiased;
+}
+
+::selection {
+  background: var(--brand-accent);
+  color: var(--ink);
+}
+
+/* ---- type scale -----------------------------------------------------------
+ * Weight 400 and tracking -0.01em are the corpus medians (§2, §4). Our own
+ * design-rules.md asks for 700-800 and -0.045em; on the measured evidence
+ * that is the far edge of what juries reward, so this page takes the median
+ * and lets size carry the display instead of weight.
+ *
+ * The clamp floor is 44px, under our template's 52px: §9.2 showed we sit at
+ * the corpus p75 on a phone, i.e. already larger than half the corpus.
+ */
+.t-display {
+  font-family: var(--font-display), system-ui, sans-serif;
+  font-size: clamp(2.75rem, min(9vw, 15vmin), 9rem);
+  font-weight: 400;
+  line-height: 0.92;
+  letter-spacing: -0.01em;
+  overflow-wrap: break-word;
+}
+
+.t-h2 {
+  font-family: var(--font-display), system-ui, sans-serif;
+  font-size: clamp(2rem, 5vw, 4rem);
+  font-weight: 400;
+  line-height: 1;
+  letter-spacing: -0.01em;
+}
+
+.t-figure {
+  font-family: var(--font-display), system-ui, sans-serif;
+  font-size: clamp(3.5rem, 11vw, 9rem);
+  font-weight: 400;
+  line-height: 0.85;
+  letter-spacing: -0.02em;
+  font-variant-numeric: tabular-nums;
+}
+
+.t-lead {
+  font-size: clamp(1.0625rem, 1.4vw, 1.25rem);
+  line-height: 1.5;
+  color: var(--ink);
+}
+
+/* The mono accent (§7.2): meta, labels, figures — never body copy. */
+.meta {
+  font-family: var(--font-mono), ui-monospace, monospace;
+  font-size: 0.75rem;
+  font-weight: 400;
+  letter-spacing: 0.06em; /* under the 0.08em Turkish cap */
+  text-transform: uppercase;
+  color: var(--ink-soft);
+}
+
+.rule-top {
+  border-top: 1px solid var(--rule);
+}
+
+/* Act 2's alternate words sit on top of the first one and are revealed one at
+   a time by the pin. With no timeline they must stay hidden, or five words
+   land on the same line — the first word already carries the sentence. */
+.swap-alt {
+  opacity: 0;
+}
+
+/* Nothing animates on load (§9.3: corpus median is 0 elements settling), so
+   there is no entrance state to undo. Scroll-driven reveals start here. */
+.reveal {
+  opacity: 0;
+  transform: translateY(1.5rem);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html {
+    scroll-behavior: auto;
+  }
+  /* Nothing a timeline would have revealed may stay hidden. */
+  .reveal {
+    opacity: 1;
+    transform: none;
+  }
+}
