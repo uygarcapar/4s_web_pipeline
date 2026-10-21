@@ -474,7 +474,13 @@ async function gateGeometry() {
       return false;
     }
 
-    const { chromium } = await import("playwright");
+    // `@playwright/test`, not `playwright`: the bare package is a dependency
+    // of apps/orchestrator, and this script runs inside a generated site copy
+    // whose only Playwright dependency is @playwright/test (which re-exports
+    // the same browser launchers). Importing `playwright` here made the
+    // geometry gate fail to resolve, and it is the last gate, so every verify
+    // exited 1 and .pipeline/verify-passed was never written.
+    const { chromium } = await import("@playwright/test");
     const { checkGeometry } = await import("./geometry.mjs");
     const problems = await checkGeometry({ chromium, url: base });
     const seconds = (Date.now() - started) / 1000;
