@@ -156,8 +156,9 @@ One scale per site, declared in `tokens.css`. No section invents a size.
   `subsets: ['latin','latin-ext']` — ş/ğ/ı/İ/ç/ö/ü must render, confirmed by
   rendering them, not by trusting a catalogue page. At most two display/body
   families plus an optional monospace accent. Which faces are permitted is
-  the direction's decision (D10 §3.2, §11 C1/C3); the self-hosted face list
-  awaits the licence decision in D10 §13 Q2.
+  the direction's decision (D10 §3.2, §11 C1/C3). Self-hosted faces are free
+  open-licence faces only — no foundry licence is bought, so a per-domain or
+  pageview-capped licence disqualifies a face (D10 §13 Q2).
 - **Display line masks need padding on both sides.** `overflow: hidden` with
   tight leading clips the cedilla of ş and the dot of İ — which silently
   renames the business ("Dişkent" → "Diskent"). Pad top and bottom by ≥0.12em
