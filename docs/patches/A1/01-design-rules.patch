@@ -1,0 +1,145 @@
+--- a/template/design-rules.md
++++ b/template/design-rules.md
+@@ -50,27 +50,30 @@
+ 
+ ## 3. Motion grammar
+ 
+-Scroll must **change** the page, not merely translate it. A page that only
+-moves content upward as it enters is the generic default and fails.
++> **Which motion a site carries is its direction's decision** — the profile
++> (`still` / `calm` / `editorial` / `kinetic`), whether a pinned hand-off or a
++> text transformation is required, whether there is a lateral move, whether
++> the hero animates on load, and whether Lenis is loaded at all. See
++> docs/DECISIONS.md D10 §3.2 and §4. The rules below are the ones that hold
++> for every site regardless of direction; they are about correctness, not
++> character.
++>
++> Moved out of this section: "scroll must change the page", the required
++> pinned hand-off, the required text transformation, the recommended lateral
++> move, the single page-load moment, and "a page whose entire motion
++> vocabulary is fade-up fails". Each of those described one design language
++> and is now a property of `kinetic-bold` (D10 §4.3).
+ 
+-- **Foundation.** Lenis smooth scroll driven by `gsap.ticker`; ScrollTrigger
+-  reads the same clock. `lenis.resize()` on every ScrollTrigger refresh, and a
+-  refresh after `document.fonts.ready` — trigger positions measured before the
+-  webfont settles are wrong by a few pixels.
+-- **Required: one pinned hand-off.** At least one section pins and two
+-  elements trade places over the scrub (a photograph taking the screen while
+-  the words leave). Not a fade.
+-- **Required: one text transformation.** At least one place where the text
+-  itself changes rather than moving — word-by-word lighting, or a name
+-  swapping in place as its subject passes the middle of the screen.
+-- **Recommended: one lateral move.** Vertical input, horizontal travel (a
+-  pinned rail of cards). Degrades to a native swipe list below 1024px — never
+-  hijack scroll on touch.
+-- **At most ONE orchestrated page-load moment.** The hero entrance. Every
+-  other entrance is scroll-driven.
+-- Per-section fade-and-slide-up is permitted **as supporting texture only**.
+-  A page whose entire motion vocabulary is fade-up fails.
+-- Animate `transform`/`opacity` only; never `transition: all`.
++- **Foundation, when a direction uses Lenis.** Lenis smooth scroll driven by
++  `gsap.ticker`; ScrollTrigger reads the same clock. `lenis.resize()` on every
++  ScrollTrigger refresh, and a refresh after `document.fonts.ready` — trigger
++  positions measured before the webfont settles are wrong by a few pixels.
++  A direction with a `still` profile may omit Lenis entirely.
++- **A lateral move never hijacks touch.** Where a direction uses one, it
++  degrades to a native swipe list below 1024px.
++- Animate `transform`, `opacity` and `filter` only; never `transition: all`.
++  (`filter` is in the list because blur and brightness transitions are near
++  universal in the reference corpus — docs/corpus-findings.md §8.2.)
+ - `gsap.matchMedia` gates everything. Under `prefers-reduced-motion: reduce`
+   **no timeline runs and no content is left hidden** — anything a timeline
+   would have revealed must already be visible.
+@@ -86,22 +89,33 @@
+ 
+ One scale per site, declared in `tokens.css`. No section invents a size.
+ 
+-| step | size | role |
+-|---|---|---|
+-| `t-display` | `clamp(3.25rem, min(10.5vw, 17.5vmin), 11.5rem)` | hero + closing statement |
+-| `t-h2` | `clamp(2.5rem, 8vw, 7rem)` | full-width section headings |
+-| `t-h2-col` | `clamp(1.875rem, 4vw, 4rem)` | headings sharing a row with another column |
+-| `t-h3` | `clamp(1.75rem, 3.2vw, 2.75rem)` | card titles |
+-| `t-lead` | `clamp(1rem, 1.15vw, 1.0625rem)` | lead paragraphs |
+-| `t-body` | `clamp(0.9375rem, 1vw, 1rem)` | body |
+-| `.meta` | `clamp(0.625rem, 0.8vw, 0.75rem)` | uppercase eyebrows |
+-| `.btn-label` | `0.8125rem` | button labels |
++> **The scale's values are the direction's**, generated from its
++> `scaleRatio`, `displayWeights` and `displayTracking` ranges
++> (docs/DECISIONS.md D10 §3.2, §5). The eight steps below are the shape every
++> site has; the numbers that used to be fixed here are not.
++>
++> Moved out: the exact `clamp()` values, "display/body ratio ≈ 6:1", and
++> "a grotesk display needs weight 700–800 and −0.04em…−0.05em tracking". The
++> measured corpus spread is 2.9–7.8 on the ratio, 220–700 on weight and
++> −0.06em…+0.02em on tracking (docs/corpus-findings.md §2–§4); the old
++> constants sat at one end of all three because they were read off a single
++> site. `kinetic-bold` keeps them (D10 §4.3).
+ 
+-- **Display/body ratio ≈ 6:1.** Big type only reads as big against a quiet
+-  floor. Raising the supporting sizes to meet the headline flattens the page
+-  even though every size got bigger — this was a real failure, corrected.
+-- **A grotesk display needs weight 700–800 *and* negative tracking**
+-  (−0.04em…−0.05em). At 400 it reads timid at any size.
++| step | role |
++|---|---|
++| `t-display` | hero + closing statement |
++| `t-h2` | full-width section headings |
++| `t-h2-col` | headings sharing a row with another column |
++| `t-h3` | card titles |
++| `t-lead` | lead paragraphs |
++| `t-body` | body |
++| `.meta` | uppercase eyebrows |
++| `.btn-label` | button labels |
++
++- **Big type only reads as big against a quiet floor.** Whatever ratio a
++  direction sets, raising the supporting sizes to meet the headline flattens
++  the page even though every size got bigger — this was a real failure,
++  corrected.
+ - **Uppercase tracking ≤ 0.08em.** The award references use 0.2–0.35em; in
+   Turkish that spread slows reading of short agglutinated phrases. One
+   tracking value for all small caps on the page.
+@@ -138,8 +152,12 @@
+ 
+ - `<html lang="tr">`; `openGraph.locale: 'tr_TR'`; hreflang `tr-TR` +
+   `x-default`.
+-- Fonts via `next/font/google`, `subsets: ['latin','latin-ext']` — ş/ğ/ı/İ/ç/ö/ü
+-  must render. Max two families.
++- Fonts via `next/font/google` **or** `next/font/local`,
++  `subsets: ['latin','latin-ext']` — ş/ğ/ı/İ/ç/ö/ü must render, confirmed by
++  rendering them, not by trusting a catalogue page. At most two display/body
++  families plus an optional monospace accent. Which faces are permitted is
++  the direction's decision (D10 §3.2, §11 C1/C3); the self-hosted face list
++  awaits the licence decision in D10 §13 Q2.
+ - **Display line masks need padding on both sides.** `overflow: hidden` with
+   tight leading clips the cedilla of ş and the dot of İ — which silently
+   renames the business ("Dişkent" → "Diskent"). Pad top and bottom by ≥0.12em
+@@ -294,17 +312,22 @@
+ | DJ7 | Does any Turkish text contain ASCII substitutions or mojibake? |
+ | DJ8 | Is the phone number rendered as selectable text with a `tel:+90` href? |
+ | DJ9 | Is the mobile CTA present with working tel: and wa.me links? |
+-| DJ10 | Is fade-and-slide-up the only motion on the page — i.e. is there no pinned hand-off and no text transformation? |
++| DJ10 | Does the page's motion match the direction's motion profile, and is fade-up not the only device when that profile is `editorial` or `kinetic`? **Measured in code** (`design/directions/checks.ts`), not asked of the model. |
+ | DJ11 | Is the memorable "one bold element" from design.json actually present? |
+ | DJ12 | Are opening hours visible with Turkish day names? |
+ | DJ13 | Does every rendered section contain body content, not just labels and headings? |
+ | DJ14 | Does the page use photographs from the crawl rather than placeholder images? |
+ | DJ15 | Does any visible body copy restate the template's reference-clinic wording rather than this client's own text? |
+-| DJ16 | Does the display type sit at weight ≥700 with negative tracking, and is the body ≤ 1/4 of the display size? |
+-| DJ17 | Does this run's fingerprint differ from every recent run in the same sector? |
++| DJ16 | Do the display weight, the display tracking and the display/body ratio all fall inside the selected direction's ranges? **Measured in code** (`design/directions/checks.ts`), not asked of the model. |
++| DJ17 | Is this run far enough from every recent run? Enforced in the design stage, not by the judge — the fingerprint it names is checked before any markup exists, and D10 §8 replaces equality with a measured structural + visual distance in task C4. |
++| DJ18 | Is the signature section present, and does it resemble its direction's reference set more than the default kit? Design note, not a hard fail, until the thresholds are calibrated (D10 §3.3). |
+ 
+-DJ3–DJ7, DJ10 and DJ15 passing means "no". **Hard fails → fix loop:**
+-DJ3–DJ7, DJ10, DJ13–DJ15, DJ17. Others go to the digest as design notes.
++DJ3–DJ7 and DJ15 passing means "no" (the unwanted trait is absent).
++**Hard fails → fix loop:** DJ3–DJ7, DJ10, DJ13–DJ15, DJ17. Others go to the
++digest as design notes. This sentence is the single source of truth for the
++hard-fail set: `design/directions/checks.test.ts` parses it and asserts
++`HARD_FAIL_IDS` matches, because the set had previously drifted apart in the
++rubric, the judge and `acceptance.json`.
+ 
+ Aesthetic comparisons between two variants use randomized A/B pairwise voting,
+ sampled 3×, trusted only on unanimity — never absolute 1–10 scores.
