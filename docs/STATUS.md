@@ -166,7 +166,14 @@ Operator fix. The hook denies writes to `.claude/hooks/*` and
 `.claude/settings.json`, so it is out of an agent's reach, which is the
 correct arrangement — a guard an agent can rewrite is not a guard.
 
-**3 · A0 still open.** `template/tests/smoke.spec.ts` requires a `wa.me` link
+**3 · Patch 08 — three §-references left inside protected files.**
+`design-rules.md:57`, `design-rules.md:94` and `build-rules.md:89` still cite
+`docs/DECISIONS.md D10 §3.2` and similar. DECISIONS.md D10 is prose with no
+sections, so those numbers resolve nowhere; the sections live in
+`docs/D10-design-variation.md`. Both files are hook-protected, so it ships as
+`docs/patches/A1/08-section-refs.patch` — applies clean, one command.
+
+**4 · A0 still open.** `template/tests/smoke.spec.ts` requires a `wa.me` link
 in the mobile sticky bar, which D8 removes when a business publishes no
 WhatsApp. Verify stops at the Playwright gate before the judge ever runs, so
 this blocks every end-to-end verify including the ship test. Protected test,
