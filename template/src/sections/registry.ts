@@ -1,12 +1,14 @@
 import type { ComponentType } from "react";
 
 import type { SectionConfig, SectionType, SiteConfig } from "@/lib/schema";
+import { Closing } from "@/sections/closing";
 import { Contact } from "@/sections/contact";
 import { Faq } from "@/sections/faq";
 import { Gallery } from "@/sections/gallery";
 import { Hero } from "@/sections/hero";
 import { HeroPhotoFull } from "@/sections/hero/photo-full";
 import { Hours } from "@/sections/hours";
+import { Marquee } from "@/sections/marquee";
 import { MapEmbed } from "@/sections/map";
 import { Services } from "@/sections/services";
 import { Statement } from "@/sections/statement";
@@ -32,6 +34,8 @@ export const sectionRegistry: { [T in SectionType]: SectionComponent<T> } = {
   hero: Hero,
   statement: Statement,
   visit: Visit,
+  closing: Closing,
+  marquee: Marquee,
   services: Services,
   team: TeamStickySwap,
   gallery: Gallery,

@@ -1,12 +1,14 @@
 import type { ComponentType } from "react";
 
 import type { SectionConfig, SiteConfig } from "@/lib/schema";
+import { Closing } from "@/sections/closing";
 import { Contact } from "@/sections/contact";
 import { Faq } from "@/sections/faq";
 import { Gallery } from "@/sections/gallery";
 import { Hero } from "@/sections/hero";
 import { HeroPhotoFull } from "@/sections/hero/photo-full";
 import { Hours } from "@/sections/hours";
+import { Marquee } from "@/sections/marquee";
 import { Services } from "@/sections/services";
 import { ServicesRailPinned } from "@/sections/services/rail-pinned";
 import { Statement } from "@/sections/statement";
@@ -73,6 +75,8 @@ export const LIBRARY_ARCHETYPES: LibraryArchetype[] = [
   entry("services/default", "services", "default", Services, bySectionType("services")),
   entry("services/rail-pinned", "services", "rail-pinned", ServicesRailPinned, bySectionType("services")),
   entry("visit/default", "visit", "default", Visit, VISIT),
+  entry("marquee/ticker", "marquee", "ticker", Marquee, bySectionType("marquee")),
+  entry("closing/statement-cta", "closing", "statement-cta", Closing, bySectionType("closing")),
   entry("gallery/default", "gallery", "default", Gallery, bySectionType("gallery")),
   entry("testimonials/default", "testimonials", "default", Testimonials, bySectionType("testimonials")),
   entry("faq/default", "faq", "default", Faq, bySectionType("faq")),

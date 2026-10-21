@@ -607,8 +607,58 @@ derives shadcn's radius scale from `--radius`. The rest of §7.2's list
 (frame, alignment, density) lands per archetype in B3/B4 rather than as a
 blanket pass over components that are about to be rewritten.
 
+## B3 — closing and marquee
+
+Inventory first, as the task says. Of B3's four section types, `statement`
+and `visit` were already built (A-phase work); **`closing` and `marquee` did
+not exist at all** — no schema, no component, no registry entry. Those are
+what B3 added.
+
+`closing` is a server component: one `t-display` line, the ask, and the
+number in full. `t-display` is shared with the hero deliberately —
+design-rules.md §4 gives that step to "hero + closing statement", so a site
+has exactly two places where type is that large. No motion, because every
+reveal available to it is the fade-up §3 names as the thing a page must not
+be built from.
+
+`marquee` **declares which profiles it supports** (§7.2): it only moves under
+`editorial` and `kinetic`. Under `still` and `calm` the same items render as
+a static wrapped row — a direction that declares a quiet page should not get
+the loudest element on it. Verified both ways on the same template:
+
+| | calm | kinetic |
+|---|---|---|
+| `.marquee-track` | absent | present |
+| transform | `none` | `matrix(…)`, advancing |
+| spans | 3 | 8 (3 + duplicates) |
+| `aria-hidden` duplicates | 0 | 4 |
+
+Items are the client's own words, minimum three. Generic cluster 5 fails a
+band of `A · B · C` with nothing behind it, and three is the floor where a
+list stops reading as a slogan.
+
+**The marquee pauses off-screen.** An infinite tween is two problems: a rAF
+frame burned forever on every client site, and a visual gate comparing a
+moving target. Playwright's `animations: "disabled"` freezes CSS and Web
+Animations but **not** GSAP, which drives rAF — the screenshot tolerance
+absorbed the drift and the gate passed 3/3, which is luck rather than
+design, and §12's "a check that produces false positives is worse than no
+check" is not a thing to leave to luck. An `IntersectionObserver` plays and
+pauses the tween; measured paused off-screen, advancing once scrolled to.
+
+Workspace: typecheck 0, lint 0, 287 tests. `verify` exits 0 on both fixtures,
+all seven gates.
+
+**One flaky gate to be aware of.** A reference run failed LHCI on
+`largest-contentful-paint` at 3581ms against a 3500 budget — 2% over, on a
+machine mid-build. Two subsequent runs passed. Recorded rather than silently
+re-run: LCP sits close enough to its threshold that it will do this again,
+and a real regression would fail consistently rather than once.
+
+`/library` now lists 13 archetypes against §7.1's target of 45.
+
 ## Next
 
-**B3** — the missing archetypes (statement/visit/closing/marquee; some exist,
-so inventory first). Then **B4**, one archetype at a time with an operator
-review in `/library`, which is the bulk of the remaining work.
+**B4** — archetypes one at a time, each ending in an operator review in
+`/library`. That is the bulk of the remaining work (~39–45 sessions) and
+every one of those sessions stops before merge.
