@@ -176,3 +176,94 @@ DJ16–DJ17, and §12 automated geometry checks.
 
 The previous file is preserved in git history. Any further change to this file
 needs the same explicit approval.
+
+## D9 — A deliberation layer: brief, composition, comparative judgement (2026-10-20)
+
+**Decision (operator):** the pipeline selects where it should decide. Three
+gaps, found while running dermaguzellik.com end to end:
+
+1. **`design` picks from a kit, it does not compose.** Palette is derived from
+   the client's own photographs (good), but the type pairing is one row of a
+   six-row table keyed by sector, the archetypes come from a closed kit, and
+   density is a function of content volume. A beauty centre with 19 treatments,
+   no staff and no prices gets the same skeleton as a dental clinic with six
+   doctors. D6's fingerprint ledger guarantees two sites *differ*; it does not
+   make either one *right for its business*.
+2. **A new component cannot exist.** `sectionSchema` is `.strict()` and
+   `registry.ts` is keyed by a fixed enum — which is what keeps facts safe and
+   is also why every site has the same parts. There is no way for the pipeline
+   to say "this client needs something the kit does not have".
+3. **There is no judgement of quality, only of defects.** `design-judge` runs
+   inside `verify` and answers DJ1–DJ12 as binary questions with evidence.
+   That catches faults ("is the phone number an image?"). It cannot answer
+   "is this good?", and a rubric score produced in a vacuum would not either.
+
+The three remedies, buildable independently:
+
+- **Brief** — a cheap LLM step before `design` that reads `facts.json` and the
+  content inventory and writes a problem statement: what the business is, who
+  walks in, the one job the site has, what material exists and what is
+  missing. The composition answers the brief instead of the sector.
+- **Composition over selection** — `design` proposes a section composition for
+  that brief and may report that the kit has nothing for it, rather than
+  silently falling back to the nearest variant.
+- **Comparative judgement** — the judge is given the reference corpus as
+  few-shot and asked to compare, not to score. The research PLAN.md already
+  cites is explicit: generic "critique this UI" prompts fall below human
+  designers, while rubric + few-shot + per-finding evidence closes about half
+  the gap (arXiv 2412.16829; UICrit few-shot ≈ 55% gain), and multimodal
+  judges correlate 0.69–0.73 with humans on concrete factors (clarity,
+  hierarchy, trustworthiness) while failing systematically on "aesthetic
+  pleasure" (arXiv 2510.08783). So the judge compares against known-good work
+  on concrete factors and never scores beauty in the abstract.
+
+**The corpus is the training set, and it already exists on disk:**
+`~/{fourstack,lit,naks,vibecheck,diskent}-landing`, plus Aventura Dental Arts,
+4ourstack.com and speaktable.com as live references. Nothing in the pipeline
+reads it. Step one is a one-off extraction into a pattern library
+(`template/pattern-library.md`) so the corpus informs every run instead of
+being re-read by eye each time.
+
+**Constraint carried over from the geometry gate:** a check that produces
+false positives is worse than no check, because it trains the fix loop to
+ignore it. The judge's output is therefore "X is worse than reference Y
+because Z", not a number.
+
+Status: recorded; pattern library first, then the brief step, then the judge.
+Extends D6 — D6 makes sites differ, D9 makes them considered.
+
+## D8 — Unpublished facts stay absent; the template degrades (2026-10-20)
+
+**Decision (operator):** when the client's site does not publish a fact the
+template used to require, the generated site omits it. Nothing is derived,
+guessed, or defaulted. Found while running dermaguzellik.com (Atakent Derma
+Güzellik, Küçükçekmece) through the pipeline: the site publishes no day-mapped
+hours, no WhatsApp number and no registered trade name, so
+`siteConfigSchema` rejected a facts set that was *correct* — and the only way
+to satisfy it was to invent data, which the verbatim-facts rule forbids.
+
+Schema changes (`template/src/lib/schema.ts`):
+- `business.legalName` → nullable. The footer and the JSON-LD `legalName`
+  are omitted when null rather than showing the brand name as a legal entity.
+- `contact.whatsappE164` → nullable. Every WhatsApp CTA disappears: the
+  sticky mobile bar becomes a single full-width call button and the contact
+  section drops its WhatsApp button. A `wa.me` link derived from a mobile
+  number would promise a channel nobody reads.
+- `openingHours` → `.max(7)` without `.min(1)`, plus a new sibling
+  `hoursNote: string | null` carrying hours the business publishes with no
+  day mapping, verbatim ("10.00-19.30"). A config-level refine requires
+  `hoursNote` whenever `openingHours` is empty, so no site can ship with no
+  hours at all.
+- `buildLocalBusinessJsonLd` omits `openingHoursSpecification` entirely when
+  there are no day-mapped hours: an unmapped range cannot be expressed as one,
+  and an empty array is a structured-data error.
+
+This narrows D5's "above the fold: hours, address, a pressable phone number
+and a CTA" to *hours in whatever form the business publishes them*. The intent
+survives — a visitor still learns when the business is open — but a site is no
+longer blocked because its owner wrote one range instead of seven.
+
+`Facts.hoursNote` (`packages/core`) is populated by the facts stage from the
+crawl's new `hours_unmapped_candidates` signal. Day mapping is never inferred:
+an LLM extraction of this same page returned "Mon–Sat 10:00–19:30, Sunday
+closed", none of which the page states.
