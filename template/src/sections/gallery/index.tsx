@@ -34,7 +34,7 @@ export function Gallery({ section }: GalleryProps) {
               width={800}
               height={600}
               className={cn(
-                "aspect-[4/3] rounded-xl object-cover ring-1 ring-brand-200",
+                "aspect-[4/3] rounded-[var(--radius)] object-cover ring-1 ring-brand-200",
                 isStrip ? "w-64 shrink-0 snap-start" : "w-full",
               )}
             />

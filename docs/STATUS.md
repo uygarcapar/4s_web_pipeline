@@ -556,14 +556,59 @@ was baked in and every request got a 404. A dev surface that silently 404s in
 production is exactly the failure that argues for a separate app over a
 guarded route.
 
+## B2 — K8 is closed
+
+**K8 is fixed and verified.** A direction's motion flags now reach the
+components, and a `calm` site renders without Lenis, without a hero entrance
+and without a pin.
+
+The flags travel on `site.config.ts`, not `design.json`: `layout.tsx` has to
+know whether to mount Lenis *before* it renders, and reading a pipeline
+artifact at runtime would make a client site depend on a file that is not
+shipped with it. `siteConfigSchema` gains a `motion` block, defaulted to
+`kinetic` so a config written before D10 parses as what it actually was.
+
+`src/lib/motion-policy.ts` holds the three decisions as pure functions, so
+the same answer reaches `layout.tsx` (a server component) and a hero
+archetype (a client one). Each component testing `config.motion.*` inline is
+how a flag ends up honoured in one place and ignored in another — K8 in
+miniature.
+
+Measured on the same template, one fixture apart:
+
+| | calm | kinetic |
+|---|---|---|
+| `lenis` class on `<html>` | — | present |
+| Lenis in the DOM | no | yes |
+| hero char transform | `none` | `matrix(…)` — entrance ran |
+| ScrollTrigger pin spacers | 0 | 1 |
+| hero opacity | 1 | 1 |
+
+That last row is the one that matters beyond the acceptance: `heroEntrance`
+uses `gsap.from`, so elements start visible and skipping it loses nothing.
+Had it been `gsap.set` + `to`, a calm direction would have rendered a blank
+hero — the same shape as the six reduced-motion content-loss bugs earlier in
+this branch.
+
+`pnpm run verify` exits 0 on both the reference config and
+`fixtures/calm.config.ts`, all seven gates, including the geometry gate at
+all twelve widths.
+
+**A gap the acceptance itself had.** The calm fixture first used the
+`default` hero, which never runs an entrance — so the probe reported
+`charCount: 0` and the flag was never exercised. Both fixtures now use
+`photo-full`, the archetype that actually carries the entrance and the pin.
+A fixture that cannot fail is the same bug as the glyph check in A5.
+
+Token reading: the seven section components now take their radius from
+`var(--radius)` rather than a hardcoded Tailwind step, so shape follows the
+direction. The UI primitives keep their own ladder — `globals.css` already
+derives shadcn's radius scale from `--radius`. The rest of §7.2's list
+(frame, alignment, density) lands per archetype in B3/B4 rather than as a
+blanket pass over components that are about to be rewritten.
+
 ## Next
 
-**B2** — refactor the archetypes to read only tokens, including closing K8:
-`layout.tsx` wraps every site in `SmoothScroll` and `hero/photo-full.tsx`
-always runs the entrance, so a `calm` direction still renders both and DJ10
-now correctly fails it. Done when a `calm` fixture renders without Lenis and
-without a hero entrance. The library is the surface that shows whether the
-refactor worked.
-
-Then B3 (the missing archetypes) and B4, which reviews archetypes one at a
-time with the operator and is the bulk of the remaining work.
+**B3** — the missing archetypes (statement/visit/closing/marquee; some exist,
+so inventory first). Then **B4**, one archetype at a time with an operator
+review in `/library`, which is the bulk of the remaining work.

@@ -57,12 +57,19 @@ const config: SiteConfigInput = {
     mersisNo: "0123456789012345",
     dataController: "Moda Ağız ve Diş Sağlığı Hizmetleri Ltd. Şti.",
   },
+  /**
+   * The direction's motion, copied here by the design stage (D10 §3.2).
+   * This reference config is the kinetic language every run before D10 was
+   * built in, stated explicitly rather than left to the schema default.
+   */
+  motion: { profile: "kinetic", heroEntrance: true, smoothScroll: true },
   sellsOnline: false,
   sections: [
     {
       type: "hero",
       id: "hero",
-      variant: "default",
+      // photo-full is the archetype that runs the entrance and the pin.
+      variant: "photo-full",
       headline: "Kadıköy'de güvenle gülümseyin",
       subheadline:
         "Moda Diş Kliniği'nde modern cihazlar ve deneyimli hekim kadrosuyla ağız ve diş sağlığınız emin ellerde. Aynı gün randevu için hemen arayın.",

@@ -84,7 +84,7 @@ export function Contact({ section, config }: ContactProps) {
             action={`mailto:${contact.email}`}
             method="post"
             encType="text/plain"
-            className="flex flex-col gap-4 rounded-xl border border-brand-100 bg-card p-6"
+            className="flex flex-col gap-4 rounded-[var(--radius)] border border-brand-100 bg-card p-6"
           >
             <div className="flex flex-col gap-1.5">
               <label htmlFor="contact-name" className="text-sm font-semibold">
@@ -95,7 +95,7 @@ export function Contact({ section, config }: ContactProps) {
                 name="ad-soyad"
                 type="text"
                 required
-                className="rounded-md border border-input bg-background px-3 py-2 text-base outline-none focus-visible:ring-3 focus-visible:ring-ring/50"
+                className="rounded-[var(--radius)] border border-input bg-background px-3 py-2 text-base outline-none focus-visible:ring-3 focus-visible:ring-ring/50"
               />
             </div>
             <div className="flex flex-col gap-1.5">
@@ -106,7 +106,7 @@ export function Contact({ section, config }: ContactProps) {
                 id="contact-phone"
                 name="telefon"
                 type="tel"
-                className="rounded-md border border-input bg-background px-3 py-2 text-base outline-none focus-visible:ring-3 focus-visible:ring-ring/50"
+                className="rounded-[var(--radius)] border border-input bg-background px-3 py-2 text-base outline-none focus-visible:ring-3 focus-visible:ring-ring/50"
               />
             </div>
             <div className="flex flex-col gap-1.5">
@@ -118,7 +118,7 @@ export function Contact({ section, config }: ContactProps) {
                 name="mesaj"
                 rows={4}
                 required
-                className="rounded-md border border-input bg-background px-3 py-2 text-base outline-none focus-visible:ring-3 focus-visible:ring-ring/50"
+                className="rounded-[var(--radius)] border border-input bg-background px-3 py-2 text-base outline-none focus-visible:ring-3 focus-visible:ring-ring/50"
               />
             </div>
             <Button type="submit" size="lg">

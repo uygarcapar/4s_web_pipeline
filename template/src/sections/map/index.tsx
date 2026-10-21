@@ -23,7 +23,7 @@ export function MapEmbed({ section, config }: MapProps) {
         title={`Harita: ${config.business.name} konumu`}
         address={config.contact.address}
         className={cn(
-          "w-full rounded-xl border border-brand-100",
+          "w-full rounded-[var(--radius)] border border-brand-100",
           section.variant === "tall" ? "h-[480px]" : "h-[320px]",
         )}
       />
