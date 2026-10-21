@@ -1,0 +1,18 @@
+/*
+ * The library compiles the template's own section components, so it needs the
+ * template's stylesheet exactly as a generated site has it — Tailwind, the
+ * shadcn layer and the default tokens.css. A direction's own tokens are
+ * injected per preview on top of these (src/app/preview/page.tsx).
+ *
+ * `@source` is required: Tailwind v4 scans the files it is pointed at, and
+ * every class the previews use lives in template/src, outside this app.
+ */
+@import "../../../../template/src/app/globals.css";
+@source "../../../../template/src";
+
+/* Chrome for the grid itself, deliberately plain: the page is a backdrop for
+   the previews and must not read as a design of its own. */
+.library-shell {
+  background: #fafafa;
+  color: #171717;
+}
