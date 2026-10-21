@@ -66,15 +66,22 @@ export function sectionsFromFacts(input: {
   hasGallery: boolean;
   hasTestimonials: boolean;
   hasHours: boolean;
+  /** The business wrote a sentence about itself the brief judged usable. */
+  hasStatement?: boolean;
 }): SectionType[] {
   // Order is the visitor's question order (design-rules.md §10.2); a section
   // with no source content is simply absent, never padded.
   const out: SectionType[] = ["hero"];
+  // Straight after the fold, in the business's own words — and it is where
+  // the text transformation lives (template/pattern-library.md §2.1).
+  if (input.hasStatement) out.push("statement");
   if (input.hasServices) out.push("services");
   if (input.hasTeam) out.push("team");
   if (input.hasGallery) out.push("gallery");
   if (input.hasTestimonials) out.push("testimonials");
-  if (input.hasHours) out.push("hours");
+  // Address, hours and the number as one section rather than three: split up
+  // they read as a form, together as a decision (§2.2).
+  if (input.hasHours) out.push("visit");
   if (input.hasFaq) out.push("faq");
   out.push("contact");
   return out;

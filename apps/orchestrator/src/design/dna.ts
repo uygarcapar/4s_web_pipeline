@@ -29,13 +29,19 @@ export type Density = "poster" | "standard" | "editorial";
  * Curated pairings. Not a free choice: a model picking fonts per site lands on
  * the same two every time, and exotic faces break Turkish. Every face here is
  * variable, on Google Fonts, and carries latin-ext.
+ *
+ * No Inter and no Roboto. docs/PLAN.md lists them as a hard ban unless the
+ * client's own brand uses the face, because they are the default every
+ * generated page reaches for and are the single clearest tell that a site was
+ * not designed for its owner. Four of these six pairings used Inter as the
+ * body face, so most clients were getting it.
  */
 export const TYPE_PAIRS: TypePair[] = [
-  { id: "grotesk-tight", display: "Archivo", body: "Inter", displayWeight: 800, temperament: "clinical" },
-  { id: "grotesk-wide", display: "Schibsted_Grotesk", body: "Inter", displayWeight: 800, temperament: "sharp" },
+  { id: "grotesk-tight", display: "Archivo", body: "Public_Sans", displayWeight: 800, temperament: "clinical" },
+  { id: "grotesk-wide", display: "Schibsted_Grotesk", body: "Karla", displayWeight: 800, temperament: "sharp" },
   { id: "humanist", display: "Figtree", body: "Source_Sans_3", displayWeight: 800, temperament: "warm" },
-  { id: "editorial-serif", display: "Fraunces", body: "Inter", displayWeight: 700, temperament: "crafted" },
-  { id: "neo-grotesk", display: "Manrope", body: "Inter", displayWeight: 800, temperament: "quiet" },
+  { id: "editorial-serif", display: "Fraunces", body: "Work_Sans", displayWeight: 700, temperament: "crafted" },
+  { id: "neo-grotesk", display: "Manrope", body: "IBM_Plex_Sans", displayWeight: 800, temperament: "quiet" },
   { id: "display-contrast", display: "Bricolage_Grotesque", body: "Plus_Jakarta_Sans", displayWeight: 800, temperament: "crafted" },
 ];
 
@@ -74,6 +80,10 @@ export const ARCHETYPES = {
   // deliberately NOT an option here: leaving it in made the choice a coin
   // flip, and a client who lost the toss silently got the old template back.
   hero: ["photo-full"],
+  // The business's own sentence, lit word by word (pattern-library.md §2.1).
+  statement: ["word-reveal"],
+  // Address, hours and the number as one section, not three (§2.2).
+  visit: ["rows"],
   services: ["rail-pinned"],
   team: ["sticky-swap"],
   // Not yet rebuilt — these still render through the template's original

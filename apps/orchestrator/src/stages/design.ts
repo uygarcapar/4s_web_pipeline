@@ -51,7 +51,34 @@ export const designStage: StageModule = {
       join(ctx.runDir, "crawl", "content.json"),
     );
     const inventory = takeInventory({ content, facts, usablePhotos: sources.length });
-    const sections = sectionsFromFacts(inventory);
+
+    // The brief is advisory on ORDER, and decides one thing outright: whether
+    // the sentence the crawl found is really the business speaking about
+    // itself. That is a judgement no regex makes well — the heuristic picked
+    // a treatment description on the first run — so the statement section
+    // exists only when the brief vouched for the sentence (D9). Everything
+    // else about which sections exist stays a function of which facts exist
+    // (D6). Absent or malformed, the fact-derived set and order stand.
+    const brief = readJson<{
+      emphasis?: unknown;
+      statementUsable?: unknown;
+      evidence?: { statementCandidate?: unknown };
+    }>(join(ctx.runDir, "brief", "brief.json"));
+
+    const hasStatement =
+      brief?.statementUsable === true &&
+      typeof brief.evidence?.statementCandidate === "string";
+    let sections = sectionsFromFacts({ ...inventory, hasStatement });
+    const emphasis = Array.isArray(brief?.emphasis)
+      ? brief.emphasis.filter((e): e is string => typeof e === "string")
+      : [];
+    if (emphasis.length > 0) {
+      const reordered = orderByEmphasis(sections, emphasis);
+      if (reordered.join() !== sections.join()) {
+        ctx.log(`brief reordered sections: ${sections.join(" → ")} ⇒ ${reordered.join(" → ")}`);
+        sections = reordered;
+      }
+    }
     ctx.log(
       `inventory: ${inventory.services.length} services, ${inventory.team.length} people, ` +
         `${inventory.faq} FAQ, ${inventory.contentBlocks} content blocks → ${sections.length} sections`,
@@ -102,6 +129,52 @@ export const designStage: StageModule = {
     };
   },
 };
+
+/**
+ * Reorder the fact-derived sections by the brief's emphasis.
+ *
+ * Emphasis is a PARTIAL preference, not a complete ordering: it reshuffles
+ * only the sections it names, and every other section keeps the slot the
+ * facts gave it. Treating unnamed sections as "least important" and sorting
+ * them to the end pushed `statement` and `visit` below `contact` on the first
+ * run, simply because the brief had not used those words.
+ *
+ * Concretely: collect the positions the named sections occupy, then refill
+ * exactly those positions in emphasis order. The hero is never named and so
+ * never moves. Emphasis entries matching no section are ignored rather than
+ * treated as an instruction to invent one.
+ */
+export function orderByEmphasis<T extends string>(
+  sections: T[],
+  emphasis: string[],
+): T[] {
+  // Section ids are ASCII identifiers, so the locale fold is en-US; tr-TR
+  // would map the "I" in a future id to a dotless ı and stop it matching.
+  const fold = (s: string): string => s.toLocaleLowerCase("en-US");
+  const rank = new Map<T, number>();
+  emphasis.forEach((name, i) => {
+    const match = sections.find((s) => s === name || fold(name).includes(fold(s)));
+    if (match !== undefined && !rank.has(match)) rank.set(match, i);
+  });
+  if (rank.size === 0) return sections;
+
+  // The slots the named sections currently occupy, in page order.
+  const slots: number[] = [];
+  sections.forEach((s, i) => {
+    if (rank.has(s) && (s as string) !== "hero") slots.push(i);
+  });
+  if (slots.length < 2) return sections;
+
+  const named = slots
+    .map((i) => sections[i]!)
+    .sort((a, b) => (rank.get(a) ?? 0) - (rank.get(b) ?? 0));
+
+  const out = [...sections];
+  slots.forEach((slot, i) => {
+    out[slot] = named[i]!;
+  });
+  return out;
+}
 
 function readJson<T>(path: string): T | null {
   if (!existsSync(path)) return null;

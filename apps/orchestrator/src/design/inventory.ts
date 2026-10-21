@@ -23,6 +23,8 @@ export interface CrawlPage {
 export interface Inventory {
   contentBlocks: number;
   services: CrawlPage[];
+  /** Individual services described on the site, independent of page count. */
+  serviceItems: number;
   team: CrawlPage[];
   posts: CrawlPage[];
   faq: number;
@@ -115,7 +117,7 @@ export function isServicePage(page: CrawlPage): boolean {
 }
 
 export function takeInventory(input: {
-  content: { pages?: unknown; faq?: unknown } | null;
+  content: { pages?: unknown; faq?: unknown; services?: unknown } | null;
   facts: Record<string, unknown>;
   /** Photographs the crawl downloaded that are large enough to show. */
   usablePhotos: number;
@@ -125,6 +127,7 @@ export function takeInventory(input: {
   const hours = asArray(input.facts.openingHours).length;
 
   const services = pages.filter(isServicePage);
+  const serviceItems = asArray(input.content?.services).length;
   const team = pages.filter(isPersonPage);
   const posts = pages.filter((p) => matches(p, POST_SLUGS));
   const testimonials = pages.filter((p) => matches(p, TESTIMONIAL_SLUGS));
@@ -137,19 +140,28 @@ export function takeInventory(input: {
   return {
     contentBlocks,
     services,
+    serviceItems,
     team,
     posts,
     faq,
     photos: input.usablePhotos,
     hours,
     // A section exists only when there is enough behind it to be worth a
-    // section: one lonely treatment page is a paragraph, not a rail.
-    hasServices: services.length >= 2,
+    // section: one lonely treatment page is a paragraph, not a rail. Counted
+    // in services, not pages — a salon that lists twenty treatments on a
+    // single /hizmetler page has plenty for a rail, and judging it by page
+    // count alone dropped the services section from a services business.
+    hasServices: serviceItems >= 2 || services.length >= 2,
     hasTeam: team.length >= 1,
     hasFaq: faq >= 2,
     hasGallery: input.usablePhotos >= 6,
     hasTestimonials: testimonials.length >= 1,
-    hasHours: hours >= 1,
+    // A business that publishes "10.00-19.30" without naming the days still
+    // has hours worth a section — `facts.hoursNote` carries them verbatim
+    // when no day mapping exists (DECISIONS D8). Judging by openingHours
+    // alone dropped the hours section from every such site, which is exactly
+    // what D5 requires a visitor to be able to see.
+    hasHours: hours >= 1 || typeof input.facts.hoursNote === "string",
   };
 }
 

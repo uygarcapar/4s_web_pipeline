@@ -38,7 +38,12 @@ export function renderTokens(dna: DesignDna): string {
   --ink-400: ${p.ink[400]};
 
   /* hover and focus only — never a surface */
-  --accent: ${p.accent};
+  /* NOT --accent: shadcn's globals.css defines its own neutral --accent in a
+     :root block that is parsed after this file is imported, so a variable of
+     that name is overwritten with oklch(0.97 0 0) and every accent in the
+     site silently becomes near-white — including the mobile call button,
+     which ended up white-on-white. */
+  --brand-accent: ${p.accent};
 
   --background: var(--paper-100);
   --foreground: var(--ink-900);
@@ -65,7 +70,29 @@ export function renderTokens(dna: DesignDna): string {
   --color-ink-700: var(--ink-700);
   --color-ink-600: var(--ink-600);
   --color-ink-400: var(--ink-400);
-  --color-accent: var(--accent);
+  --color-accent: var(--brand-accent);
+
+  /* Compatibility aliases for the brand-* ramp. The archetype components
+     (hero/photo-full, services/rail-pinned, team/sticky-swap) are written
+     against paper/ink/accent, but the original sections, the footer, the
+     sticky CTA and globals.css's shadcn mapping (--primary, --ring) are all
+     still on brand-*. Without these the moment this file replaces the
+     template's own tokens.css every one of those classes resolves to
+     nothing, and the gallery, hours, contact and footer render unstyled.
+     brand-400/600 map to the accent so focus rings and primary buttons stay
+     visible rather than becoming a flat paper tone. */
+  --color-brand-50: var(--paper-50);
+  --color-brand-100: var(--paper-100);
+  --color-brand-200: var(--paper-200);
+  --color-brand-300: var(--paper-300);
+  --color-brand-400: var(--brand-accent);
+  --color-brand-500: var(--paper-500);
+  --color-brand-600: var(--brand-accent);
+  --color-brand-700: var(--ink-700);
+  --color-brand-800: var(--ink-800);
+  --color-brand-900: var(--ink-900);
+  --color-brand-950: var(--ink-900);
+
   --font-display: var(--font-display);
   --font-sans: var(--font-sans);
 }
