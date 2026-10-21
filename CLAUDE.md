@@ -79,3 +79,14 @@ re-derived by eye on every run.
 
 When compacting, always preserve: the full list of modified files, the verify
 command for the current working copy, and the current domain/run id.
+
+## Workflow
+
+- One task per branch (`task-<id>`). When typecheck, lint and test are
+  green: push, `gh pr create --fill`, then
+  `gh pr merge --squash --delete-branch`. Do not wait for the operator.
+- Exception: if the task produced a patch under docs/patches/ for a
+  protected file, open the PR but do not merge. Stop and tell the operator
+  the exact `git apply` command to run.
+- Exception: tasks that end in an operator review (A3 reference picks, B4
+  /library review) stop before merge.
