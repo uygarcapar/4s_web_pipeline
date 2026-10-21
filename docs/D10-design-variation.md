@@ -163,7 +163,8 @@ export const directionSchema = z.strictObject({
   }),
   motion: z.strictObject({
     profiles: z.array(z.enum(["still", "calm", "editorial", "kinetic"])),
-    signatures: z.array(z.string()),  // MotionSignature ids allowed
+    signatures: z.array(motionSignature),  // PERMITTED here
+    required: z.array(motionSignature),    // MUST be present; subset of the above
     heroEntrance: z.boolean(),
     smoothScroll: z.boolean(),
   }),
@@ -176,6 +177,27 @@ export const directionSchema = z.strictObject({
   avoid: z.array(z.string()),        // which generic clusters this direction is near, and how it stays out
 });
 ```
+
+> **Amended in A2.** Two changes, both because §3.3 needs them and the sketch
+> above could not express them:
+>
+> - **`motion.required` added.** §3.3 defines DJ10 as checking *both* halves —
+>   every signature the profile requires is present, and nothing the direction
+>   disables is. The original schema had only the permitted list, so the
+>   required half had no input, which is the K8 failure A1 found: a `calm`
+>   site that still pins satisfies an empty requirement. `required` must be a
+>   subset of `signatures`, enforced by a refine — a direction requiring what
+>   it disables would make DJ10 demand a signature and then fail the page for
+>   carrying it.
+> - **`signatures` is an enum, not `z.string()`.** DJ10 compares a measured
+>   page against this list in both directions, so a typo in a direction file
+>   would read as "absent" and fail every page built in that direction with
+>   nothing pointing at the cause. The list lives in
+>   `packages/core/src/design.ts` as `MOTION_SIGNATURES`; A3 extends it when a
+>   direction needs a device the first four do not use.
+>
+> The implemented schemas are in `packages/core/src/design.ts`. Where this
+> document and that file differ, the file is what runs.
 
 ### 4.3 First four directions
 
