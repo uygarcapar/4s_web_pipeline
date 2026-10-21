@@ -190,6 +190,20 @@ const config: SiteConfigInput = {
       showForm: true,
     },
     {
+      type: "marquee",
+      id: "marquee",
+      variant: "ticker",
+      items: ["İmplant Tedavisi", "Diş Beyazlatma", "Ortodonti", "Çocuk Diş Hekimliği"],
+    },
+    {
+      type: "closing",
+      id: "closing",
+      variant: "statement-cta",
+      headline: "Randevunuzu bugün alın",
+      body: "Aynı gün muayene için telefonla ulaşabilirsiniz; acil durumlarda randevusuz hastalarımızı da kabul ediyoruz.",
+      ctaPrimary: { label: "Hemen Ara", action: "tel" },
+    },
+    {
       type: "map",
       id: "map",
       variant: "default",

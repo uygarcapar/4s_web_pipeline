@@ -127,6 +127,20 @@ const config: SiteConfigInput = {
       showForm: true,
     },
     {
+      type: "marquee",
+      id: "marquee",
+      variant: "ticker",
+      items: ["Cilt Bakımı", "Lazer Epilasyon", "Bölgesel İncelme"],
+    },
+    {
+      type: "closing",
+      id: "closing",
+      variant: "statement-cta",
+      headline: "Randevu için arayın",
+      body: "Cilt tipinize uygun programı ilk görüşmede birlikte belirliyoruz.",
+      ctaPrimary: { label: "Hemen Ara", action: "tel" },
+    },
+    {
       type: "map",
       id: "map",
       variant: "default",

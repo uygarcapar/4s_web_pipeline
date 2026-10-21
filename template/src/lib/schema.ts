@@ -229,10 +229,51 @@ export const visitSectionSchema = z
   })
   .strict();
 
+/**
+ * The last thing on the page: one display-sized line and the call to action,
+ * on its own screen.
+ *
+ * A visitor who has read everything should not have to scroll back to the
+ * hero to find the phone number, and a footer full of links is not an ask.
+ * The copy is the client's own; the number comes from `config.contact`, so
+ * this section cannot state a fact of its own (D10 §7.1 "closing").
+ */
+export const closingSectionSchema = z
+  .object({
+    ...sectionBase,
+    type: z.literal("closing"),
+    variant: z.enum(["statement-cta"]).optional(),
+    headline: z.string().min(1),
+    body: z.string().min(1).optional(),
+    ctaPrimary: ctaSchema,
+    ctaSecondary: ctaSchema.optional(),
+  })
+  .strict();
+
+/**
+ * A band of short phrases running across the page.
+ *
+ * `items` are the client's own words — service names, districts served, a
+ * list they already publish — never decoration. Generic cluster 5 in
+ * design-rules.md §2 fails a marquee of `A · B · C` with no content behind
+ * it, which is what this section becomes if it is handed filler.
+ */
+export const marqueeSectionSchema = z
+  .object({
+    ...sectionBase,
+    type: z.literal("marquee"),
+    variant: z.enum(["ticker"]).optional(),
+    /** Three is the minimum that reads as a list rather than a slogan. */
+    items: z.array(z.string().min(1)).min(3),
+  })
+  .strict();
+
 export const sectionSchema = z.discriminatedUnion("type", [
   heroSectionSchema,
   statementSectionSchema,
   visitSectionSchema,
+  closingSectionSchema,
+  marqueeSectionSchema,
   servicesSectionSchema,
   teamSectionSchema,
   gallerySectionSchema,
@@ -421,6 +462,8 @@ export type OpeningHoursEntry = z.infer<typeof openingHoursEntrySchema>;
 export type HeroSection = z.infer<typeof heroSectionSchema>;
 export type StatementSection = z.infer<typeof statementSectionSchema>;
 export type VisitSection = z.infer<typeof visitSectionSchema>;
+export type ClosingSection = z.infer<typeof closingSectionSchema>;
+export type MarqueeSection = z.infer<typeof marqueeSectionSchema>;
 export type ServicesSection = z.infer<typeof servicesSectionSchema>;
 export type TeamSection = z.infer<typeof teamSectionSchema>;
 export type GallerySection = z.infer<typeof gallerySectionSchema>;
