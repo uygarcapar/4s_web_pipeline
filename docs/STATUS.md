@@ -444,9 +444,62 @@ Two deliberate deviations from §5, both to avoid breaking what runs today:
   and its tests; wiring without a sampler would mean building the input by
   hand at the call site.
 
+## A5 — self-hosted faces, Turkish proved by rendering
+
+**Phase A is complete.**
+
+Eleven faces vendored as woff2 (`latin` + `latin-ext`) into `data/fonts/`,
+1.0 MB, committed like the direction reference sets and copied per run rather
+than shipped in every template copy. `scripts/vendor-fonts.mjs` re-runs it.
+All eleven are **OFL**, confirmed against
+`ui-ux-pro-max/data/google-font-licenses.json` rather than from memory — so
+Q2 holds: no per-domain or pageview-capped licence anywhere.
+
+Each family ships its `OFL.txt`. OFL §2 requires the licence travel with the
+font, and a generated client site is a redistribution — so `copyFaces` moves
+it too, not just the woff2.
+
+`local-fonts.ts` renders `src/lib/fonts.ts` with `next/font/local` and
+**pins no weight**: a variable face loaded at a single weight cannot do an
+optical-size curve, which is the actual cause of "fontlar modern değil" three
+times over. A test asserts no `weight: "NNN"` ever appears.
+
+### The glyph check, and why it nearly shipped useless
+
+A5's acceptance is "renders the Turkish test string with no fallback glyphs,
+checked by Playwright". Two bugs on the way there, both of which would have
+left a green test proving nothing:
+
+1. **It failed everything.** `document.fonts.ready` resolves against the
+   *pending* set, and a face is only fetched when something asks to render in
+   it — so ready resolved immediately, nothing had loaded, and all eleven
+   faces measured as fallback. Fixed with an explicit
+   `document.fonts.load(…, text)`, plus an assertion that at least one face
+   reports `status === "loaded"` before any measurement is trusted.
+2. **Then it passed everything**, which is the same bug with the sign
+   flipped. So the file carries a negative control: load `latin` alone and
+   assert the check catches exactly the letters that live in `latin-ext`.
+
+The control also corrected me. I expected four failures — ş, ğ, İ, ı — and
+got three. **Google's `latin` subset carries ı (U+0131) explicitly**,
+alongside basic Latin. So a face rendering a dotless ı is not thereby
+Turkish-capable, which is precisely the kind of thing a catalogue page would
+have let through.
+
+One `@font-face` per subset, not one rule listing both files: a single rule
+uses only the first source that loads — `latin` — and `latin-ext`, where
+ş/ğ/İ live, would never be consulted.
+
+Workspace: typecheck 0, lint 0, 268 tests (230 orchestrator + 29 core + 9
+template).
+
+Not wired into the design stage, same reasoning as A4: the stage still emits
+a `DesignDna`, and the spec path goes live at C3.
+
 ## Next
 
-A5 (self-hosted fonts, free open-licence only per Q2) closes Phase A. Phase B
-refactors the archetypes to read only tokens, which is where K8 finally
-closes — until then a direction with `heroEntrance: false` still cannot pass
-DJ10.
+**Phase B.** B1 (`/library` route), B2 (token-only refactor — where K8
+finally closes; until then a direction with `heroEntrance: false` cannot pass
+DJ10), B3 (statement/visit/closing/marquee), then B4, which reviews
+archetypes one at a time with the operator and is the bulk of the remaining
+work.

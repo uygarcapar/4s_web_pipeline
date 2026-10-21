@@ -6,9 +6,9 @@ vardır ya da Claude Code'a verilecek **tek bir prompt**.
 
 İşaretler: 🧑 = sen (korumalı dosya ya da karar) · 🤖 = Claude Code
 
-Durum: §0'daki operatör işlerinin hepsi bitti, §13 ve A5 font yaması dahil.
-Hiçbir 🤖 görevi karar bekliyor değil. Sıradaki görev **A3** — ve A3 senin
-referans seçiminle bitiyor, yani o oturum merge'den önce durur.
+Durum: **Faz A bitti** (A1, A0, A0b, A2, A3, A4, A5). Operatör bekleyen bir
+şey yok. Sıradaki **B1** — ve Faz B'nin asıl yükü B4, her arketipte senin
+`/library` incelemenle bitiyor.
 
 ---
 
@@ -97,7 +97,7 @@ Oturum bitince 🧑: diff'e bak → PR → merge → bir sonraki ID.
 | ✅ | **A2** şemalar | — | merged · 3 şema + 22 test · D10 §4.2 düzeltildi (motion.required) |
 | ✅ | **A3** 4 direction + ref | — | merged, PR #11 · 4 direction + 16 referans · seçimler olduğu gibi onaylandı |
 | ✅ | **A4** `tokens.ts` | — | merged · spec → tokens.css, direction başına snapshot · §4 invariantları kodda |
-| 1 | **A5** self-hosted font | 🤖 | sıradaki · Q2 cevaplandı: yalnız ücretsiz açık lisanslı yüzler · Faz A'yı kapatır |
+| ✅ | **A5** self-hosted font | — | merged · 11 OFL yüz vendor'landı, Türkçe render ile kanıtlandı · **Faz A bitti** |
 
 ### 2.1 ✅ A0b — template kendi verify'ını geçiyor (PR #6)
 
