@@ -362,7 +362,15 @@ still has its own local `DirectionRanges`. A3 replaces the stub with real
 direction files parsed by `directionSchema`, and that is the moment the local
 type goes — swapping it now would mean rewriting `checks.ts` twice.
 
-## A3 — the direction catalog (PR open, **awaiting operator review**)
+## A3 — the direction catalog (merged, PR #11)
+
+**Reference picks accepted as-is** by the operator on 2026-10-22 — all four
+directions keep the four screenshots proposed in
+`docs/A3-reference-candidates.md`, including editorial-serif's, which was
+flagged as the weakest set and accepted knowingly. If calm serif pages start
+coming out wrong, that reference set is the first thing to re-harvest; the
+candidates not picked are still listed in that file.
+
 
 The four directions of §4.3 as real files under
 `apps/orchestrator/src/design/directions/`, parsed by `directionSchema` at
@@ -370,8 +378,7 @@ module load, with 16 reference screenshots committed under
 `data/directions/<id>/refs/`. `stub.ts` is deleted; `checks.ts` and the judge
 now take core's `Direction`.
 
-A3 ends in an operator review of the reference picks, so this one stops
-before merge: **`docs/A3-reference-candidates.md`**.
+The candidate shortlist and what was rejected: **`docs/A3-reference-candidates.md`**.
 
 **The measured ranking was wrong in three of four directions.** I scored all
 56 usable corpus sites against each direction's ranges, then opened the
