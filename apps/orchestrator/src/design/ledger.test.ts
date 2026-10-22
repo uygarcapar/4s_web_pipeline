@@ -1,32 +1,32 @@
 import { describe, expect, it } from "vitest";
-import { openStore, type Store } from "@pipeline/core";
+import { openStore, type DesignSpec, type Store } from "@pipeline/core";
 
-import { composeDna } from "./dna.js";
-import { derivePalette } from "./palette.js";
-import { recentDirectionUsage, recordDesign } from "./ledger.js";
+import { DIRECTIONS } from "./directions/index.js";
+import { sampleSpec } from "./sample-spec.js";
+import { recentArchetypes, recentDirectionUsage, recordSpec } from "./ledger.js";
 
 /**
- * The rotation penalty's input (D10 §6.2). Worth its own tests because the
- * two things most likely to be wrong about it are both invisible at runtime:
- * a window that silently never expires, and a count scoped to one sector —
- * which is the D6 behaviour §6.2 exists to replace.
+ * The rotation penalties' inputs (D10 §6.2, §6.4). Worth their own tests
+ * because the two things most likely to be wrong about them are both
+ * invisible at runtime: a window that silently never expires, and a count
+ * scoped to one sector — which is the D6 behaviour §6.2 exists to replace.
  */
 
-const palette = derivePalette([]);
+const palette = { name: "nötr", hue: 38 };
 
-function dnaFor(domain: string) {
-  return composeDna({
-    domain,
-    sector: "dentist",
-    palette,
-    contentBlocks: 200,
-    sections: ["hero", "services", "contact"],
-    recent: [],
-  });
+function specFor(id: string, seed: string, sections?: DesignSpec["sections"]): DesignSpec {
+  const spec = sampleSpec(DIRECTIONS[id]!, seed, 0);
+  return sections === undefined ? spec : { ...spec, sections };
 }
 
-function record(store: Store, domain: string, sector: string, direction: string): void {
-  recordDesign(store, { domain, sector, dna: dnaFor(domain), direction });
+function record(
+  store: Store,
+  domain: string,
+  sector: string,
+  id: string,
+  sections?: DesignSpec["sections"],
+): void {
+  recordSpec(store, { domain, sector, spec: specFor(id, domain, sections), palette });
 }
 
 describe("recentDirectionUsage", () => {
@@ -61,21 +61,72 @@ describe("recentDirectionUsage", () => {
     expect(recentDirectionUsage(store, outside)["editorial-serif"]).toBeUndefined();
   });
 
-  /**
-   * Rows written before the design space existed have a null direction.
-   * Counting them under any name would skew the penalty against whichever
-   * direction we guessed, which is why the column is nullable.
-   */
-  it("ignores rows from before D10", () => {
-    const store = openStore({ memory: true });
-    recordDesign(store, { domain: "legacy.com", sector: "dentist", dna: dnaFor("legacy.com") });
-    expect(recentDirectionUsage(store)).toEqual({});
-  });
-
   it("does not double-count a client that is rebuilt", () => {
     const store = openStore({ memory: true });
     record(store, "a.com", "dentist", "swiss-grid");
     record(store, "a.com", "dentist", "swiss-grid");
     expect(recentDirectionUsage(store)["swiss-grid"]).toBe(1);
+  });
+});
+
+describe("recentArchetypes", () => {
+  const sections: DesignSpec["sections"] = [
+    { type: "hero", archetype: "index" },
+    { type: "services", archetype: "accordion" },
+    { type: "contact", archetype: "default" },
+  ];
+
+  it("counts every type/archetype pair the recent runs shipped", () => {
+    const store = openStore({ memory: true });
+    record(store, "a.com", "dentist", "swiss-grid", sections);
+    record(store, "b.com", "barber", "swiss-grid", sections);
+
+    expect(recentArchetypes(store)).toEqual({
+      "hero/index": 2,
+      "services/accordion": 2,
+      "contact/default": 2,
+    });
+  });
+
+  it("only looks back `limit` runs", () => {
+    const store = openStore({ memory: true });
+    record(store, "old.com", "dentist", "swiss-grid", [
+      { type: "hero", archetype: "offset-grid" },
+      { type: "services", archetype: "index" },
+      { type: "contact", archetype: "default" },
+    ]);
+    record(store, "new.com", "dentist", "swiss-grid", sections);
+
+    const recent = recentArchetypes(store, 1);
+    expect(recent["hero/index"]).toBe(1);
+    expect(recent["hero/offset-grid"]).toBeUndefined();
+  });
+
+  /**
+   * Rows written before C3 hold the DNA's own archetype shape — an object,
+   * not an array. Skipping them costs one run's worth of rotation; guessing
+   * at them would mean avoiding layouts nobody was served.
+   */
+  it("ignores rows written before the spec path", () => {
+    const store = openStore({ memory: true });
+    const spec = specFor("swiss-grid", "legacy.com", sections);
+    recordSpec(store, { domain: "legacy.com", sector: "dentist", spec, palette });
+    // Overwrite with the pre-C3 shape, as an old row would hold it.
+    store.$client
+      .prepare("UPDATE designs SET archetypes = ? WHERE domain = ?")
+      .run(JSON.stringify({ hero: "photo-full" }), "legacy.com");
+
+    expect(recentArchetypes(store)).toEqual({});
+  });
+
+  it("survives an unparseable row", () => {
+    const store = openStore({ memory: true });
+    record(store, "a.com", "dentist", "swiss-grid", sections);
+    store.$client
+      .prepare("UPDATE designs SET archetypes = ? WHERE domain = ?")
+      .run("not json", "a.com");
+
+    expect(() => recentArchetypes(store)).not.toThrow();
+    expect(recentArchetypes(store)).toEqual({});
   });
 });
