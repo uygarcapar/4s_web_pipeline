@@ -1528,6 +1528,63 @@ name; this one measures the result.
 
 `PIPELINE_SKIP_PRERENDER=1` turns off the §8.2 half; §8.1 still gates.
 
+## The direction review — two of four rejected (operator, 2026-10-22)
+
+The B4 archetypes were merged without review on standing instruction, so the
+review was owed. It happened against `/library`, all four directions:
+
+| direction | displayWeights | scaleRatio | verdict |
+|---|---|---|---|
+| `kinetic-bold` | 700–800 | 5.5–7.0 | "çok iyi" |
+| `swiss-grid` | 400–500 | 4.0–6.0 | "fena değil" |
+| `quiet-luxury` | 300–400 | 4.0–6.0 | "çok sevmedim" |
+| `editorial-serif` | 300–400 | 3.0–4.5 | "hepsi kötü" |
+
+The split falls exactly on display weight and scale ratio. Both rejected
+directions are the light, small-scale half of the catalog; both accepted
+ones are the heavy half. This is consistent with the standing instruction
+recorded since 2026-10-19 — modern fonts, large type — and it means
+restrained type reads to this operator as unfinished rather than as elegant.
+
+Two renders, looked at rather than inferred:
+
+- `editorial-serif/hero/type-only`, desktop: a thin Fraunces headline over
+  about a third of the viewport, right 40% and bottom 30% empty.
+- `quiet-luxury/hero/index`, mobile: small centred display type, a wide
+  unexplained gap between the `01–04` numbers and their titles, no
+  photograph.
+
+**The archetypes are not the problem.** The same `hero/index` under
+`swiss-grid` is left-aligned throughout with rules between the rows and
+reads as a table. Quiet-luxury renders it centred with `rules: "none"`, so
+the gap reads as broken spacing. That is a direction-level decision, which
+is why the answer is to replace the direction and not to patch the layout.
+
+### What follows
+
+`editorial-serif` and `quiet-luxury` are to be **replaced, not repaired**.
+Raising their weights and ratios to answer the complaint would produce two
+more `kinetic-bold`s, which the §8.1 distance gate would then reject against
+each other.
+
+Replacing is urgent rather than cosmetic: C4 measured four directions
+producing about six distinct sites before the gate falls back. Two
+directions take that to roughly three, and §12's ship test wants ten.
+
+**Blocked on the operator for reference screenshots.** A direction needs at
+least three (`refs`, §4.1), and A3 established that the reference picks are
+the operator's call. Four to six liked sites, enough to see two distinct
+languages, and the rest is mechanical: define the ranges, draw the archetype
+shortlists from the existing library, re-measure §8.1 and §8.2.
+
+### Note on the calibration data
+
+`docs/D10-visual-calibration.md` measured all four directions. Half that
+matrix describes sites that will not exist. The harness is still worth
+having and the method still holds, but the numbers have to be re-taken once
+the catalog settles — and §8.3's operator labelling should wait for the same
+reason.
+
 ## Next
 
 **§8.3 calibration — operator.** ~30 labelled pairs. Both thresholds move to
