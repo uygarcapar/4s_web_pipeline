@@ -53,7 +53,7 @@ export const heroSectionSchema = z
     type: z.literal("hero"),
     /** Layout archetype, chosen per site by the design stage (D6). */
     variant: z
-      .enum(["default", "centered", "photo-full", "seam-bottom", "type-only", "split", "index", "collage", "offset-grid"])
+      .enum(["default", "centered", "photo-full", "seam-bottom", "type-only", "split", "index", "collage", "offset-grid", "marquee"])
       .optional(),
     headline: z.string().min(1),
     subheadline: z.string().min(1).optional(),

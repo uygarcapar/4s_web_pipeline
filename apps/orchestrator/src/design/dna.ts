@@ -88,6 +88,7 @@ export const ARCHETYPES = {
     "index",
     "collage",
     "offset-grid",
+    "marquee",
   ],
   // The business's own sentence, lit word by word (pattern-library.md §2.1).
   statement: ["word-reveal"],
