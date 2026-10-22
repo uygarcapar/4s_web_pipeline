@@ -41,6 +41,13 @@ exports[`editorial-serif > matches its snapshot 1`] = `
   --rule-width: 0px;
   --rule-color: transparent;
 
+  /* How a photograph meets the page (inset). An archetype reads
+     these rather than branching on the frame name, so a new frame is a token
+     change and not an edit to every section that shows a picture. */
+  --image-radius: var(--radius);
+  --image-inset: 1.5rem;
+  --image-aspect: 4 / 3;
+
   /* grid (§4.2), as tokens so an archetype never branches on the direction
      name. left-flush: a centred language and a left-flush one are the
      same markup with a different anchor. */
@@ -234,6 +241,13 @@ exports[`kinetic-bold > matches its snapshot 1`] = `
   --rule-width: 1px;
   --rule-color: var(--ink-400);
 
+  /* How a photograph meets the page (bleed). An archetype reads
+     these rather than branching on the frame name, so a new frame is a token
+     change and not an edit to every section that shows a picture. */
+  --image-radius: 0px;
+  --image-inset: 0rem;
+  --image-aspect: 4 / 3;
+
   /* grid (§4.2), as tokens so an archetype never branches on the direction
      name. left-flush: a centred language and a left-flush one are the
      same markup with a different anchor. */
@@ -425,6 +439,13 @@ exports[`quiet-luxury > matches its snapshot 1`] = `
   --radius: 0rem;
   --rule-width: 0px;
   --rule-color: transparent;
+
+  /* How a photograph meets the page (bleed). An archetype reads
+     these rather than branching on the frame name, so a new frame is a token
+     change and not an edit to every section that shows a picture. */
+  --image-radius: 0px;
+  --image-inset: 0rem;
+  --image-aspect: 4 / 3;
 
   /* grid (§4.2), as tokens so an archetype never branches on the direction
      name. centered: a centred language and a left-flush one are the
@@ -621,6 +642,13 @@ exports[`swiss-grid > matches its snapshot 1`] = `
   --radius: 0rem;
   --rule-width: 2px;
   --rule-color: var(--ink-400);
+
+  /* How a photograph meets the page (inset). An archetype reads
+     these rather than branching on the frame name, so a new frame is a token
+     change and not an edit to every section that shows a picture. */
+  --image-radius: var(--radius);
+  --image-inset: 1.5rem;
+  --image-aspect: 4 / 3;
 
   /* grid (§4.2), as tokens so an archetype never branches on the direction
      name. asymmetric: a centred language and a left-flush one are the

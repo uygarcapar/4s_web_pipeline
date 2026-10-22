@@ -748,9 +748,52 @@ noise in B3 after two passing runs, then recorded it as a real regression in
 B4 once it failed three of five. The second reading was right, and the cause
 was B2's switch of the reference hero to `photo-full`.
 
+## B4 · `hero/split` — **awaiting operator review**
+
+Second B4 archetype. PR open, **not merged**.
+
+The gap in the middle: `photo-full` needs a photograph good enough to fill a
+screen, `type-only` needs none, and most crawled SMB sites sit between —
+one or two usable interior shots, fine at half a screen and poor at full
+bleed. Composition from `noho-ink`.
+
+**Not `hero/default` rebuilt.** The legacy component hardcodes `text-4xl`, a
+`brand-*` gradient and its own spacing, so it looks identical under every
+direction — which is why the design stage was never allowed to pick it. This
+reads only tokens.
+
+Measured across four directions × two widths: no overflow, zero tap targets
+under 44px, and now with real faces — Archivo 81px / Fraunces 53 / Inter
+Tight 67 / Instrument Serif 67 on desktop.
+
+New tokens: `--image-radius`, `--image-inset`, `--image-aspect` from
+`shape.imageFrame`, so an archetype frames a photograph the way its direction
+frames photographs instead of branching on the frame's name.
+
+**Two findings worth more than the archetype.**
+
+1. **Images 404'd in every library preview.** `apps/library/public` had no
+   images, so any archetype with a photograph rendered a broken-image icon.
+   It went unnoticed through B1 and the whole of `hero/type-only`'s review,
+   because that archetype has no image and the earlier measurements only
+   read type. `public/images` is a symlink to the template's now. Anything
+   reviewed before this was reviewed without its photographs.
+2. **The library shows one sample per direction, not its range.** All four
+   directions list `bleed` or `inset` first and radius `0` first, and the
+   library samples option `[0]` — so the image frame looks identical in all
+   four previews even though the tokens vary correctly. Proved by unit test
+   rather than left looking like a bug: four frames render four distinct
+   stylesheets, `masked` is a 3/4 window against `bleed`'s 4/3. The real
+   sampler (§6.3) picks per client with a seeded PRNG; the library's
+   deterministic `[0]` is a fixture property, not a defect — but it means a
+   `/library` review cannot see a direction's whole range.
+
+`verify` exits 0 on both fixtures. 299 tests.
+
 ## Next
 
-The rest of B4, one archetype at a time — §7.1 wants 8 heroes and the
-template now has 3. Both blocking decisions are settled: `verify` is green on both fixtures and
+The rest of B4 — §7.1 wants 8 heroes, the template now has 4 selectable
+(`photo-full`, `type-only`, `split`, plus the legacy `default` which the
+design stage will not pick). Both blocking decisions are settled: `verify` is green on both fixtures and
 `/library` renders each direction's own faces, so an archetype review can
 now judge type as well as composition.

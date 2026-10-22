@@ -81,7 +81,7 @@ export const ARCHETYPES = {
   // flip, and a client who lost the toss silently got the old template back.
   // `type-only` carries no photograph at all, which is what most crawled
   // SMB sites can actually support (B4).
-  hero: ["photo-full", "type-only"],
+  hero: ["photo-full", "type-only", "split"],
   // The business's own sentence, lit word by word (pattern-library.md §2.1).
   statement: ["word-reveal"],
   // Address, hours and the number as one section, not three (§2.2).

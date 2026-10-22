@@ -7,6 +7,7 @@ import { Faq } from "@/sections/faq";
 import { Gallery } from "@/sections/gallery";
 import { Hero } from "@/sections/hero";
 import { HeroPhotoFull } from "@/sections/hero/photo-full";
+import { HeroSplit } from "@/sections/hero/split";
 import { HeroTypeOnly } from "@/sections/hero/type-only";
 import { Hours } from "@/sections/hours";
 import { Marquee } from "@/sections/marquee";
@@ -73,6 +74,7 @@ export const LIBRARY_ARCHETYPES: LibraryArchetype[] = [
   entry("hero/default", "hero", "default", Hero, bySectionType("hero")),
   entry("hero/photo-full", "hero", "photo-full", HeroPhotoFull, bySectionType("hero")),
   entry("hero/type-only", "hero", "type-only", HeroTypeOnly, bySectionType("hero")),
+  entry("hero/split", "hero", "split", HeroSplit, bySectionType("hero")),
   entry("statement/word-reveal", "statement", "word-reveal", Statement, STATEMENT),
   entry("services/default", "services", "default", Services, bySectionType("services")),
   entry("services/rail-pinned", "services", "rail-pinned", ServicesRailPinned, bySectionType("services")),
