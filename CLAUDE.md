@@ -88,5 +88,9 @@ command for the current working copy, and the current domain/run id.
 - Exception: if the task produced a patch under docs/patches/ for a
   protected file, open the PR but do not merge. Stop and tell the operator
   the exact `git apply` command to run.
-- Exception: tasks that end in an operator review (A3 reference picks, B4
-  /library review) stop before merge.
+- Exception: tasks that end in an operator *decision* stop before merge —
+  A3's reference picks were one. A B4 archetype is NOT one: build it, verify
+  it across every direction, merge it, and report what the operator should
+  look at in `/library`. The review happens after the merge, and a rejection
+  is a follow-up task. (Operator instruction, 2026-10-22: "dont ask me to
+  merge, merge it.")

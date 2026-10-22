@@ -166,11 +166,13 @@ Task B4, one archetype: <section>/<archetype-name>.
 Composition references: <2–3 paths from data/corpus/shots/>.
 Take composition only — no copy, branding or distinctive artwork.
 Done when: it renders in /library under all four directions at desktop and
-mobile, reads only tokens, passes invariants in isolation. Then stop for my
-review in /library.
+mobile, reads only tokens, passes invariants in isolation. Then merge and tell me what to
+look at in /library.
 ```
 
-🧑 `/library`'de 4 direction × 2 viewport'a bak → onay ya da red + neden.
+🤖 arketipi kurar, doğrular ve **merge eder**; sonra ne bakman gerektiğini
+söyler. 🧑 `/library`'de 4 direction × 3 aday × 2 viewport'a bakar — red
+gelirse ayrı bir görev olur (operatör kararı, 2026-10-22).
 İlk 3 B4 oturumunun maliyetini not et; kalan bütçeyi ondan hesapla.
 
 Sıra: hero (7) → services (5) → team (4) → gallery (4) → visit (3) →

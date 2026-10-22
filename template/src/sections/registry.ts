@@ -9,6 +9,7 @@ import { Hero } from "@/sections/hero";
 import { HeroPhotoFull } from "@/sections/hero/photo-full";
 import { HeroCollage } from "@/sections/hero/collage";
 import { HeroIndex } from "@/sections/hero/index-list";
+import { HeroOffsetGrid } from "@/sections/hero/offset-grid";
 import { HeroSplit } from "@/sections/hero/split";
 import { HeroTypeOnly } from "@/sections/hero/type-only";
 import { Hours } from "@/sections/hours";
@@ -70,6 +71,7 @@ const archetypeRegistry: {
     "split": HeroSplit,
     "index": HeroIndex,
     "collage": HeroCollage,
+    "offset-grid": HeroOffsetGrid,
   },
   statement: { "word-reveal": Statement },
   visit: { "rows": Visit },
