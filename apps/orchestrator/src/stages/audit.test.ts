@@ -1,14 +1,19 @@
 import { describe, expect, it } from "vitest";
 import { factsSchema, issuesFileSchema } from "@pipeline/core";
 import {
+  addressScore,
   buildFacts,
+  extractServices,
+  findWebSiteNode,
   normalizeTrPhone,
   parseJsonldHours,
   parseOpeningHours,
+  pickAddress,
   pickTrPhone,
   readExtracted,
   readPages,
   resolveTrProvince,
+  trLocalityFromAddress,
 } from "./facts.js";
 import { runRules, summarizeAxe, summarizeLhr } from "./audit-rules.js";
 import type { LighthouseSummary } from "./audit-rules.js";
@@ -148,6 +153,13 @@ describe("parseOpeningHours", () => {
     expect(entries[6]).toEqual({ day: 7, opens: "08:00", closes: "22:00" });
   });
 
+  it("handles 'Tüm Günler', which is how the first real client states it", () => {
+    const entries = parseOpeningHours(["Tüm Günler: 09:00 – 20:00"]);
+    expect(entries).toHaveLength(7);
+    expect(entries[0]).toEqual({ day: 1, opens: "09:00", closes: "20:00" });
+    expect(entries[6]).toEqual({ day: 7, opens: "09:00", closes: "20:00" });
+  });
+
   it("returns [] for unparseable input", () => {
     expect(parseOpeningHours(["hafta içi açığız", "", "09:00"])).toEqual([]);
     expect(parseOpeningHours([])).toEqual([]);
@@ -266,6 +278,195 @@ describe("buildFacts", () => {
     expect(facts.address).toBe("Atatürk Cad. No:12 Daire 3, Kadıköy, İstanbul 34710");
     expect(facts.sources.address).toBe("extracted.addressCandidates");
     expect(() => factsSchema.parse(facts)).not.toThrow();
+  });
+});
+
+/* ------------------------------------------------------------------ */
+/* Regressions from the first real client (minaguzellik.com)           */
+/*                                                                     */
+/* Every case here is something the extractor actually got wrong on a  */
+/* live site, where the fixtures above all passed. They are kept with  */
+/* the real values because the shapes are what real sites publish.     */
+/* ------------------------------------------------------------------ */
+
+describe("addressScore / pickAddress", () => {
+  const realAddress = "Cumhuriyet Mah. Nazım Hikmet Bulvarı No: 25 Kat:2 Beylikdüzü / İstanbul";
+  const prose =
+    "Duş Alırken Dikkat: Duş alırken kaşları yoğun su temasından korumak için vazelin uygulayabilirsiniz.";
+
+  it("rejects prose outright rather than merely ranking it lower", () => {
+    expect(addressScore(prose)).toBe(0);
+  });
+
+  it("prefers a real address over longer prose", () => {
+    // The whole bug: the prose is 100 chars, the address 71, and the old
+    // rule was "longest candidate wins".
+    expect(prose.length).toBeGreaterThan(realAddress.length);
+    expect(pickAddress([prose, realAddress])).toBe(realAddress);
+  });
+
+  it("scores a resolvable province tail above a bare street line", () => {
+    expect(addressScore(realAddress)).toBeGreaterThan(
+      addressScore("Piri Reis Mah. İstiklal Cad. Semerkand Evleri Sit. A Blok"),
+    );
+  });
+
+  it("returns null when no candidate looks like an address", () => {
+    expect(pickAddress([prose, "Hoş geldiniz", ""])).toBeNull();
+  });
+});
+
+describe("trLocalityFromAddress", () => {
+  it("takes the district off the street line, not the whole segment", () => {
+    // Returned the entire street line as `district` until the address was
+    // right enough for anyone to notice.
+    expect(
+      trLocalityFromAddress(
+        "Cumhuriyet Mah. Nazım Hikmet Bulvarı No: 25 Kat:2 Beylikdüzü / İstanbul",
+      ),
+    ).toEqual({ district: "Beylikdüzü", city: "İstanbul" });
+  });
+
+  it("keeps a comma-delimited district as-is", () => {
+    expect(trLocalityFromAddress("Atatürk Cad. No:12, Kadıköy, İstanbul")).toEqual({
+      district: "Kadıköy",
+      city: "İstanbul",
+    });
+  });
+
+  it("reports no district rather than a street line it cannot split", () => {
+    const parsed = trLocalityFromAddress("Nazım Hikmet Bulvarı No: 25 Kat: 2 / İstanbul");
+    expect(parsed?.city).toBe("İstanbul");
+    expect(parsed?.district).toBeNull();
+  });
+});
+
+describe("buildFacts — business name", () => {
+  const websiteJsonld = [
+    { "@context": "https://schema.org", "@type": "WebSite", name: "Mina Güzellik Merkezi" },
+    { "@type": "WebPage", name: "Galeri - Mina Güzellik Merkezi" },
+  ];
+
+  it("reads WebSite.name when nothing is typed LocalBusiness or Organization", () => {
+    // WordPress SEO plugins publish only this. Missing it sent the name
+    // down to the title fallback.
+    expect(findWebSiteNode(websiteJsonld)?.name).toBe("Mina Güzellik Merkezi");
+    const facts = buildFacts({
+      domain: "minaguzellik.com",
+      extracted: readExtracted({ jsonld: websiteJsonld }),
+      pages: readPages([
+        { url: "https://minaguzellik.com/gallery", title: "Galeri - Mina Güzellik Merkezi" },
+        { url: "https://minaguzellik.com/", title: "Anasayfa - Mina Güzellik Merkezi" },
+      ]),
+    });
+    expect(facts.businessName).toBe("Mina Güzellik Merkezi");
+    expect(facts.sources.businessName).toBe("jsonld:WebSite.name");
+  });
+
+  it("falls back to the home page's title, not the first crawled page's", () => {
+    // Crawl order put /gallery first, so the business was named "Galeri".
+    const facts = buildFacts({
+      domain: "minaguzellik.com",
+      extracted: readExtracted({}),
+      pages: readPages([
+        { url: "https://minaguzellik.com/gallery", title: "Galeri - Mina Güzellik Merkezi" },
+        { url: "https://minaguzellik.com/", title: "Anasayfa - Mina Güzellik Merkezi" },
+      ]),
+    });
+    expect(facts.businessName).toBe("Mina Güzellik Merkezi");
+  });
+});
+
+describe("readExtracted — phone shapes", () => {
+  it("reads the grouped shape the crawl writes", () => {
+    // `strArray` on an object returned [], so `extracted.phones` was empty
+    // on every real site and the landline was lost entirely.
+    const signals = readExtracted({
+      phones: { mobile: ["0541 825 39 59"], landline: ["0212 852 70 74"] },
+    });
+    expect(signals?.phones).toEqual(["0541 825 39 59", "0212 852 70 74"]);
+    expect(pickTrPhone(signals?.phones ?? [])).toBe("+905418253959");
+  });
+
+  it("still reads a flat array", () => {
+    expect(readExtracted({ phones: ["0532 123 45 67"] })?.phones).toEqual(["0532 123 45 67"]);
+  });
+});
+
+describe("extractServices", () => {
+  const domain = "minaguzellik.com";
+  const nav = ["/", "/about-us", "/gallery", "/services", "/contact"];
+  const page = (
+    path: string,
+    name: string,
+    links: string[] = nav,
+  ): Record<string, unknown> => ({
+    url: `https://${domain}${path}`,
+    title: `${name} - Mina Güzellik Merkezi`,
+    jsonLd: [
+      {
+        "@type": "BreadcrumbList",
+        itemListElement: [
+          { item: { name: "Ana sayfa" } },
+          { item: { name } },
+        ],
+      },
+    ],
+    links,
+  });
+
+  const pages = readPages([
+    page("/", "Anasayfa"),
+    page("/about-us", "Hakkımızda"),
+    page("/gallery", "Galeri"),
+    page("/contact", "İletişim"),
+    page("/tesekkurler", "Teşekkürler"),
+    page("/services", "Hizmetlerimiz", [...nav, "/lazer-epilasyon", "/cilt-bakimi"]),
+    page("/cilt-bakimi", "Cilt Bakımı"),
+    page("/lazer-epilasyon", "Lazer Epilasyon"),
+    page("/microblading", "Microblading"),
+    page("/%d9%84%db%8c%d8%b2%d8%b1", "لیزر مو برای مرد ها"),
+  ]);
+
+  it("lists the service pages and nothing else", () => {
+    // `buildFacts` returned a hardcoded [] here, so the design stage was
+    // told this salon had two services when it publishes 21.
+    expect(extractServices(pages, domain, "Mina Güzellik Merkezi")).toEqual([
+      "Lazer Epilasyon",
+      "Cilt Bakımı",
+      "Microblading",
+    ]);
+  });
+
+  it("puts the services index's own order first", () => {
+    const services = extractServices(pages, domain, "Mina Güzellik Merkezi");
+    // The index links lazer-epilasyon before cilt-bakimi; microblading is
+    // orphaned from it and comes after both.
+    expect(services.indexOf("Lazer Epilasyon")).toBeLessThan(services.indexOf("Cilt Bakımı"));
+    expect(services.at(-1)).toBe("Microblading");
+  });
+
+  it("excludes site chrome even though the services index links it", () => {
+    const services = extractServices(pages, domain, "Mina Güzellik Merkezi");
+    for (const name of ["Anasayfa", "Hakkımızda", "Galeri", "İletişim", "Hizmetlerimiz"]) {
+      expect(services).not.toContain(name);
+    }
+  });
+
+  it("drops a page whose name is not in Latin script", () => {
+    expect(extractServices(pages, domain, "Mina Güzellik Merkezi")).not.toContain(
+      "لیزر مو برای مرد ها",
+    );
+  });
+
+  it("prefers the breadcrumb name over the title's brand-stripped form", () => {
+    // /kas-kontur is titled "Kıl Tekniği - ..." — the slug is no guide.
+    const [only] = extractServices(
+      readPages([page("/kas-kontur", "Kıl Tekniği", []), page("/", "Anasayfa", [])]),
+      domain,
+      "Mina Güzellik Merkezi",
+    );
+    expect(only).toBe("Kıl Tekniği");
   });
 });
 

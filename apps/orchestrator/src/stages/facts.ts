@@ -24,6 +24,22 @@ function str(v: unknown): string | null {
   return typeof v === "string" && v.trim().length > 0 ? v.trim() : null;
 }
 
+/**
+ * Phone candidates from either shape the crawl has written: a flat array, or
+ * the `{ mobile: [...], landline: [...] }` grouping it writes today. Reading
+ * only the array shape made `extracted.phones` silently empty on every real
+ * site — minaguzellik.com published a landline and a mobile and the facts
+ * ended up with neither from this source (the mobile survived only because
+ * the same number was also a `tel:` href).
+ */
+function phoneStrings(v: unknown): string[] {
+  if (Array.isArray(v)) return strArray(v);
+  if (!isObj(v)) return [];
+  // Mobiles first: pickTrPhone prefers a mobile anyway, but ordering here
+  // keeps the chosen source honest when both groups are present.
+  return [...strArray(v.mobile), ...strArray(v.landline), ...strArray(v.other)];
+}
+
 function boolOrNull(v: unknown): boolean | null {
   return typeof v === "boolean" ? v : null;
 }
@@ -68,7 +84,7 @@ function pick(raw: Record<string, unknown>, ...keys: string[]): unknown {
 export function readExtracted(raw: unknown): ExtractedSignals | null {
   if (!isObj(raw)) return null;
   return {
-    phones: strArray(raw.phones),
+    phones: phoneStrings(pick(raw, "phones", "phoneCandidates", "phone_candidates")),
     telHrefs: strArray(pick(raw, "telHrefs", "tel_hrefs")),
     waHrefs: strArray(pick(raw, "waHrefs", "whatsappHrefs", "whatsapp_hrefs")),
     mailtos: strArray(pick(raw, "mailtos", "mailtoHrefs", "mailto_hrefs")),
@@ -99,6 +115,42 @@ export interface CrawlPage {
   h1: string | null;
   ogSiteName: string | null;
   links: string[];
+  /** Path-only form of `url`, trailing slash stripped ("/" for the root). */
+  path: string | null;
+  /** Last BreadcrumbList entry: the page's own name as the site states it. */
+  breadcrumbName: string | null;
+  /** Per-page JSON-LD, kept so site-wide nodes can be read off any page. */
+  jsonld: unknown[];
+}
+
+/** Path-only, trailing slash stripped. Returns null for an unparseable URL. */
+export function pathOf(url: string | null): string | null {
+  if (url === null) return null;
+  try {
+    return new URL(url).pathname.replace(/\/+$/, "") || "/";
+  } catch {
+    return null;
+  }
+}
+
+/**
+ * The page's own name from its BreadcrumbList trail. Preferred over `<title>`
+ * for service names because it carries no brand suffix and no separator to
+ * guess at: `/kas-kontur` is titled "Kıl Tekniği - Mina Güzellik Merkezi" and
+ * its last crumb is exactly "Kıl Tekniği".
+ */
+function breadcrumbNameOf(jsonld: unknown[]): string | null {
+  let last: string | null = null;
+  for (const node of flattenJsonld(jsonld)) {
+    if (!typesOf(node).includes("BreadcrumbList")) continue;
+    const items = Array.isArray(node.itemListElement) ? node.itemListElement : [];
+    for (const item of items) {
+      if (!isObj(item)) continue;
+      const name = isObj(item.item) ? str(item.item.name) : str(item.name);
+      if (name) last = name;
+    }
+  }
+  return last;
 }
 
 /** Tolerant reader for crawl/pages.json (array of pages or { pages: [...] }). */
@@ -125,17 +177,23 @@ export function readPages(raw: unknown): CrawlPage[] {
         if (href) links.push(href);
       }
     }
+    const url = str(item.url) ?? str(item.finalUrl);
+    const jsonld = Array.isArray(item.jsonLd)
+      ? item.jsonLd
+      : Array.isArray(item.jsonld)
+        ? item.jsonld
+        : [];
     pages.push({
-      url: str(item.url) ?? str(item.finalUrl),
+      url,
       title: str(item.title),
       metaDescription:
         str(item.metaDescription) ?? str(item.meta_description) ?? str(item.description),
       h1: str(item.h1) ?? h1s[0] ?? null,
-      // TODO(uygar): crawl/pages.json has no generic `links` array yet, so
-      // facts.socialLinks stays empty. Add link collection to the crawl
-      // extraction when social profiles start mattering for generated sites.
       ogSiteName: str(item.ogSiteName) ?? str(item.og_site_name) ?? str(og.site_name),
       links,
+      path: pathOf(url),
+      breadcrumbName: breadcrumbNameOf(jsonld),
+      jsonld,
     });
   }
   return pages;
@@ -210,6 +268,20 @@ export function findOrganizationNode(jsonld: unknown[]): Record<string, unknown>
     if (typesOf(node).some((t) => t.toLocaleLowerCase("en-US").includes("organization"))) {
       return node;
     }
+  }
+  return null;
+}
+
+/**
+ * First WebSite-typed JSON-LD node. Yoast and most WordPress SEO plugins emit
+ * `WebSite.name` on every page and nothing typed Organization or
+ * LocalBusiness at all, so without this the business name falls through to
+ * `<title>` — which on minaguzellik.com gave "Galeri", the gallery page's
+ * title, while "Mina Güzellik Merkezi" sat in `WebSite.name` on all 29 pages.
+ */
+export function findWebSiteNode(jsonld: unknown[]): Record<string, unknown> | null {
+  for (const node of flattenJsonld(jsonld)) {
+    if (typesOf(node).some((t) => t.toLocaleLowerCase("en-US") === "website")) return node;
   }
   return null;
 }
@@ -325,7 +397,9 @@ export function parseOpeningHours(candidates: string[]): OpeningHoursEntry[] {
     const text = raw.toLocaleLowerCase("tr-TR");
     const dayMatches = matchDays(text);
     let dayList: IsoDay[] = [];
-    if (/her\s*gün|hergün/.test(text)) {
+    // "Tüm günler" is as common as "her gün" and means the same thing; the
+    // crawl now joins such a label to its time range before it gets here.
+    if (/(tüm|her)\s*gün(ler)?|hergün|haftanın\s*(7|yedi)\s*günü|7\s*\/\s*24/.test(text)) {
       dayList = [1, 2, 3, 4, 5, 6, 7];
     } else if (dayMatches.length === 2) {
       const [a, b] = dayMatches as [DayMatch, DayMatch];
@@ -449,7 +523,78 @@ function mapsQueryFromIframes(mapsIframes: string[]): string | null {
       /* malformed URI component — skip */
     }
   }
+  // The `?pb=` embed form carries no `q=`; the place string lives in its
+  // `!2s` field ("!2sCumhuriyet+Mahallesi,+...+Esenyurt/İstanbul"). Reading
+  // only `q=` meant every pb-style embed — which is what the Google Maps
+  // "share > embed" button produces — contributed nothing.
+  for (const src of mapsIframes) {
+    const m = /!2s([^!]+)/.exec(src);
+    if (!m?.[1]) continue;
+    try {
+      const q = decodeURIComponent(m[1].replace(/\+/g, " ")).trim();
+      // `!2s` is also used for short locale codes ("tr") elsewhere in the
+      // payload; a place string is longer than that.
+      if (q.length > 8) return q;
+    } catch {
+      /* malformed URI component — skip */
+    }
+  }
   return null;
+}
+
+/**
+ * Turkish street-address markers. A candidate carrying none of these is prose
+ * that happened to be picked up by the address heuristic.
+ *
+ * Guarded with `\p{L}` rather than `\b`, because JavaScript's `\b` is defined
+ * on ASCII word characters: after "Sokağı" the preceding "ı" is not a word
+ * character, so `\b` finds no boundary and the token silently fails to match
+ * exactly the Turkish spellings this list exists to catch.
+ */
+const ADDRESS_TOKEN_RE =
+  /(?<!\p{L})(mah(\.|alle(si)?)?|cad(\.|de(si)?)?|sok(\.|ak|ağı)?|bulvar[ıi]?|blv\.?|no\s*:|kat\s*:|daire|apt\.?|apartman|sit(\.|esi)?|blok|plaza|iş\s*merkezi|sanayi|osb)(?!\p{L})/iu;
+
+/**
+ * How strongly a crawl candidate looks like a postal address.
+ *
+ * Replaces "longest candidate wins", which on the first real client chose a
+ * 100-character microblading aftercare sentence ("Duş alırken kaşları ...
+ * vazelin uygulayabilirsiniz") over the salon's actual 71-character address,
+ * and then fed it to `mapsEmbedQuery`. Length is not evidence; the address
+ * vocabulary and a resolvable province tail are.
+ *
+ * Returns 0 for anything that carries no address marker at all, so prose is
+ * excluded outright rather than merely outranked.
+ */
+export function addressScore(candidate: string): number {
+  const text = candidate.trim();
+  if (text.length < 12) return 0;
+  // A sentence is prose, not an address. Addresses abbreviate ("Mah.",
+  // "No:"); they do not end in a full stop after a finite verb.
+  if (/[.!?]\s+[A-ZÇĞİÖŞÜ]/.test(text) && !ADDRESS_TOKEN_RE.test(text)) return 0;
+  if (!ADDRESS_TOKEN_RE.test(text)) return 0;
+
+  let score = 1;
+  // Each distinct marker is independent evidence.
+  const markers = text.match(new RegExp(ADDRESS_TOKEN_RE.source, "gi"));
+  score += new Set((markers ?? []).map((m) => m.toLocaleLowerCase("tr-TR"))).size;
+  // A tail that resolves to a real province is the strongest single signal.
+  if (trLocalityFromAddress(text) !== null) score += 4;
+  if (/\b\d{5}\b/.test(text)) score += 1;
+  if (/\bno\s*:?\s*\d/i.test(text)) score += 1;
+  return score;
+}
+
+/** Highest-scoring address candidate; null when none looks like an address. */
+export function pickAddress(candidates: string[]): string | null {
+  const ranked = candidates
+    .map((c) => c.trim())
+    .filter((c) => c.length > 0)
+    .map((c) => ({ text: c, score: addressScore(c) }))
+    .filter((c) => c.score > 0)
+    // Longest only breaks ties between equally address-like candidates.
+    .sort((a, b) => b.score - a.score || b.text.length - a.text.length);
+  return ranked[0]?.text ?? null;
 }
 
 const SOCIAL_PLATFORMS: { platform: string; pattern: RegExp }[] = [
@@ -478,6 +623,170 @@ function socialLinksFromPages(pages: CrawlPage[]): { platform: string; url: stri
   return [...found.entries()].map(([platform, url]) => ({ platform, url }));
 }
 
+/* ------------------------------------------------------------------ */
+/* Services                                                            */
+/* ------------------------------------------------------------------ */
+
+/**
+ * Page kinds every SMB site has that are never a service. Matched against the
+ * slug and against the page's own name, so a site may spell them either way.
+ *
+ * This is deliberately a list of *page kinds* rather than a list of
+ * non-services: it stays the same size as clients change, whereas guessing
+ * which words are services would need editing per sector.
+ */
+const BOILERPLATE_SLUG_RE =
+  /^\/?(|home|anasayfa|index|hakk[ıi]m[ıi]zda|about(-us)?|biz-kimiz|ekibimiz|team|galeri|gallery|foto(graf)?(-galeri)?|ileti[şs]im|contact(-us)?|randevu(-formu)?|appointment|te[şs]ekk[üu]rler|thank(s|-you)|blog|haberler|news|yaz[ıi]lar|makaleler|sss|faq|s[ıi]k-sorulan-sorular|hizmetler(imiz)?|services|sepet|cart|[öo]deme|checkout|gizlilik(-politikas[ıi])?|privacy|kvkk|[çc]erez|cookie|[şs]artlar|terms|site-haritas[ıi]|sitemap|404|arama|search|yorumlar|referanslar|fiyat(lar)?|price(s|-list)?)$/i;
+
+const BOILERPLATE_NAME_RE =
+  /^(ana\s*sayfa|anasayfa|home|hakk[ıi]m[ıi]zda|about\s*us?|ekibimiz|galeri|gallery|ileti[şs]im|contact|randevu\s*formu|randevu|te[şs]ekk[üu]rler|blog|haberler|sss|s[ıi]k\s*sorulan\s*sorular|hizmetler(imiz)?|services|gizlilik\s*politikas[ıi]|kvkk|[çc]erez\s*politikas[ıi]|kullan[ıi]m\s*[şs]artlar[ıi]|yorumlar|referanslar|fiyat\s*listesi)$/i;
+
+/** Pages whose own name a services index would be titled with. */
+const SERVICES_INDEX_NAME_RE =
+  /^(hizmetler(imiz)?|services|tedaviler|uygulamalar|[üu]r[üu]nler(imiz)?|b[öo]l[üu]mler(imiz)?)$/i;
+
+/** Latin/Turkish script only: a Turkish site's service names are Turkish. */
+const LATIN_NAME_RE = /^[\p{Script=Latin}\p{Nd}\s\-–—&/'’.,()+%]+$/u;
+
+/** The page's own name: breadcrumb tail, then H1, then the title's own part. */
+function pageName(page: CrawlPage, brand: string | null): string | null {
+  if (page.breadcrumbName) return page.breadcrumbName;
+  if (page.h1) return page.h1;
+  const title = page.title;
+  if (!title) return null;
+  // "Microblading - Mina Güzellik Merkezi" → "Microblading". Strip the brand
+  // wherever it sits rather than assuming it comes second: Turkish SEO titles
+  // use both orders, and splitting on the first separator is how "Galeri -
+  // Mina Güzellik Merkezi" became the business name.
+  if (brand) {
+    const stripped = title
+      .split(/\s*[|–—·•]\s*|\s+-\s+/)
+      .map((part) => part.trim())
+      .filter(
+        (part) =>
+          part.length > 0 &&
+          part.toLocaleLowerCase("tr-TR") !== brand.toLocaleLowerCase("tr-TR"),
+      );
+    if (stripped.length > 0) return stripped.join(" ");
+  }
+  return (title.split(/\s*[|–—·•]\s*|\s+-\s+/)[0] ?? title).trim() || null;
+}
+
+/**
+ * Link targets that appear on nearly every crawled page: site chrome.
+ *
+ * The services index links its children *and* the main nav, so without this
+ * the "pages linked from the services index" rule returns `/`, `/about-us`,
+ * `/gallery` and `/contact` alongside the real services. A link's presence on
+ * almost every page is what makes it navigation rather than content.
+ */
+function chromePaths(pages: CrawlPage[], domain: string): Set<string> {
+  const counts = new Map<string, number>();
+  for (const page of pages) {
+    const seen = new Set<string>();
+    for (const link of page.links) {
+      const target = internalPath(link, domain, page.url);
+      if (target === null || seen.has(target)) continue;
+      seen.add(target);
+      counts.set(target, (counts.get(target) ?? 0) + 1);
+    }
+  }
+  const threshold = Math.max(2, Math.ceil(pages.length * 0.8));
+  const chrome = new Set<string>();
+  for (const [path, count] of counts) {
+    if (count >= threshold) chrome.add(path);
+  }
+  return chrome;
+}
+
+/** Path of `link` when it points at `domain`, else null. Resolves relatives. */
+function internalPath(link: string, domain: string, base: string | null): string | null {
+  let parsed: URL;
+  try {
+    parsed = new URL(link, base ?? `https://${domain}`);
+  } catch {
+    return null;
+  }
+  if (parsed.protocol !== "http:" && parsed.protocol !== "https:") return null;
+  if (parsed.hostname.replace(/^www\./i, "") !== domain.replace(/^www\./i, "")) return null;
+  return parsed.pathname.replace(/\/+$/, "") || "/";
+}
+
+/**
+ * Service names, from the pages the business published for them.
+ *
+ * `buildFacts` returned a hardcoded `[]` here, so no client has ever had a
+ * service in its facts — minaguzellik.com publishes 21 service pages and the
+ * design stage was told it had two, then reasonably chose a gallery-led
+ * layout for a business whose entire offering is its service list.
+ *
+ * A page is a service when it is an internal page, is not site chrome, and is
+ * not one of the boilerplate page kinds above. Pages the site's own services
+ * index links come first and in its order — that is the business stating both
+ * the set and the priority — with the remaining service pages after it.
+ * Nothing is invented: every name is the page's own breadcrumb or heading.
+ */
+export function extractServices(
+  pages: CrawlPage[],
+  domain: string,
+  brand: string | null,
+): string[] {
+  const chrome = chromePaths(pages, domain);
+  const byPath = new Map<string, CrawlPage>();
+  for (const page of pages) {
+    if (page.path !== null && !byPath.has(page.path)) byPath.set(page.path, page);
+  }
+
+  const isService = (page: CrawlPage): boolean => {
+    if (page.path === null || page.path === "/") return false;
+    if (chrome.has(page.path)) return false;
+    const slug = page.path.split("/").filter(Boolean).pop() ?? "";
+    if (BOILERPLATE_SLUG_RE.test(decodeURIComponent(slug))) return false;
+    const name = pageName(page, brand);
+    if (name === null || BOILERPLATE_NAME_RE.test(name)) return false;
+    return LATIN_NAME_RE.test(name);
+  };
+
+  const ordered: CrawlPage[] = [];
+  const taken = new Set<string>();
+  const take = (page: CrawlPage): void => {
+    if (page.path === null || taken.has(page.path)) return;
+    taken.add(page.path);
+    ordered.push(page);
+  };
+
+  // The services index first, in its own link order.
+  for (const index of pages) {
+    const name = pageName(index, brand);
+    const slug = index.path?.split("/").filter(Boolean).pop() ?? "";
+    const isIndex =
+      (name !== null && SERVICES_INDEX_NAME_RE.test(name)) ||
+      SERVICES_INDEX_NAME_RE.test(decodeURIComponent(slug));
+    if (!isIndex) continue;
+    for (const link of index.links) {
+      const target = internalPath(link, domain, index.url);
+      const page = target === null ? undefined : byPath.get(target);
+      if (page && isService(page)) take(page);
+    }
+  }
+  // Then every other service page, in crawl order.
+  for (const page of pages) {
+    if (isService(page)) take(page);
+  }
+
+  const names: string[] = [];
+  const seen = new Set<string>();
+  for (const page of ordered) {
+    const name = pageName(page, brand);
+    if (name === null) continue;
+    const key = name.toLocaleLowerCase("tr-TR");
+    if (seen.has(key)) continue;
+    seen.add(key);
+    names.push(name);
+  }
+  return names;
+}
+
 export interface BuildFactsInput {
   domain: string;
   extracted: ExtractedSignals | null;
@@ -496,19 +805,40 @@ export function buildFacts(input: BuildFactsInput): Facts {
   const org = lb ?? findOrganizationNode(jsonld);
   const sources: Record<string, string> = {};
 
-  // businessName: JSON-LD name > og:site_name > <title> first segment > domain
+  // businessName: JSON-LD LocalBusiness/Organization name > WebSite name >
+  // og:site_name > the HOME page's title > domain.
+  //
+  // Both later steps were wrong on the first real client. WordPress SEO
+  // plugins publish the site name only as `WebSite.name`, which neither
+  // node finder matched, and the title fallback took whichever page the
+  // crawl happened to return first — `/gallery`, giving "Galeri".
   let businessName: string | null = null;
   const jsonldName = org ? str(org.name) : null;
+  const siteNode = findWebSiteNode(jsonld);
+  const siteName = siteNode ? str(siteNode.name) : null;
   const ogSiteName = pages.map((p) => p.ogSiteName).find((n) => n !== null) ?? null;
-  const firstTitle = pages.map((p) => p.title).find((t) => t !== null) ?? null;
+  const home = pages.find((p) => p.path === "/") ?? pages[0];
+  const homeTitle = home?.title ?? null;
   if (jsonldName) {
     businessName = jsonldName;
     sources.businessName = "jsonld:name";
+  } else if (siteName) {
+    businessName = siteName;
+    sources.businessName = "jsonld:WebSite.name";
   } else if (ogSiteName) {
     businessName = ogSiteName;
     sources.businessName = "og:site_name";
-  } else if (firstTitle) {
-    businessName = (firstTitle.split(/[|–—·•]|\s-\s/)[0] ?? firstTitle).trim() || firstTitle;
+  } else if (homeTitle) {
+    // On the home page the brand is usually the longest segment, not the
+    // first: "Anasayfa - Mina Güzellik Merkezi".
+    const segments = homeTitle
+      .split(/\s*[|–—·•]\s*|\s+-\s+/)
+      .map((s) => s.trim())
+      .filter((s) => s.length > 0 && !BOILERPLATE_NAME_RE.test(s));
+    businessName =
+      segments.sort((a, b) => b.length - a.length)[0] ??
+      (homeTitle.split(/[|–—·•]|\s-\s/)[0] ?? homeTitle).trim() ??
+      homeTitle;
     sources.businessName = "title";
   } else {
     businessName = input.domain;
@@ -559,12 +889,9 @@ export function buildFacts(input: BuildFactsInput): Facts {
     address = jsonldAddr.text;
     sources.address = "jsonld:address";
   } else {
-    const longest = (extracted?.addressCandidates ?? [])
-      .map((a) => a.trim())
-      .filter((a) => a.length > 0)
-      .sort((a, b) => b.length - a.length)[0];
-    if (longest) {
-      address = longest;
+    const best = pickAddress(extracted?.addressCandidates ?? []);
+    if (best) {
+      address = best;
       sources.address = "extracted.addressCandidates";
     }
   }
@@ -643,6 +970,9 @@ export function buildFacts(input: BuildFactsInput): Facts {
   const socialLinks = socialLinksFromPages(pages);
   if (socialLinks.length > 0) sources.socialLinks = "pages:links";
 
+  const services = extractServices(pages, input.domain, businessName);
+  if (services.length > 0) sources.services = "pages:servicePages";
+
   return {
     businessName,
     legalName,
@@ -655,7 +985,10 @@ export function buildFacts(input: BuildFactsInput): Facts {
     mapsEmbedQuery,
     openingHours,
     hoursNote,
-    services: [],
+    services,
+    // TODO(uygar): prices need a published price list to read; no client has
+    // had one yet. Left empty rather than derived — a wrong price is the
+    // worst fact the pipeline could invent.
     prices: [],
     socialLinks,
     sources,
@@ -714,6 +1047,41 @@ const TR_PROVINCE_BY_NORMALIZED_NAME: ReadonlyMap<string, string> = new Map(
  * whose address plainly ends "Küçükçekmece/İstanbul" still yields a null
  * district and city, which the template schema then rejects.
  */
+/**
+ * The district out of the segment that precedes the province.
+ *
+ * Turkish addresses are only sometimes punctuated between the street line and
+ * the district: "Cumhuriyet Mah. Nazım Hikmet Bulvarı No: 25 Kat:2
+ * Beylikdüzü / İstanbul" puts both in one slash-delimited segment. Returning
+ * the whole segment made `district` the entire street address, which the
+ * generated site then printed as the neighbourhood.
+ *
+ * When the segment carries street vocabulary, the district is what follows
+ * the last of it. When it carries none ("..., Kadıköy, İstanbul") the segment
+ * already *is* the district. If the tail cannot be isolated, this returns
+ * null — no district is better than the street line labelled as one.
+ */
+function districtFromSegment(segment: string): string | null {
+  const text = segment.trim();
+  if (!ADDRESS_TOKEN_RE.test(text)) return text.length > 0 ? text : null;
+
+  const marker = new RegExp(ADDRESS_TOKEN_RE.source, "gi");
+  let end = -1;
+  let m: RegExpExecArray | null;
+  while ((m = marker.exec(text)) !== null) end = m.index + m[0].length;
+  if (end < 0) return null;
+
+  // Skip the marker's own operand ("No: 25", "Kat:2") and keep what is left.
+  const tail = text
+    .slice(end)
+    .replace(/^[\s:.]*\d+\s*(\/\s*\d+)?/, "")
+    .replace(/^[\s:.,-]+/, "")
+    .trim();
+  if (tail.length === 0 || /\d/.test(tail)) return null;
+  // A district is a place name, not a remaining clause.
+  return tail.split(/\s+/).length <= 3 ? tail : null;
+}
+
 export function trLocalityFromAddress(
   address: string,
 ): { district: string | null; city: string } | null {
@@ -731,7 +1099,7 @@ export function trLocalityFromAddress(
     const district =
       previous !== null &&
       previous.toLocaleLowerCase("tr-TR") !== canonical.toLocaleLowerCase("tr-TR")
-        ? previous
+        ? districtFromSegment(previous)
         : null;
     return { district, city: canonical };
   }

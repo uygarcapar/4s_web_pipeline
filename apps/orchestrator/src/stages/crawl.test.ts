@@ -70,6 +70,26 @@ describe("findHoursCandidates", () => {
       [],
     );
   });
+
+  it("joins an every-day label to the range on the following line", () => {
+    // How minaguzellik.com publishes its only hours. "Tüm Günler" matched
+    // no label pattern, so the range was never collected and the salon's
+    // facts recorded no opening hours at all.
+    const text = ["İletişim", "Apt. No: 27/6", "", "Tüm Günler:", "09:00 – 20:00", ""].join(
+      "\n",
+    );
+    expect(findHoursCandidates(text)).toEqual(["Tüm Günler: 09:00 – 20:00"]);
+  });
+
+  it("keeps an every-day label and range that share a line", () => {
+    expect(findHoursCandidates("Her gün 10.00-19.30")).toEqual(["Her gün 10.00-19.30"]);
+  });
+
+  it("does not duplicate a line that already names a day", () => {
+    expect(findHoursCandidates("Pazar günleri 09:00 - 20:00")).toEqual([
+      "Pazar günleri 09:00 - 20:00",
+    ]);
+  });
 });
 
 describe("findAddressCandidates", () => {
@@ -90,6 +110,22 @@ describe("findAddressCandidates", () => {
     expect(findAddressCandidates("Sadece telefon: 0532 123 45 67")).toEqual(
       [],
     );
+  });
+
+  it("does not match an address token inside a longer word", () => {
+    // "Dikkat:" ends in "kat:", so this microblading aftercare sentence was
+    // collected as an address candidate — and, being the longest one, was
+    // published as the first real client's street address.
+    expect(
+      findAddressCandidates(
+        "Duş Alırken Dikkat: Duş alırken kaşları yoğun su temasından korumak için vazelin uygulayabilirsiniz.",
+      ),
+    ).toEqual([]);
+  });
+
+  it("still matches a genuine Kat: after a word boundary", () => {
+    const line = "Nazım Hikmet Bulvarı No: 25 Kat:2 Beylikdüzü / İstanbul";
+    expect(findAddressCandidates(line)).toEqual([line]);
   });
 });
 
