@@ -27,10 +27,12 @@ export const swissGrid: Direction = {
     "rather than warmth, whose site should read like a well-kept index of " +
     "what it does.",
   type: {
+    // Archivo dropped: it belongs to `stark-display` now. Inter Tight and
+    // Public Sans are the grotesks this style was actually set in.
     pairs: [
       { display: "Inter Tight", body: "Inter Tight" },
-      { display: "Public Sans", body: "Public Sans" },
-      { display: "Archivo", body: "Archivo" },
+      { display: "Inter Tight", body: "Public Sans" },
+      { display: "Public Sans", body: "Karla" },
     ],
     // Required, not optional: see `avoid`.
     mono: ["JetBrains Mono", "Space Mono"],

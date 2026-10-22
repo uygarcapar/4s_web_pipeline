@@ -28,13 +28,16 @@ export const starkDisplay: Direction = {
     "usable pictures and a clear sentence about itself. The type runs to the " +
     "edges of the viewport and the page needs nothing else to feel finished.",
   type: {
-    // Grotesks only. The rejection was of a thin serif at small scale, and
-    // a serif at THIS scale is a different proposition — but it is also a
-    // different direction, and one unbuilt register at a time is enough.
+    // Archivo, and only Archivo — it is this direction's alone now. The
+    // body varies instead, which keeps `typePair` unfrozen while the face
+    // a visitor actually reads stays constant and distinctive.
+    //
+    // Anton and Bebas Neue went to `kinetic-bold`: sharing all three faces
+    // with it is why the operator called their renders the same site.
     pairs: [
       { display: "Archivo", body: "Archivo" },
-      { display: "Anton", body: "Public Sans" },
-      { display: "Bebas Neue", body: "Inter Tight" },
+      { display: "Archivo", body: "Public Sans" },
+      { display: "Archivo", body: "Inter Tight" },
     ],
     mono: ["Space Mono", "JetBrains Mono"],
     // The operator's floor is 400; this direction sits well above it because

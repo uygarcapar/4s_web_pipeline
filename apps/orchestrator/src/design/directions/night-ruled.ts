@@ -33,10 +33,14 @@ export const nightRuled: Direction = {
     "studio — where one atmospheric picture sets the room and the practical " +
     "details are drawn over it rather than tucked underneath.",
   type: {
+    // The serifs, and this is the only direction that gets them. Archivo
+    // dropped: a serif display over a dark photograph is the thing that
+    // makes this direction unmistakable, and mixing a grotesk back in just
+    // made it another heavy-type page.
     pairs: [
       { display: "Fraunces", body: "Inter Tight" },
-      { display: "Archivo", body: "Public Sans" },
       { display: "Instrument Serif", body: "Karla" },
+      { display: "Newsreader", body: "Public Sans" },
     ],
     mono: ["JetBrains Mono"],
     displayWeights: [400, 700],

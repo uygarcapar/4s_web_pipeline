@@ -17,7 +17,7 @@
  * Everything is local: the renders, the screenshots and the embeddings all
  * stay on this machine (§13 Q4).
  */
-import { mkdirSync, rmSync, writeFileSync } from "node:fs";
+import { existsSync, mkdirSync, rmSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
 
 import { DIRECTIONS, DIRECTION_IDS } from "../src/design/directions/index.js";
@@ -108,8 +108,25 @@ interface Candidate {
   vectors: { desktop: Float32Array; mobile: Float32Array };
 }
 
-rmSync(OUT, { recursive: true, force: true });
+/**
+ * Clear the renders, NOT the labels.
+ *
+ * The first version removed the whole directory, which silently destroyed
+ * `labels.json` — an hour of the operator's judgement — the first time the
+ * pairs were regenerated after a catalog change. Regenerating is exactly
+ * when you most want the old labels: they are what tells you whether the
+ * change did what it was supposed to.
+ *
+ * Labels key on `<a>|<b>`, so they survive a regeneration and simply stop
+ * matching for any pair that is no longer sampled. `calibrate:report`
+ * already ignores labels with no matching pair.
+ */
+rmSync(SHOTS, { recursive: true, force: true });
 mkdirSync(SHOTS, { recursive: true });
+
+if (existsSync(join(OUT, "labels.json"))) {
+  console.log("keeping the existing labels.json — pairs are keyed by name\n");
+}
 
 const candidates: Candidate[] = [];
 let port = 3200;

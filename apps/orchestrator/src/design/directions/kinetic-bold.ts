@@ -15,9 +15,14 @@ export const kineticBold: Direction = {
     "material can carry a full-bleed hero and whose owner wants the site to " +
     "feel newer than the neighbours'.",
   type: {
+    // Condensed poster faces, and NOT Archivo. Until Phase E's calibration
+    // this direction and `stark-display` drew from an identical pool —
+    // Archivo, Anton, Bebas Neue — and the operator labelled two of their
+    // renders "the same site". Three heavy grotesks on white are three of
+    // the same page whatever their scale ratios say.
     pairs: [
-      { display: "Archivo", body: "Archivo" },
       { display: "Anton", body: "Inter Tight" },
+      { display: "Anton", body: "Karla" },
       { display: "Bebas Neue", body: "Karla" },
     ],
     mono: ["Space Mono"],
