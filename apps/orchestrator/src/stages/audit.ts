@@ -60,7 +60,12 @@ export const auditStage: StageModule = {
       const lhDesktop = lh.desktop ? summarizeLhr(lh.desktop, "desktop") : null;
 
       ctx.log("building facts from crawl signals");
-      const facts = buildFacts({ domain: ctx.domain, extracted, pages });
+      const facts = buildFacts({
+        domain: ctx.domain,
+        extracted,
+        pages,
+        services: serviceNames(readJson(join(ctx.runDir, "crawl", "content.json"))),
+      });
       if (lh.error) facts.sources.lighthouse = `failed: ${lh.error}`;
       if (axe.error) facts.sources.axe = `failed: ${axe.error}`;
       const safeFacts = factsSchema.parse(facts);
@@ -121,6 +126,23 @@ function readJson(path: string): unknown {
   } catch {
     return null;
   }
+}
+
+/**
+ * Service names out of crawl/content.json, which the crawl stage built with
+ * `servicesFromPages`. Facts take the names from there rather than deriving
+ * their own, so the list the design stage reads and the list the facts
+ * publish cannot drift apart.
+ */
+function serviceNames(content: unknown): string[] {
+  if (!isObj(content) || !Array.isArray(content.services)) return [];
+  const names: string[] = [];
+  for (const item of content.services) {
+    if (!isObj(item)) continue;
+    const title = typeof item.title === "string" ? item.title.trim() : "";
+    if (title !== "") names.push(title);
+  }
+  return names;
 }
 
 function clampRuns(raw: string | undefined): number {

@@ -15,7 +15,7 @@ import {
   isTooSmallImage,
   normalizeUrl,
   originalAssetUrl,
-  servicesFromContentBlocks,
+  servicesFromPages,
   readImageDimensions,
   slugForUrl,
   type ContentBlock,
@@ -318,10 +318,12 @@ async function runCrawl(ctx: StageContext): Promise<StageResult> {
 
   // The client's own copy, merged cross-page: the plan and generate stages
   // reuse this text verbatim instead of inventing new Turkish. `services`
-  // carries individual services rather than service pages, so a business
-  // that lists all of them on one page still gets a services section.
+  // carries individual services whether the business gives each one its own
+  // page or lists them all on one, and is the single list `facts.services`
+  // is built from — the two used to disagree, and the design stage read the
+  // one that was wrong.
   const content = buildContentArtifact(pages);
-  const services = servicesFromContentBlocks(pages);
+  const services = servicesFromPages(pages);
   writeFileSync(
     join(crawlDir, "content.json"),
     JSON.stringify({ ...content, services }, null, 2) + "\n",

@@ -8,13 +8,17 @@ import {
   findHoursCandidates,
   findPhoneCandidates,
   hasMojibake,
+  isServiceDescription,
+  isServiceTitle,
   isTooSmallImage,
   normalizeUrl,
   originalAssetUrl,
   plainText,
   readImageDimensions,
+  servicesFromPages,
   slugForUrl,
   type ContentBlock,
+  type ContentSourcePage,
 } from "./crawl-extract.js";
 
 describe("findPhoneCandidates", () => {
@@ -126,6 +130,157 @@ describe("findAddressCandidates", () => {
   it("still matches a genuine Kat: after a word boundary", () => {
     const line = "Nazım Hikmet Bulvarı No: 25 Kat:2 Beylikdüzü / İstanbul";
     expect(findAddressCandidates(line)).toEqual([line]);
+  });
+});
+
+describe("servicesFromPages", () => {
+  const page = (
+    path: string,
+    name: string,
+    blocks: ContentBlock[] = [],
+    h1: string[] = [name],
+  ): ContentSourcePage => ({
+    url: `https://minaguzellik.com${path}`,
+    slug: path.replace(/^\//, "") || "index",
+    title: `${name} - Mina Güzellik Merkezi`,
+    h1,
+    contentBlocks: blocks,
+    jsonLd: [
+      {
+        "@type": "BreadcrumbList",
+        itemListElement: [{ item: { name: "Ana sayfa" } }, { item: { name } }],
+      },
+    ],
+  });
+
+  const prose = (text: string): ContentBlock => ({ tag: "p", text });
+
+  it("reads a service off its own page", () => {
+    // 21 pages like this, and the heading scan found none of them: no
+    // service page announces "Hizmetlerimiz" in its H1.
+    const services = servicesFromPages([
+      page("/microblading", "Microblading", [
+        prose("Microblading, kaşların görünümünü iyileştirmek için kullanılan bir işlemdir."),
+      ]),
+    ]);
+    expect(services).toEqual([
+      {
+        title: "Microblading",
+        description:
+          "Microblading, kaşların görünümünü iyileştirmek için kullanılan bir işlemdir.",
+        sourceUrl: "https://minaguzellik.com/microblading",
+      },
+    ]);
+  });
+
+  it("keeps a service page that has no usable prose", () => {
+    const [only] = servicesFromPages([page("/botoks", "Botoks", [prose("Kısa.")])]);
+    expect(only?.title).toBe("Botoks");
+    expect(only?.description).toBe("");
+  });
+
+  it("excludes boilerplate page kinds", () => {
+    const pages = [
+      page("/", "Anasayfa"),
+      page("/about-us", "Hakkımızda"),
+      page("/gallery", "Galeri"),
+      page("/contact", "İletişim"),
+      page("/iletisim-2", "Randevu Formu"),
+      page("/tesekkurler", "Teşekkürler"),
+      page("/services", "Hizmetlerimiz"),
+      page("/blog/kas-bakimi-nasil", "Kaş Bakımı Nasıl Yapılır"),
+    ];
+    expect(servicesFromPages(pages)).toEqual([]);
+  });
+
+  it("drops a page whose name is not in Latin script", () => {
+    expect(servicesFromPages([page("/lazer-fa", "لیزر مو برای مرد ها")])).toEqual([]);
+  });
+
+  it("rejects contact furniture that shares the services markup", () => {
+    // The whole bug: this one item was the entire services list handed to
+    // the design stage, for a salon with 21 service pages.
+    const listing = page(
+      "/services",
+      "Hizmetlerimiz",
+      [
+        { tag: "h2", text: "WHATSAPP HATTIMIZ:" },
+        prose("Cumhuriyet Mah. Nazım Hikmet Bulvarı No: 25 Kat:2 Beylikdüzü / İstanbul"),
+      ],
+      ["Hizmetlerimiz"],
+    );
+    expect(servicesFromPages([listing])).toEqual([]);
+  });
+
+  it("still reads a one-page services listing", () => {
+    // The layout the heading scan existed for, and which must keep working.
+    const listing = page(
+      "/services",
+      "Hizmetlerimiz",
+      [
+        { tag: "h2", text: "Lazer Epilasyon" },
+        prose("İstenmeyen tüylerin kalıcı olarak azaltılması için uygulanan yöntemdir."),
+        { tag: "h2", text: "Cilt Bakımı" },
+        prose("Cildin ihtiyacına göre temizlik, nemlendirme ve bakım uygulamalarıdır."),
+      ],
+      ["Hizmetlerimiz"],
+    );
+    expect(servicesFromPages([listing]).map((s) => s.title)).toEqual([
+      "Lazer Epilasyon",
+      "Cilt Bakımı",
+    ]);
+  });
+
+  it("does not list the same service twice when it has a page and a listing entry", () => {
+    const services = servicesFromPages([
+      page("/lazer-epilasyon", "Lazer Epilasyon", [
+        prose("İstenmeyen tüylerin kalıcı olarak azaltılması için uygulanan yöntemdir."),
+      ]),
+      page(
+        "/services",
+        "Hizmetlerimiz",
+        [
+          { tag: "h2", text: "Lazer Epilasyon" },
+          prose("Aynı hizmetin listedeki kısa açıklaması burada yer alır."),
+        ],
+        ["Hizmetlerimiz"],
+      ),
+    ]);
+    expect(services.map((s) => s.title)).toEqual(["Lazer Epilasyon"]);
+  });
+
+  it("prefers the breadcrumb name over the slug", () => {
+    // /kas-kontur is "Kıl Tekniği"; the slug is no guide to the name.
+    expect(servicesFromPages([page("/kas-kontur", "Kıl Tekniği")])[0]?.title).toBe(
+      "Kıl Tekniği",
+    );
+  });
+});
+
+describe("isServiceTitle / isServiceDescription", () => {
+  it("rejects a label that introduces something", () => {
+    expect(isServiceTitle("WHATSAPP HATTIMIZ:")).toBe(false);
+    expect(isServiceTitle("Telefon")).toBe(false);
+    expect(isServiceTitle("Bizi Takip Edin")).toBe(false);
+  });
+
+  it("accepts a real service name", () => {
+    expect(isServiceTitle("Kalıcı Makyaj")).toBe(true);
+    expect(isServiceTitle("Erkeklere Özel Manikür ve Pedikür")).toBe(true);
+  });
+
+  it("rejects an address as a description", () => {
+    expect(
+      isServiceDescription(
+        "Cumhuriyet Mah. Nazım Hikmet Bulvarı No: 25 Kat:2 Beylikdüzü / İstanbul",
+      ),
+    ).toBe(false);
+  });
+
+  it("accepts prose about the service", () => {
+    expect(
+      isServiceDescription("Cildin ihtiyacına göre temizlik ve bakım uygulamalarıdır."),
+    ).toBe(true);
   });
 });
 
