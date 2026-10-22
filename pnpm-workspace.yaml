@@ -3,6 +3,16 @@ packages:
   - "apps/*"
   - "template"
 
+# Neither needs its install script run. `onnxruntime-node` ships the
+# prebuilt `.node` binary in its tarball — the design stage's embedder was
+# measured working with these scripts skipped — and `protobufjs`'s is a CLI
+# type generator this repo never invokes. Declining keeps two postinstall
+# scripts out of every `pnpm install`; if a future platform does need the
+# download, it fails loudly rather than silently embedding nothing.
+allowBuilds:
+  onnxruntime-node: false
+  protobufjs: false
+
 onlyBuiltDependencies:
   - better-sqlite3
   - esbuild
