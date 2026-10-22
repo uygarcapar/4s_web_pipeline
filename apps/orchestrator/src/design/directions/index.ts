@@ -1,8 +1,8 @@
 import { directionSchema, type Direction } from "@pipeline/core";
 
-import { editorialSerif } from "./editorial-serif.js";
+import { cinematicCalm } from "./cinematic-calm.js";
 import { kineticBold } from "./kinetic-bold.js";
-import { quietLuxury } from "./quiet-luxury.js";
+import { starkDisplay } from "./stark-display.js";
 import { swissGrid } from "./swiss-grid.js";
 
 /**
@@ -13,8 +13,15 @@ import { swissGrid } from "./swiss-grid.js";
  * module load — a direction that contradicts itself (requiring a motion
  * signature it also disables, an inverted range, fewer than three reference
  * screenshots) fails here rather than three stages downstream.
+ *
+ * Two of the original four are gone. `editorial-serif` and `quiet-luxury`
+ * were rejected in the 2026-10-22 review and are replaced by
+ * `stark-display` and `cinematic-calm`, built from the operator's own
+ * reference sites. The count stays at four deliberately: C4 measured four
+ * directions producing about six distinct sites before the distance gate
+ * starts falling back, and §12's ship test wants ten.
  */
-const CATALOG = [kineticBold, editorialSerif, swissGrid, quietLuxury].map(
+const CATALOG = [kineticBold, starkDisplay, swissGrid, cinematicCalm].map(
   (direction) => directionSchema.parse(direction),
 );
 
@@ -35,4 +42,4 @@ export function resolveDirection(id: string | undefined): Direction {
   return DIRECTIONS[id ?? DEFAULT_DIRECTION_ID] ?? kineticBold;
 }
 
-export { editorialSerif, kineticBold, quietLuxury, swissGrid };
+export { cinematicCalm, kineticBold, starkDisplay, swissGrid };
