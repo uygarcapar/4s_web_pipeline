@@ -69,7 +69,7 @@ export const servicesSectionSchema = z
     type: z.literal("services"),
     /** Layout archetype, chosen per site by the design stage (D6). */
     variant: z
-      .enum(["default", "list", "rail-pinned", "stack", "alternating"])
+      .enum(["default", "list", "rail-pinned", "stack", "alternating", "accordion"])
       .optional(),
     title: z.string().min(1).optional(),
     items: z

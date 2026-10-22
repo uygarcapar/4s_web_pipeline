@@ -97,7 +97,7 @@ export const ARCHETYPES = {
   // B3: the last screen, and the band of the client's own phrases.
   closing: ["statement-cta"],
   marquee: ["ticker"],
-  services: ["rail-pinned", "alternating"],
+  services: ["rail-pinned", "alternating", "accordion"],
   team: ["sticky-swap"],
   // Not yet rebuilt — these still render through the template's original
   // component. Listing "default" keeps that explicit rather than implied.

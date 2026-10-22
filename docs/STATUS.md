@@ -1029,11 +1029,36 @@ Image framing follows the direction, 3/4 under `kinetic-bold` and
 
 `verify` exits 0 on both fixtures. 326 tests.
 
+## B4 · `services/accordion`
+
+Every service a closed row, opening to its description. Composition from
+`seasats` and `heronaiapp`.
+
+**The case: a lot of services.** The clinic this pipeline was built against
+publishes nineteen treatments. `rail-pinned` becomes a scroll endurance test
+past about five, and `alternating` wants a photograph per row. Nineteen
+cards is a wall; nineteen closed rows is a list someone can read, which is
+what §8's density rule is for.
+
+**Native `<details>`, no JavaScript.** The toggle is the browser's, so it
+works before hydration, under `prefers-reduced-motion` and from the keyboard
+without anything from us. An archetype shipping a client bundle to flip a
+boolean is spending the 250 KB budget on nothing. `name` on the element
+makes the rows mutually exclusive, so a long list does not become a longer
+one as someone reads it.
+
+Rows measure 73–83px tall across every direction and width — zero targets
+under the §7 floor of 44, which is the rule this template failed on eighteen
+elements before A0b. The index numeral takes the mono accent where the
+direction has one (Space Mono, JetBrains Mono) and the body face where it
+does not.
+
+`verify` exits 0 on both fixtures.
+
 ## Next
 
-**Services, 3 of 6** — `rail-pinned`, `alternating`, and the legacy
-`default`. §7.1 still wants index list, numbered rows, image grid and
-accordion.
+**Services, 4 of 6** — `rail-pinned`, `alternating`, `accordion`, plus the
+legacy `default`. §7.1 still wants index list and image grid.
 
 Two cleanups worth doing at some point, neither urgent: delete the legacy
 `hero/default` and `services/default`, which read no tokens and look
