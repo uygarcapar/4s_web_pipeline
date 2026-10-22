@@ -204,6 +204,35 @@ A2 + A4 merged ve her section tipinde en az 2 arketip olunca:
 10 gerçek KOBİ sitesi, en az 3 sektör, pipeline'dan geçir. Desktop fold'ları
 yan yana koy: hiçbir ikisini "aynı site" diye gruplayamıyorsan D10 bitti.
 
+```sh
+# 1. Sıraya ekle (10 site, en az 3 sektör)
+pnpm --filter @pipeline/orchestrator pipeline queue add <url>
+
+# 2. Çalıştır. Stage zinciri:
+#    crawl → audit → brief → design → plan → generate → signature → verify → notify
+#    deploy MANUEL (DECISIONS D1) — otomatik koşmaz.
+pnpm --filter @pipeline/orchestrator pipeline run
+
+# 3. Yan yana bak — §12'nin asıl testi bu
+pnpm --filter @pipeline/library dev   # → http://localhost:3106/ship
+```
+
+`/ship`, verify sonrası alınan fold'ları bir ızgarada gösterir — yeniden
+render etmez, `recordFinalVector`'ın zaten çektiği ekran görüntüleri.
+**Direction isimleri başta gizli:** test "gözle gruplanıyor mu" sorusu ve
+her kartın altında `kinetic-bold` yazması cevabı soru sorulmadan veriyor.
+Gruplandırdıktan sonra "reveal directions" ile aç.
+
+İki site benzer çıkarsa, kartları seç ve direction'ları aç. İki olasılık
+var ve ayrımı önemli:
+
+- **Aynı direction** → rotasyon yeterince zorlamamış; §6.2'nin λ'sı veya
+  §6.4'ün penceresi.
+- **Farklı direction** → mesafe kapısı ikisini de geçirmiş ve yine de aynı
+  görünüyorlar. Bu eşik sorunu değil: katalog o iki direction'ı yeterince
+  ayırmıyor (2026-10-23 kalibrasyonunda `kinetic-bold` ↔ `technical-accent`
+  tam olarak bu durumda kaldı, bkz. docs/D10-visual-calibration.md).
+
 ### Faz E — ship'ten sonra, kütüphaneyi büyütme
 
 E1 → E5, standart döngü. İlk batch 5 site; maliyeti ölç, sonra büyüt.
