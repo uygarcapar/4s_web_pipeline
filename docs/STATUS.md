@@ -657,10 +657,12 @@ and a real regression would fail consistently rather than once.
 
 `/library` now lists 13 archetypes against §7.1's target of 45.
 
-## B4 · `hero/type-only` — **awaiting operator review**
+## B4 · `hero/type-only` — accepted, merged (PR #18)
 
-First B4 archetype. PR open, **not merged**: every B4 session ends in a
-review in `/library`.
+First B4 archetype, reviewed in `/library` and accepted as built on
+2026-10-22. Face and weight were explicitly out of scope for that review —
+see the font-pin item below — so the judgement was on composition, spacing,
+hierarchy and the facts row.
 
 Chosen first because `photo-full` needs a photograph good enough to fill a
 screen and most crawled SMB sites do not have one — `quiet-luxury` already
@@ -724,4 +726,13 @@ meaning anything.
 ## Next
 
 The rest of B4, one archetype at a time — §7.1 wants 8 heroes and the
-template now has 3.
+template now has 3. Two decisions are outstanding and both change what the
+next sessions should do, so they are worth settling first:
+
+1. **LCP over budget** (below). `verify` exits 1 on the reference fixture
+   today, which means no B4 archetype can claim a green end-to-end run until
+   it is fixed or the fixture is changed back.
+2. **The font pin.** Until `local-fonts.ts` is wired, every direction renders
+   Archivo 800, so a `/library` review cannot judge typeface or weight — only
+   composition. That limits what an operator review is actually able to
+   approve, for every remaining archetype.
