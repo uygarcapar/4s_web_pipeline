@@ -1119,16 +1119,77 @@ afterwards.
 
 `verify` exits 0 on both fixtures.
 
+## B4 is complete — every §7.1 target met
+
+| section | target | built |
+|---|---|---|
+| hero | 7 | photo-full · type-only · split · index · collage · offset-grid · marquee |
+| services | 6 | rail-pinned · alternating · accordion · image-grid · index |
+| team | 5 | sticky-swap · grid · roster · lead · portrait-rows |
+| gallery | 5 | strip · mosaic · full-bleed · pairs · contact-sheet |
+| visit | 4 | rows · map-split · stacked · card |
+| statement | 3 | word-reveal · static · quote-split |
+| faq | 3 | accordion · two-column · rows |
+| closing | 3 | statement-cta · split-panel · banner |
+| testimonials | 3 | default · single-large · ruled-list |
+| process | 3 | numbered · timeline · rail |
+| marquee | 2 | ticker · static-band |
+
+`process` did not exist as a section type at all — schema, three archetypes,
+registry, library fixture. It is the one section the plan stage must be
+careful with: §9 forbids inventing a process, and "1. Call us 2. We meet 3.
+You smile" is generic cluster 4 verbatim. The schema requires three real
+steps and the archetypes show `duration` only where the client states one,
+because estimating how long someone else's appointment takes is an
+invention about their business.
+
+`verify` exits 0 on all three fixtures. typecheck 0, lint 0, 326 tests.
+
+### What the last batches turned up
+
+Three defects older than the work that exposed them, all found by adding a
+section rather than by reading code:
+
+- **The template defined none of the eight type-step classes.** Every
+  archetype written against `t-display`, `meta`, `btn-label` and the rest
+  rendered at browser defaults *in the template* and looked correct only in
+  `/library`, which injects the generated stylesheet. `tokens.css` now
+  carries the default scale, generated from `kinetic-bold` by the A4 code so
+  it cannot drift from a run's output.
+- **`.meta` and `.btn-label` had no `nowrap`**, which the site nav had been
+  assuming. With it added the nav brand stopped wrapping and started being
+  crushed to zero width instead — `min-w-0` in a flex row — so it is
+  `shrink-0` now and the link list moves to `lg`.
+- **`photo-full` overflowed its own `h-svh`** on a 390px-tall landscape
+  phone, dropping its CTA onto the next section's heading.
+
+And one gap in the review surface itself: five archetypes used
+`bySectionType()` for sections no fixture carries, so they silently never
+appeared in `/library` and their previews 404'd.
+
+That is the fifth, sixth and seventh time in this phase that a measurement
+passed something a render caught. The pattern has held all the way through:
+**measurements verify presence and dimension; only looking verifies
+legibility**, and dark or short-viewport directions break assumptions the
+light, tall ones hide.
+
 ## Next
 
-**Hero 7/7, services 6/6.** Remaining §7.1 targets: team (1 of 5), gallery
-(1 of 5), visit (1 of 4), statement (1 of 3), faq (1 of 3), closing (1 of
-3), testimonials (1 of 3), marquee (1 of 2), process (0 of 3).
+Phase B's library is built. What remains is Phase C — the selection
+pipeline that chooses among it (`brief`, scorer, `compose`, structural and
+visual distance, calibration) — and then Phase D's signature section and
+judge work.
 
-The legacy `hero/default` and `services/default` are still in the registry
-reading no tokens and rendering identically under every direction. The
-design stage will not pick either, so they are traps for whoever reads the
-registry next rather than options — they should go.
+Two things are worth doing before C, because C depends on both:
+
+1. **Wire the spec path.** `spec-tokens.ts` and `local-fonts.ts` are written
+   and tested but unwired; the design stage still emits a `DesignDna`. Until
+   C3 does this, none of the catalog reaches a real run.
+2. **The archetype count is now large enough that the fixtures are the
+   limit.** Four services, four gallery images, three team members and no
+   `process` section in any committed config means most archetypes are
+   previewed at a size the real client will exceed. The nineteen-service
+   clone used to check `services/index` was done by hand and thrown away.
 
 Two cleanups worth doing at some point, neither urgent: delete the legacy
 `hero/default` and `services/default`, which read no tokens and look

@@ -14,6 +14,9 @@ import { TestimonialsSingleLarge } from "@/sections/testimonials/single-large";
 import { VisitCard } from "@/sections/visit/card";
 import { VisitMapSplit } from "@/sections/visit/map-split";
 import { VisitStacked } from "@/sections/visit/stacked";
+import { ProcessNumbered } from "@/sections/process/numbered";
+import { ProcessRail } from "@/sections/process/rail";
+import { ProcessTimeline } from "@/sections/process/timeline";
 import { Contact } from "@/sections/contact";
 import { Faq } from "@/sections/faq";
 import { Gallery } from "@/sections/gallery";
@@ -80,6 +83,37 @@ const STATEMENT: SectionConfig = {
 
 const VISIT: SectionConfig = { type: "visit", id: "visit", title: "Bize gelin" };
 
+/** Not in the reference config, so stated here (like STATEMENT and VISIT). */
+const PROCESS: SectionConfig = {
+  type: "process",
+  id: "process",
+  variant: "numbered",
+  title: "Tedavi süreci",
+  steps: [
+    {
+      title: "İlk muayene",
+      description:
+        "Ağız içi muayene ve panoramik röntgenle mevcut durum çıkarılır.",
+      duration: "30 dakika",
+    },
+    {
+      title: "Tedavi planı",
+      description:
+        "Seçenekler, süre ve ücret yazılı olarak paylaşılır; karar size bırakılır.",
+    },
+    {
+      title: "Uygulama",
+      description:
+        "Planlanan tedavi, randevu aralıkları kemik ve diş yapınıza göre belirlenerek uygulanır.",
+    },
+    {
+      title: "Kontrol",
+      description: "Tedavi sonrası altıncı ayda kontrol muayenesi yapılır.",
+    },
+  ],
+};
+
+
 function entry(
   id: string,
   sectionType: SectionConfig["type"],
@@ -139,5 +173,8 @@ export const LIBRARY_ARCHETYPES: LibraryArchetype[] = [
   entry("visit/card", "visit", "card", VisitCard, VISIT),
   entry("visit/map-split", "visit", "map-split", VisitMapSplit, VISIT),
   entry("visit/stacked", "visit", "stacked", VisitStacked, VISIT),
+  entry("process/numbered", "process", "numbered", ProcessNumbered, PROCESS),
+  entry("process/timeline", "process", "timeline", ProcessTimeline, PROCESS),
+  entry("process/rail", "process", "rail", ProcessRail, PROCESS),
   entry("contact/default", "contact", "default", Contact, bySectionType("contact")),
 ].filter((a): a is LibraryArchetype => a !== null);

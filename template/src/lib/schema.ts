@@ -280,12 +280,44 @@ export const marqueeSectionSchema = z
   })
   .strict();
 
+/**
+ * The steps a client describes for working with them: a first consultation,
+ * a treatment plan, a follow-up.
+ *
+ * Only built when the business already describes them — §9 forbids inventing
+ * a process, and a generic "1. Call us 2. We meet 3. You smile" is exactly
+ * the filler generic cluster 4 fails. The plan stage quotes the client's own
+ * page or drops the section.
+ */
+export const processSectionSchema = z
+  .object({
+    ...sectionBase,
+    type: z.literal("process"),
+    variant: z.enum(["numbered", "timeline", "rail"]).optional(),
+    title: z.string().min(1).optional(),
+    steps: z
+      .array(
+        z
+          .object({
+            title: z.string().min(1),
+            description: z.string().min(1),
+            /** The client's own label, e.g. "20 dakika" — never estimated. */
+            duration: z.string().min(1).optional(),
+          })
+          .strict(),
+      )
+      // Two steps is a pair, not a process; below three the section is noise.
+      .min(3),
+  })
+  .strict();
+
 export const sectionSchema = z.discriminatedUnion("type", [
   heroSectionSchema,
   statementSectionSchema,
   visitSectionSchema,
   closingSectionSchema,
   marqueeSectionSchema,
+  processSectionSchema,
   servicesSectionSchema,
   teamSectionSchema,
   gallerySectionSchema,
@@ -476,6 +508,7 @@ export type StatementSection = z.infer<typeof statementSectionSchema>;
 export type VisitSection = z.infer<typeof visitSectionSchema>;
 export type ClosingSection = z.infer<typeof closingSectionSchema>;
 export type MarqueeSection = z.infer<typeof marqueeSectionSchema>;
+export type ProcessSection = z.infer<typeof processSectionSchema>;
 export type ServicesSection = z.infer<typeof servicesSectionSchema>;
 export type TeamSection = z.infer<typeof teamSectionSchema>;
 export type GallerySection = z.infer<typeof gallerySectionSchema>;

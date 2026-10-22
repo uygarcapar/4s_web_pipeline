@@ -22,6 +22,7 @@ const EXPECTED_TYPES: SectionType[] = [
   "visit",
   "closing",
   "marquee",
+  "process",
   "services",
   "team",
   "gallery",
