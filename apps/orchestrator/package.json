@@ -8,6 +8,7 @@
   },
   "scripts": {
     "pipeline": "tsx src/cli.ts",
+    "defaults": "tsx scripts/write-template-defaults.mts",
     "typecheck": "tsc --noEmit",
     "lint": "eslint src",
     "test": "vitest run"
