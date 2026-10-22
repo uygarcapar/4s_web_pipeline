@@ -157,7 +157,7 @@ const config: SiteConfigInput = {
     {
       type: "gallery",
       id: "gallery",
-      variant: "default",
+      variant: "mosaic",
       title: "Kliniğimizden Kareler",
       images: [
         { src: "/images/gallery-1.svg", alt: "Klinik bekleme salonu" },

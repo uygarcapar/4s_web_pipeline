@@ -129,7 +129,9 @@ export const gallerySectionSchema = z
   .object({
     ...sectionBase,
     type: z.literal("gallery"),
-    variant: z.enum(["default", "strip"]).optional(),
+    variant: z
+      .enum(["default", "strip", "mosaic", "full-bleed", "pairs", "contact-sheet"])
+      .optional(),
     title: z.string().min(1).optional(),
     images: z.array(imageSchema).min(1),
   })
