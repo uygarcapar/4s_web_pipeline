@@ -38,13 +38,24 @@ export interface Face {
   axes: string;
   /** True when the vendored file is a variable font. */
   variable: boolean;
+  /**
+   * True when the face has no lowercase glyphs, so every string renders as
+   * capitals whatever the markup says.
+   *
+   * It matters for line-height, not for taste. Turkish capitals carry marks
+   * above the cap height — Ü, Ö, Ğ, İ — and at display scale those marks
+   * collide with the line above unless the leading is opened up. The spec's
+   * `displayCase` cannot answer this: a spec can say `sentence`, the
+   * component can render sentence case, and Anton will still draw capitals.
+   */
+  uppercaseOnly?: boolean;
 }
 
 export const FACES: Face[] = [
   // Display
   { family: "Archivo", slug: "archivo", licence: "OFL", axes: "wdth,wght@62..125,100..900", variable: true },
-  { family: "Anton", slug: "anton", licence: "OFL", axes: "", variable: false },
-  { family: "Bebas Neue", slug: "bebas-neue", licence: "OFL", axes: "", variable: false },
+  { family: "Anton", slug: "anton", licence: "OFL", axes: "", variable: false, uppercaseOnly: true },
+  { family: "Bebas Neue", slug: "bebas-neue", licence: "OFL", axes: "", variable: false, uppercaseOnly: true },
   { family: "Fraunces", slug: "fraunces", licence: "OFL", axes: "opsz,wght@9..144,100..900", variable: true },
   { family: "Newsreader", slug: "newsreader", licence: "OFL", axes: "opsz,wght@6..72,200..800", variable: true },
   { family: "Instrument Serif", slug: "instrument-serif", licence: "OFL", axes: "", variable: false },

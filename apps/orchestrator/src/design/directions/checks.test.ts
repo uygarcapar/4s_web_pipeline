@@ -9,12 +9,42 @@ import {
   type MotionMeasurement,
   type TypeMeasurement,
 } from "./checks.js";
-import {
-  editorialSerif as EDITORIAL_SERIF,
-  kineticBold as KINETIC_BOLD,
-  resolveDirection,
-} from "./index.js";
+import { kineticBold as KINETIC_BOLD, resolveDirection } from "./index.js";
 import { HARD_FAIL_IDS } from "../../stages/design-judge.js";
+import type { Direction } from "@pipeline/core";
+
+/**
+ * A calm, light-weight direction, defined here rather than taken from the
+ * catalog.
+ *
+ * It used to be `editorial-serif`, and when the 2026-10-22 review deleted
+ * that direction these tests broke — which was the tests' fault, not the
+ * review's. They exercise `checkDj10` and `checkDj16`, not the catalog: what
+ * they need is *a* direction with weight 400, no required signature, no hero
+ * entrance and smooth scroll on, and pinning that to whichever catalog entry
+ * happened to have those values coupled the check's tests to a list of
+ * design opinions that is meant to change.
+ *
+ * `KINETIC_BOLD` stays real, because the contrast case has to be a direction
+ * someone can actually be assigned.
+ */
+const CALM_DIRECTION: Direction = {
+  ...KINETIC_BOLD,
+  id: "calm-fixture",
+  type: {
+    ...KINETIC_BOLD.type,
+    displayWeights: [300, 400],
+    displayTracking: [-0.015, 0],
+    scaleRatio: [3, 4.5],
+  },
+  motion: {
+    profiles: ["calm"],
+    signatures: [],
+    required: [],
+    heroEntrance: false,
+    smoothScroll: true,
+  },
+};
 
 /**
  * The A1 acceptance fixture (D10 §12): a page set at display weight 400 with
@@ -40,9 +70,9 @@ const CALM: MotionMeasurement = {
 };
 
 describe("A1 acceptance — weight 400, no pin", () => {
-  it("passes under editorial-serif", () => {
-    const dj16 = checkDj16(FIXTURE.type, EDITORIAL_SERIF);
-    const dj10 = checkDj10(FIXTURE.motion, EDITORIAL_SERIF);
+  it("passes under a calm, light direction", () => {
+    const dj16 = checkDj16(FIXTURE.type, CALM_DIRECTION);
+    const dj10 = checkDj10(FIXTURE.motion, CALM_DIRECTION);
     expect(dj16.pass, dj16.evidence).toBe(true);
     expect(dj10.pass, dj10.evidence).toBe(true);
   });
@@ -80,7 +110,7 @@ describe("checkDj16", () => {
   it("treats the range bounds as inclusive", () => {
     const r = checkDj16(
       { displayWeight: 300, displayTracking: 0, displayToBodyRatio: 4.5 },
-      EDITORIAL_SERIF,
+      CALM_DIRECTION,
     );
     expect(r.pass, r.evidence).toBe(true);
   });
@@ -103,7 +133,7 @@ describe("checkDj10 — presence", () => {
   });
 
   it("does not demand a pin from a calm direction", () => {
-    const r = checkDj10({ ...CALM, fadeUpOnly: true }, EDITORIAL_SERIF);
+    const r = checkDj10({ ...CALM, fadeUpOnly: true }, CALM_DIRECTION);
     expect(r.pass, r.evidence).toBe(true);
   });
 });
@@ -116,22 +146,22 @@ describe("checkDj10 — presence", () => {
  */
 describe("checkDj10 — absence", () => {
   it("fails a calm direction that still pins", () => {
-    const r = checkDj10({ ...CALM, signatures: ["pinned-handoff"] }, EDITORIAL_SERIF);
+    const r = checkDj10({ ...CALM, signatures: ["pinned-handoff"] }, CALM_DIRECTION);
     expect(r.pass).toBe(false);
     expect(r.evidence).toContain("disables pinned-handoff");
   });
 
   it("fails a calm direction that still runs a hero entrance", () => {
-    const r = checkDj10({ ...CALM, heroEntrance: true }, EDITORIAL_SERIF);
+    const r = checkDj10({ ...CALM, heroEntrance: true }, CALM_DIRECTION);
     expect(r.pass).toBe(false);
     expect(r.evidence).toContain("hero entrance");
   });
 
   it("fails a direction whose smoothScroll flag is off when Lenis is installed", () => {
-    const still: typeof EDITORIAL_SERIF = {
-      ...EDITORIAL_SERIF,
+    const still: typeof CALM_DIRECTION = {
+      ...CALM_DIRECTION,
       id: "still-poster",
-      motion: { ...EDITORIAL_SERIF.motion, smoothScroll: false },
+      motion: { ...CALM_DIRECTION.motion, smoothScroll: false },
     };
     const r = checkDj10({ ...CALM, smoothScroll: true }, still);
     expect(r.pass).toBe(false);
@@ -140,8 +170,8 @@ describe("checkDj10 — absence", () => {
 
   it("allows what the direction permits but does not require", () => {
     const r = checkDj10({ ...CALM, signatures: ["pinned-handoff"] }, {
-      ...EDITORIAL_SERIF,
-      motion: { ...EDITORIAL_SERIF.motion, signatures: ["pinned-handoff"] },
+      ...CALM_DIRECTION,
+      motion: { ...CALM_DIRECTION.motion, signatures: ["pinned-handoff"] },
     });
     expect(r.pass, r.evidence).toBe(true);
   });
@@ -166,7 +196,7 @@ describe("checkDj10 — absence", () => {
  */
 describe("catalog directions are self-consistent", () => {
   it("requires nothing it does not also allow", () => {
-    for (const d of [KINETIC_BOLD, EDITORIAL_SERIF]) {
+    for (const d of [KINETIC_BOLD, CALM_DIRECTION]) {
       const contradictory = d.motion.required.filter(
         (s) => !d.motion.signatures.includes(s),
       );

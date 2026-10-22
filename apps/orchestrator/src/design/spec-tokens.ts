@@ -331,9 +331,9 @@ export function rampViolations(spec: DesignSpec): string[] {
 
   // paper-50 text on the accent: every primary button, and `bg-brand-600`
   // wherever a component reaches for it. `photo-led` is checked too, against
-  // its ink-700 fallback — skipping it is how a dark `quiet-luxury` page
-  // shipped a button whose label failed, since ink-700 inverts to a LIGHT
-  // colour and the button's text had been hardcoded white.
+  // its ink-700 fallback — skipping it is how a dark photo-led page shipped
+  // a button whose label failed, since ink-700 inverts to a LIGHT colour
+  // and the button's text had been hardcoded white.
   const accentColor =
     strategy === "photo-led"
       ? { l: ink[2]!, c: brandC * inkChroma(2) }
@@ -355,9 +355,9 @@ export function rampViolations(spec: DesignSpec): string[] {
 /**
  * The accent.
  *
- * `photo-led` has none by design — quiet-luxury's whole argument is that the
- * photographs carry the page, and an accent would be the "bright accent on
- * near-black" cluster it lists under `avoid`. It falls back to the ink so
+ * `photo-led` has none by design — `cinematic-calm`'s whole argument is that
+ * the photographs carry the page, and an accent would be the "bright accent
+ * on near-black" cluster it lists under `avoid`. It falls back to the ink so
  * focus rings and primary buttons stay visible.
  */
 function accent(spec: DesignSpec): string {

@@ -35,7 +35,7 @@ describe("specDistance", () => {
   it("is 1 when every axis differs", () => {
     const other: DesignSpec = {
       ...base,
-      direction: "quiet-luxury",
+      direction: "cinematic-calm",
       type: { ...base.type, display: "Fraunces", body: "Karla", displayWeight: 300 },
       color: { ...base.color, mode: base.color.mode === "dark" ? "light" : "dark" },
       shape: { ...base.shape, radius: base.shape.radius === 0 ? 12 : 0, imageFrame: "collage" },

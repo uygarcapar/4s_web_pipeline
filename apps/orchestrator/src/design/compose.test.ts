@@ -104,7 +104,7 @@ describe("fingerprintSpec", () => {
   });
 
   it.each([
-    ["direction", { direction: "editorial-serif" }],
+    ["direction", { direction: "stark-display" }],
     ["type pairing", { type: { ...base.type, display: "Anton" } }],
     ["colour mode", { color: { ...base.color, mode: "dark" as const } }],
     ["density", { grid: { ...base.grid, density: "poster" as const } }],

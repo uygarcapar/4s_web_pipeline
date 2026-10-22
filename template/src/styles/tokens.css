@@ -124,7 +124,7 @@ body {
   font-family: var(--font-display), system-ui, sans-serif;
   font-size: clamp(2.25rem, min(9.035vw, 15.36vmin), 6.353rem);
   font-weight: 400;
-  line-height: 0.86;
+  line-height: 0.96;
   letter-spacing: -0.009em;
   overflow-wrap: break-word;
 }
@@ -133,7 +133,7 @@ body {
   font-family: var(--font-display), system-ui, sans-serif;
   font-size: clamp(2.559rem, 8vw, 4.652rem);
   font-weight: 400;
-  line-height: 0.9;
+  line-height: 1;
   letter-spacing: -0.008em;
   overflow-wrap: break-word;
 }

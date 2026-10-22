@@ -23,16 +23,18 @@ import { cosine, MODEL, packVector, unpackVector } from "./embed.js";
  *
  * **Not §8.2's 0.85.** That number predates any measurement of this
  * detector, and measuring it (docs/D10-visual-calibration.md) showed 0.85
- * would reject correct candidates: a `kinetic-bold` page and a
- * `quiet-luxury` page — light-and-loud against near-black-and-serif — score
- * 0.91 on the mobile fold, while two draws of the *same* direction with the
- * same hero score 0.93–0.97. At 0.85 the gate fires on pages that look
- * nothing alike, which is the broken detector design-rules §12 is about.
+ * would reject correct candidates: a loud light page and a near-black serif
+ * one scored 0.91 on the mobile fold, while two draws of the *same*
+ * direction with the same hero scored 0.93–0.97. At 0.85 the gate fires on
+ * pages that look nothing alike, which is the broken detector
+ * design-rules §12 is about.
  *
- * 0.93 is where eight candidates from one client separated. Two cautions
- * live in that file and belong here too: the margin is 0.02, and the
- * measurement used identical copy and no photographs, which inflates every
- * pair. §8.3 — thirty operator-labelled pairs — is what settles this.
+ * 0.93 is where eight candidates from one client separated. Three cautions,
+ * all of which belong here and not only in that file: the margin is 0.02;
+ * the measurement used identical copy and no photographs, which inflates
+ * every pair; and **half the catalog it measured no longer exists** — the
+ * 2026-10-22 review replaced two directions, so the matrix needs re-taking
+ * before §8.3's thirty operator-labelled pairs settle this.
  */
 export const SIMILARITY_THRESHOLD = 0.93;
 

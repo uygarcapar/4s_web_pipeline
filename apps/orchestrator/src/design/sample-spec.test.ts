@@ -1,5 +1,6 @@
 import { designSpecSchema } from "@pipeline/core";
 import { describe, expect, it } from "vitest";
+import type { Direction } from "@pipeline/core";
 
 import { DIRECTIONS, DIRECTION_IDS } from "./directions/index.js";
 import { hashSeed, mulberry32, sampleSpec } from "./sample-spec.js";
@@ -121,9 +122,23 @@ describe("split resolves to the direction's own polarity", () => {
     }
   });
 
+  /**
+   * Built rather than borrowed: after the 2026-10-22 review no catalog
+   * direction declares both `split` and a near-black `paperLightness`, so
+   * there is nothing to point at. The rule still has to hold for the next
+   * direction that does — and `renderRamp` renders anything that is not
+   * literally `"dark"` as a light page, so getting this wrong means a
+   * near-black direction shipping a white one.
+   */
   it("gives a near-black direction a dark page", () => {
-    const direction = DIRECTIONS["quiet-luxury"]!;
-    expect(direction.color.modes).toContain("split");
+    const direction: Direction = {
+      ...DIRECTIONS["cinematic-calm"]!,
+      color: {
+        ...DIRECTIONS["cinematic-calm"]!.color,
+        modes: ["split"],
+        paperLightness: [0.12, 0.28],
+      },
+    };
     for (let i = 0; i < 40; i += 1) {
       expect(sampleSpec(direction, "lux", i).color.mode).toBe("dark");
     }

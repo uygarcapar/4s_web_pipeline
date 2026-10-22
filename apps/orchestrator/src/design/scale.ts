@@ -1,5 +1,7 @@
 import type { DesignSpec } from "@pipeline/core";
 
+import { FACE_BY_FAMILY } from "./faces.js";
+
 /**
  * The eight-step type scale, generated from a `DesignSpec` (D10 §5).
  *
@@ -85,6 +87,33 @@ const displayVmin = (ratio: number): number =>
  * that a heading inside a capped container keeps growing with the viewport
  * while its column does not.
  */
+/**
+ * Display line-height, by case.
+ *
+ * 0.86 is tight on purpose and works for sentence case. It does **not** work
+ * for capitals in Turkish: Ü, Ö, Ğ and İ carry marks above the cap height,
+ * and at display scale those marks crash into the baseline of the line
+ * above. Measured on a two-line `KADIKÖY'DE GÜVENLE / GÜLÜMSEYİN` at
+ * scaleRatio 8 — the umlauts of the second line sat inside the first.
+ *
+ * **`displayCase` is not enough to detect this**, which cost a wrong fix
+ * first. Anton and Bebas Neue have no lowercase glyphs at all: a spec can
+ * say `displayCase: "sentence"`, the component can render sentence case, and
+ * the face still draws capitals. So the face is asked too.
+ *
+ * Not specific to one direction either — `kinetic-bold` has listed Anton
+ * since A3 and collides identically. Nothing had rendered a Turkish headline
+ * in a caps-only face until the 2026-10-22 catalog made one the default, and
+ * a Latin-only test page would never have shown it.
+ */
+const DISPLAY_LINE_HEIGHT = { sentence: 0.86, upper: 0.96 } as const;
+
+/** Whether this spec's headline will be drawn in capitals, however written. */
+function rendersAsCapitals(spec: DesignSpec): boolean {
+  if (spec.type.displayCase === "upper") return true;
+  return FACE_BY_FAMILY.get(spec.type.display)?.uppercaseOnly === true;
+}
+
 export function buildScale(spec: DesignSpec): TypeStep[] {
   const { displayWeight, displayTracking, scaleRatio } = spec.type;
   const displayMax = round(BODY_MAX_REM * scaleRatio);
@@ -114,7 +143,7 @@ export function buildScale(spec: DesignSpec): TypeStep[] {
       fluid: `min(${displayVw(scaleRatio)}vw, ${displayVmin(scaleRatio)}vmin)`,
       maxRem: displayMax,
       weight: displayWeight,
-      lineHeight: 0.86,
+      lineHeight: DISPLAY_LINE_HEIGHT[rendersAsCapitals(spec) ? "upper" : "sentence"],
       tracking: displayTracking,
       family: "display",
     },
@@ -124,7 +153,9 @@ export function buildScale(spec: DesignSpec): TypeStep[] {
       fluid: "8vw",
       maxRem: round(step(0.82)),
       weight: displayWeight,
-      lineHeight: 0.9,
+      // Same reason as `t-display`, one notch looser throughout because the
+      // step is smaller and the marks are proportionally larger.
+      lineHeight: rendersAsCapitals(spec) ? 1 : 0.9,
       tracking: round(displayTracking * 0.9),
       family: "display",
     },

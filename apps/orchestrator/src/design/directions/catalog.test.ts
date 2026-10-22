@@ -14,7 +14,7 @@ import {
 const REPO_ROOT = join(dirname(fileURLToPath(import.meta.url)), "../../../../..");
 
 /** The four D10 §4.3 ships before any more are added. */
-const EXPECTED = ["kinetic-bold", "editorial-serif", "swiss-grid", "quiet-luxury"];
+const EXPECTED = ["kinetic-bold", "stark-display", "swiss-grid", "cinematic-calm"];
 
 describe("direction catalog", () => {
   it("holds exactly the four directions of §4.3", () => {

@@ -204,14 +204,22 @@ describe("image frame", () => {
 
 describe("colour", () => {
   it("inverts the ramp for a dark direction rather than re-pointing it", () => {
-    const css = renderSpecTokens(specFor("quiet-luxury"));
+    // `cinematic-calm` permits both polarities and the fixture takes
+    // `modes[0]`, so the dark one is asked for explicitly — otherwise this
+    // asserts that a light page is dark and fails for the right reason at
+    // the wrong time.
+    const base = specFor("cinematic-calm");
+    const css = renderSpecTokens({
+      ...base,
+      color: { ...base.color, mode: "dark" },
+    });
     // paper-50 is the lightest step on a light page and the darkest on a dark one.
     const paper50 = /--paper-50: oklch\(([\d.]+)/.exec(css)?.[1];
     expect(Number(paper50)).toBeLessThan(0.5);
   });
 
   it("gives a photo-led direction no chromatic accent", () => {
-    expect(renderSpecTokens(specFor("quiet-luxury"))).toContain(
+    expect(renderSpecTokens(specFor("cinematic-calm"))).toContain(
       "--brand-accent: var(--ink-700)",
     );
   });
