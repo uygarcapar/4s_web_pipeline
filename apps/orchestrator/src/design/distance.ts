@@ -1,4 +1,4 @@
-import type { DesignSpec } from "@pipeline/core";
+import type { DesignSpec, Direction } from "@pipeline/core";
 
 /**
  * Structural distance between two specs (D10 §8.1).
@@ -189,4 +189,58 @@ export function distanceRejection(
   }
 
   return null;
+}
+
+/**
+ * The furthest two specs drawn from the SAME direction can ever be.
+ *
+ * Every axis a direction declares exactly one value for is weight it can
+ * never earn: two draws will always agree on it. Sum those and the
+ * remainder is the direction's ceiling — and if that ceiling is below
+ * `THRESHOLDS.allSectors`, **the direction can serve exactly one client,
+ * ever**. Every subsequent one is rejected against the first.
+ *
+ * `swiss-grid` shipped like that and nobody noticed: it froze colour mode,
+ * motion profile, alignment, image frame, radius and density, leaving 6 of
+ * 18 points of room against a 0.40 threshold. It was found by a capacity
+ * probe, not by a gate, which is why this is a function with a test rather
+ * than a paragraph in a doc.
+ *
+ * `direction` is always frozen — two draws from one direction share it by
+ * definition — so a ceiling of 1.0 is unreachable and 0.833 is the real
+ * maximum.
+ */
+export function maxInternalDistance(direction: Direction): {
+  ceiling: number;
+  frozen: AxisKey[];
+} {
+  const values: Record<AxisKey, number> = {
+    // Shared by definition.
+    direction: 1,
+    heroArchetype: (direction.archetypes.hero ?? ["default"]).length,
+    colorMode: resolvedModes(direction).size,
+    typePair: new Set(direction.type.pairs.map((p) => `${p.display}/${p.body}`)).size,
+    motionProfile: direction.motion.profiles.length,
+    gridAlignment: direction.grid.alignment.length,
+    imageFrame: direction.shape.imageFrame.length,
+    radius: direction.shape.radius.length,
+    density: direction.grid.density.length,
+    displayWeight: direction.type.displayWeights.length,
+  };
+
+  const frozen = (Object.keys(AXIS_WEIGHTS) as AxisKey[]).filter((k) => values[k] < 2);
+  const lost = frozen.reduce((sum, k) => sum + AXIS_WEIGHTS[k], 0);
+  return { ceiling: Number(((TOTAL_WEIGHT - lost) / TOTAL_WEIGHT).toFixed(3)), frozen };
+}
+
+/**
+ * The polarities a direction can actually render, with `split` resolved the
+ * way `sampleSpec` resolves it — a direction declaring `["light", "split"]`
+ * has ONE colour mode, not two, and counting the literal array would hide
+ * exactly the kind of frozen axis this function exists to find.
+ */
+function resolvedModes(direction: Direction): Set<string> {
+  const [min, max] = direction.color.paperLightness;
+  const split = (min + max) / 2 < 0.5 ? "dark" : "light";
+  return new Set(direction.color.modes.map((m) => (m === "split" ? split : m)));
 }

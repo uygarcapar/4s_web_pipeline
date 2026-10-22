@@ -12,19 +12,19 @@
   --brand-c: 0.145;
 
   /* paper: light, accent-block */
-  --paper-50: oklch(0.99 calc(var(--brand-c) * 0.18) var(--brand-h));
-  --paper-100: oklch(0.975 calc(var(--brand-c) * 0.207) var(--brand-h));
-  --paper-200: oklch(0.95 calc(var(--brand-c) * 0.234) var(--brand-h));
-  --paper-300: oklch(0.91 calc(var(--brand-c) * 0.261) var(--brand-h));
-  --paper-400: oklch(0.86 calc(var(--brand-c) * 0.288) var(--brand-h));
-  --paper-500: oklch(0.8 calc(var(--brand-c) * 0.315) var(--brand-h));
+  --paper-50: oklch(0.99 calc(var(--brand-c) * 0.05) var(--brand-h));
+  --paper-100: oklch(0.975 calc(var(--brand-c) * 0.057) var(--brand-h));
+  --paper-200: oklch(0.95 calc(var(--brand-c) * 0.065) var(--brand-h));
+  --paper-300: oklch(0.91 calc(var(--brand-c) * 0.073) var(--brand-h));
+  --paper-400: oklch(0.86 calc(var(--brand-c) * 0.08) var(--brand-h));
+  --paper-500: oklch(0.8 calc(var(--brand-c) * 0.088) var(--brand-h));
 
   /* ink */
-  --ink-900: oklch(0.18 calc(var(--brand-c) * 0.35) var(--brand-h));
-  --ink-800: oklch(0.26 calc(var(--brand-c) * 0.3) var(--brand-h));
-  --ink-700: oklch(0.34 calc(var(--brand-c) * 0.25) var(--brand-h));
-  --ink-600: oklch(0.42 calc(var(--brand-c) * 0.2) var(--brand-h));
-  --ink-400: oklch(0.5 calc(var(--brand-c) * 0.15) var(--brand-h));
+  --ink-900: oklch(0.18 calc(var(--brand-c) * 0.1) var(--brand-h));
+  --ink-800: oklch(0.26 calc(var(--brand-c) * 0.085) var(--brand-h));
+  --ink-700: oklch(0.34 calc(var(--brand-c) * 0.07) var(--brand-h));
+  --ink-600: oklch(0.42 calc(var(--brand-c) * 0.055) var(--brand-h));
+  --ink-400: oklch(0.5 calc(var(--brand-c) * 0.04) var(--brand-h));
 
   --background: var(--paper-100);
   --foreground: var(--ink-900);
@@ -39,21 +39,21 @@
   --rule-width: 1px;
   --rule-color: var(--ink-400);
 
-  /* How a photograph meets the page (inset). An archetype reads
+  /* How a photograph meets the page (bleed). An archetype reads
      these rather than branching on the frame name, so a new frame is a token
      change and not an edit to every section that shows a picture. */
-  --image-radius: var(--radius);
-  --image-inset: 1.5rem;
+  --image-radius: 0px;
+  --image-inset: 0rem;
   --image-aspect: 4 / 3;
 
   /* grid (§4.2), as tokens so an archetype never branches on the direction
-     name. asymmetric: a centred language and a left-flush one are the
+     name. left-flush: a centred language and a left-flush one are the
      same markup with a different anchor. */
   --text-align: left;
   --align-items: flex-start;
   /* How far a secondary column is pushed off the baseline grid. Zero unless
      the direction is asymmetric, which is the only one that offsets. */
-  --offset-y: 4rem;
+  --offset-y: 0rem;
 
   /* rhythm, from grid.density (standard) */
   --section-y: 5.5rem;

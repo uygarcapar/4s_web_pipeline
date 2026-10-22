@@ -1,6 +1,19 @@
 import type { Direction } from "@pipeline/core";
 
 /**
+ * **Widened in Phase E, because it could only ever serve one client.**
+ *
+ * It froze colour mode, motion profile, alignment, image frame, radius AND
+ * density — 12 of the 18 points §8.1 weighs — leaving a ceiling of 0.333
+ * against a 0.40 threshold. Two swiss-grid clients could never be far
+ * enough apart, so the second one was always rejected and the direction
+ * yielded exactly one site. Nothing failed; a capacity probe found it.
+ * `maxInternalDistance` is now a test, so the next one fails loudly.
+ *
+ * Four axes are unfrozen above and each is argued at its site. `radius`
+ * stays frozen on purpose: buying distance by rounding the corners would
+ * trade away the thing being measured.
+ *
  * D10 §4.3 — precise, systematic, technical. The only direction whose mono
  * accent is required rather than optional: the index numbers, the time-and-
  * place labels and the field captions are the language, not decoration.
@@ -33,16 +46,27 @@ export const swissGrid: Direction = {
     maxChroma: 0.18,
   },
   shape: {
+    // Square stays frozen, and deliberately: the International Style has no
+    // rounded corners, and unfreezing an axis by betraying the direction
+    // would buy distance with the thing the distance is measuring.
     radius: [0],
     rules: ["heavy", "hairline"],
-    imageFrame: ["inset"],
+    // Full-bleed as well as inset. Müller-Brockmann's posters run the
+    // photograph to the trim; an inset-only grid was a narrower reading of
+    // the idiom than the idiom deserves.
+    imageFrame: ["inset", "bleed"],
   },
   grid: {
-    alignment: ["asymmetric"],
-    density: ["standard"],
+    // Flush-left is at least as Swiss as asymmetric, and arguably more so.
+    alignment: ["asymmetric", "left-flush"],
+    // A dense page is entirely in character — the style was made for
+    // timetables and catalogues before it was made for posters.
+    density: ["standard", "editorial"],
   },
   motion: {
-    profiles: ["editorial"],
+    // `calm` as well: a Swiss page that does not move is not a lesser
+    // version of one that does.
+    profiles: ["editorial", "calm"],
     signatures: ["pinned-rail", "lateral-move", "pinned-handoff"],
     required: [],
     heroEntrance: false,

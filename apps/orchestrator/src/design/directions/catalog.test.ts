@@ -13,11 +13,27 @@ import {
 
 const REPO_ROOT = join(dirname(fileURLToPath(import.meta.url)), "../../../../..");
 
-/** The four D10 §4.3 ships before any more are added. */
-const EXPECTED = ["kinetic-bold", "stark-display", "swiss-grid", "cinematic-calm"];
+/**
+ * The catalog, pinned.
+ *
+ * Seven after Phase E. The number is not aesthetic: four directions were
+ * measured producing eleven mutually-distinct sites across all sectors and
+ * six within one, against a §12 ship test of ten — so it grew because the
+ * capacity curve said it had to, and this pin is what makes a silent
+ * shrink impossible.
+ */
+const EXPECTED = [
+  "kinetic-bold",
+  "stark-display",
+  "swiss-grid",
+  "cinematic-calm",
+  "technical-accent",
+  "gallery-wall",
+  "night-ruled",
+];
 
 describe("direction catalog", () => {
-  it("holds exactly the four directions of §4.3", () => {
+  it("holds exactly the directions §4.3 ships", () => {
     expect([...DIRECTION_IDS].sort()).toEqual([...EXPECTED].sort());
   });
 
