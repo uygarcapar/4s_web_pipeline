@@ -35,11 +35,13 @@ export const generateStage: StageModule = {
     const assetCount = stageCrawlAssets(ctx, siteDir);
     ctx.log(`${assetCount} crawl photograph(s) staged in public/images/crawl/`);
 
-    // The palette and the type pairing are decisions the design stage already
-    // made from this client's own photographs and sector, and checked against
-    // the fingerprint ledger (D6). They are copied in rather than described
-    // to the model: a model asked to choose a palette reaches for the same
-    // one every time, which is the sameness the ledger exists to prevent.
+    // The palette and the type pairing are the design stage's: the hue from
+    // this client's own photographs, everything else from the direction the
+    // scorer chose, measured against every recent run on ten axes and on
+    // the rendered page itself (D10 §8). They are copied in rather than
+    // described to the model, because a model asked to choose a palette
+    // reaches for the same one every time — which is the sameness the whole
+    // selection pipeline exists to prevent.
     const staged = stageDesign(ctx, siteDir);
     if (!staged) {
       return { ok: false, error: "design/tokens.css missing (design stage must run first)" };
