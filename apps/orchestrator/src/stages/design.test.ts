@@ -267,6 +267,65 @@ describe("design stage — the spec path", () => {
     }
   });
 
+  /**
+   * §8.1 through the stage. The unit tests prove the arithmetic; what this
+   * proves is that the spec the ledger stores and the spec the next run
+   * measures against are the same object — the join §8 depends on and the
+   * one place a serialization bug would hide.
+   */
+  it("moves to another candidate rather than repeat a recent run", async () => {
+    const built: string[] = [];
+    for (let i = 0; i < 4; i += 1) {
+      const d = mkdtempSync(join(tmpdir(), "design-"));
+      try {
+        seedRun(d);
+        const result = await designStage.run(makeCtx(d, store, `klinik-${i}.com`));
+        expect(result.ok, result.error).toBe(true);
+        const spec = specIn(d);
+        const hero = spec.sections.find((s) => s.type === "hero")!.archetype;
+        built.push(`${spec.direction}/${hero}`);
+      } finally {
+        rmSync(d, { recursive: true, force: true });
+      }
+    }
+    // §8.1's hard rule: direction AND hero may not both repeat within three
+    // runs. Identical briefs, so nothing else distinguishes these clients.
+    for (let i = 1; i < built.length; i += 1) {
+      const window = built.slice(Math.max(0, i - 3), i);
+      expect(window, `run ${i} repeated ${built[i]}`).not.toContain(built[i]);
+    }
+  });
+
+  it("records why each rejected candidate lost", async () => {
+    seedRun(dir);
+    await designStage.run(makeCtx(dir, store));
+
+    const next = mkdtempSync(join(tmpdir(), "design-"));
+    try {
+      seedRun(next);
+      await designStage.run(makeCtx(next, store, "ikinci.com"));
+      const spec = specIn(next);
+      expect(spec.rejected.length).toBeGreaterThan(0);
+      for (const r of spec.rejected) {
+        expect(r.reason).toMatch(/all-sectors|same-sector|recent-runs/);
+        expect(r.distance).toBeGreaterThanOrEqual(0);
+      }
+    } finally {
+      rmSync(next, { recursive: true, force: true });
+    }
+  });
+
+  /** The ledger has to round-trip, or every distance is measured as 1. */
+  it("stores a spec the next run can parse", async () => {
+    seedRun(dir);
+    await designStage.run(makeCtx(dir, store));
+    const row = store.$client
+      .prepare("SELECT spec FROM designs WHERE domain = ?")
+      .get("ornek.com.tr") as { spec: string | null };
+    expect(row.spec).not.toBeNull();
+    expect(() => designSpecSchema.parse(JSON.parse(row.spec!))).not.toThrow();
+  });
+
   /** A brief written before §6.1 added the four scales still has to build. */
   it("builds from a brief with no classifications", async () => {
     seedRun(dir, {
