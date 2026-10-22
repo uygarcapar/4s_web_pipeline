@@ -17,7 +17,7 @@ exports[`editorial-serif > matches its snapshot 1`] = `
   /* paper: light, mono-hue */
   --paper-50: oklch(0.99 calc(var(--brand-c) * 0.18) var(--brand-h));
   --paper-100: oklch(0.975 calc(var(--brand-c) * 0.207) var(--brand-h));
-  --paper-200: oklch(0.95 calc(var(--brand-c) * 0.23399999999999999) var(--brand-h));
+  --paper-200: oklch(0.95 calc(var(--brand-c) * 0.234) var(--brand-h));
   --paper-300: oklch(0.91 calc(var(--brand-c) * 0.261) var(--brand-h));
   --paper-400: oklch(0.86 calc(var(--brand-c) * 0.288) var(--brand-h));
   --paper-500: oklch(0.8 calc(var(--brand-c) * 0.315) var(--brand-h));
@@ -25,13 +25,13 @@ exports[`editorial-serif > matches its snapshot 1`] = `
   /* ink */
   --ink-900: oklch(0.18 calc(var(--brand-c) * 0.35) var(--brand-h));
   --ink-800: oklch(0.26 calc(var(--brand-c) * 0.3) var(--brand-h));
-  --ink-700: oklch(0.36 calc(var(--brand-c) * 0.24999999999999997) var(--brand-h));
-  --ink-600: oklch(0.46 calc(var(--brand-c) * 0.19999999999999996) var(--brand-h));
-  --ink-400: oklch(0.64 calc(var(--brand-c) * 0.14999999999999997) var(--brand-h));
+  --ink-700: oklch(0.34 calc(var(--brand-c) * 0.25) var(--brand-h));
+  --ink-600: oklch(0.42 calc(var(--brand-c) * 0.2) var(--brand-h));
+  --ink-400: oklch(0.5 calc(var(--brand-c) * 0.15) var(--brand-h));
 
   --background: var(--paper-100);
   --foreground: var(--ink-900);
-  --brand-accent: oklch(0.52 var(--brand-c) var(--brand-h));
+  --brand-accent: oklch(0.48 var(--brand-c) var(--brand-h));
 
   --font-display: var(--font-display-face);
   --font-sans: var(--font-body-face);
@@ -218,7 +218,7 @@ exports[`kinetic-bold > matches its snapshot 1`] = `
   /* paper: light, mono-hue */
   --paper-50: oklch(0.99 calc(var(--brand-c) * 0.18) var(--brand-h));
   --paper-100: oklch(0.975 calc(var(--brand-c) * 0.207) var(--brand-h));
-  --paper-200: oklch(0.95 calc(var(--brand-c) * 0.23399999999999999) var(--brand-h));
+  --paper-200: oklch(0.95 calc(var(--brand-c) * 0.234) var(--brand-h));
   --paper-300: oklch(0.91 calc(var(--brand-c) * 0.261) var(--brand-h));
   --paper-400: oklch(0.86 calc(var(--brand-c) * 0.288) var(--brand-h));
   --paper-500: oklch(0.8 calc(var(--brand-c) * 0.315) var(--brand-h));
@@ -226,16 +226,16 @@ exports[`kinetic-bold > matches its snapshot 1`] = `
   /* ink */
   --ink-900: oklch(0.18 calc(var(--brand-c) * 0.35) var(--brand-h));
   --ink-800: oklch(0.26 calc(var(--brand-c) * 0.3) var(--brand-h));
-  --ink-700: oklch(0.36 calc(var(--brand-c) * 0.24999999999999997) var(--brand-h));
-  --ink-600: oklch(0.46 calc(var(--brand-c) * 0.19999999999999996) var(--brand-h));
-  --ink-400: oklch(0.64 calc(var(--brand-c) * 0.14999999999999997) var(--brand-h));
+  --ink-700: oklch(0.34 calc(var(--brand-c) * 0.25) var(--brand-h));
+  --ink-600: oklch(0.42 calc(var(--brand-c) * 0.2) var(--brand-h));
+  --ink-400: oklch(0.5 calc(var(--brand-c) * 0.15) var(--brand-h));
 
   --background: var(--paper-100);
   --foreground: var(--ink-900);
-  --brand-accent: oklch(0.52 var(--brand-c) var(--brand-h));
+  --brand-accent: oklch(0.48 var(--brand-c) var(--brand-h));
 
   --font-display: var(--font-display-face);
-  --font-sans: var(--font-body-face);
+  --font-sans: var(--font-display-face);
   --font-mono: var(--font-mono-face);
 
   /* shape (§4.2) */
@@ -427,10 +427,10 @@ exports[`quiet-luxury > matches its snapshot 1`] = `
 
   /* ink */
   --ink-900: oklch(0.97 calc(var(--brand-c) * 0.35) var(--brand-h));
-  --ink-800: oklch(0.93 calc(var(--brand-c) * 0.3) var(--brand-h));
-  --ink-700: oklch(0.87 calc(var(--brand-c) * 0.24999999999999997) var(--brand-h));
-  --ink-600: oklch(0.78 calc(var(--brand-c) * 0.19999999999999996) var(--brand-h));
-  --ink-400: oklch(0.6 calc(var(--brand-c) * 0.14999999999999997) var(--brand-h));
+  --ink-800: oklch(0.92 calc(var(--brand-c) * 0.3) var(--brand-h));
+  --ink-700: oklch(0.85 calc(var(--brand-c) * 0.25) var(--brand-h));
+  --ink-600: oklch(0.76 calc(var(--brand-c) * 0.2) var(--brand-h));
+  --ink-400: oklch(0.66 calc(var(--brand-c) * 0.15) var(--brand-h));
 
   --background: var(--paper-100);
   --foreground: var(--ink-900);
@@ -624,7 +624,7 @@ exports[`swiss-grid > matches its snapshot 1`] = `
   /* paper: light, accent-block */
   --paper-50: oklch(0.99 calc(var(--brand-c) * 0.18) var(--brand-h));
   --paper-100: oklch(0.975 calc(var(--brand-c) * 0.207) var(--brand-h));
-  --paper-200: oklch(0.95 calc(var(--brand-c) * 0.23399999999999999) var(--brand-h));
+  --paper-200: oklch(0.95 calc(var(--brand-c) * 0.234) var(--brand-h));
   --paper-300: oklch(0.91 calc(var(--brand-c) * 0.261) var(--brand-h));
   --paper-400: oklch(0.86 calc(var(--brand-c) * 0.288) var(--brand-h));
   --paper-500: oklch(0.8 calc(var(--brand-c) * 0.315) var(--brand-h));
@@ -632,16 +632,16 @@ exports[`swiss-grid > matches its snapshot 1`] = `
   /* ink */
   --ink-900: oklch(0.18 calc(var(--brand-c) * 0.35) var(--brand-h));
   --ink-800: oklch(0.26 calc(var(--brand-c) * 0.3) var(--brand-h));
-  --ink-700: oklch(0.36 calc(var(--brand-c) * 0.24999999999999997) var(--brand-h));
-  --ink-600: oklch(0.46 calc(var(--brand-c) * 0.19999999999999996) var(--brand-h));
-  --ink-400: oklch(0.64 calc(var(--brand-c) * 0.14999999999999997) var(--brand-h));
+  --ink-700: oklch(0.34 calc(var(--brand-c) * 0.25) var(--brand-h));
+  --ink-600: oklch(0.42 calc(var(--brand-c) * 0.2) var(--brand-h));
+  --ink-400: oklch(0.5 calc(var(--brand-c) * 0.15) var(--brand-h));
 
   --background: var(--paper-100);
   --foreground: var(--ink-900);
-  --brand-accent: oklch(0.52 var(--brand-c) var(--brand-h));
+  --brand-accent: oklch(0.48 var(--brand-c) var(--brand-h));
 
   --font-display: var(--font-display-face);
-  --font-sans: var(--font-body-face);
+  --font-sans: var(--font-display-face);
   --font-mono: var(--font-mono-face);
 
   /* shape (§4.2) */

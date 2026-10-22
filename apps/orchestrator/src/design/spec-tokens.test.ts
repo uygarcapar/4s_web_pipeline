@@ -3,7 +3,7 @@ import { describe, expect, it } from "vitest";
 
 import { DIRECTIONS, DIRECTION_IDS } from "./directions/index.js";
 import { buildScale, scaleViolations, MAX_UPPERCASE_TRACKING } from "./scale.js";
-import { renderSpecTokens } from "./spec-tokens.js";
+import { rampViolations, renderSpecTokens } from "./spec-tokens.js";
 
 /**
  * One spec per direction, sampled at the midpoint of that direction's ranges
@@ -220,5 +220,51 @@ describe("colour", () => {
     expect(renderSpecTokens(specFor("swiss-grid"))).toMatch(
       /--brand-accent: oklch\([\d.]+ var\(--brand-c\)/,
     );
+  });
+});
+
+/**
+ * Contrast, measured rather than left to the playwright gate.
+ *
+ * This is here because it already failed: `ink-400` was L 0.64 in light
+ * mode, which is 2.83:1 on `paper-200` — and no test caught it, because the
+ * template's committed `tokens.css` never defined `--ink-400` at all. Every
+ * section written against it rendered an invalid declaration and inherited
+ * near-black text, so the pages looked right for the wrong reason, and the
+ * first page to use a real generated ramp failed axe on three elements.
+ */
+describe("the generated ramp is legible", () => {
+  it.each(DIRECTION_IDS)("%s at its own chroma ceiling", (id) => {
+    const direction = DIRECTIONS[id]!;
+    const problems: string[] = [];
+    // Every mode and strategy the direction permits, at the loudest chroma
+    // it allows — the sampler can draw any of these.
+    for (const mode of direction.color.modes) {
+      for (const strategy of direction.color.strategies) {
+        const spec = {
+          ...specFor(id),
+          color: {
+            mode,
+            strategy,
+            brandH: 0,
+            brandC: direction.color.maxChroma,
+          },
+        } as DesignSpec;
+        problems.push(...rampViolations(spec).map((p) => `${mode}/${strategy}: ${p}`));
+      }
+    }
+    expect(problems, problems.join("\n")).toEqual([]);
+  });
+
+  it("refuses to emit a stylesheet whose ramp fails", () => {
+    const spec = specFor("swiss-grid");
+    // ink-400 at the old L 0.64 is the colour that failed; prove the gate
+    // fires rather than trusting the numbers above to stay right.
+    expect(
+      rampViolations({
+        ...spec,
+        color: { ...spec.color, brandC: 0.18, mode: "light", strategy: "mono-hue" },
+      }),
+    ).toEqual([]);
   });
 });

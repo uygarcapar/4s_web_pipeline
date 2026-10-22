@@ -1,6 +1,8 @@
 import type { DesignSpec } from "@pipeline/core";
 
 import { buildScale, scaleViolations, MEASURE_CH, type TypeStep } from "./scale.js";
+import { AA_TEXT, worstContrast } from "./contrast.js";
+import { fontRoles, type FontRoleName } from "./local-fonts.js";
 
 /**
  * `DesignSpec` → the generated site's `src/styles/tokens.css` (D10 §5, A4).
@@ -10,10 +12,9 @@ import { buildScale, scaleViolations, MEASURE_CH, type TypeStep } from "./scale.
  * plus `mode` and `strategy`, the radius and rule weights from `shape`, the
  * rhythm from `grid.density`. **The model never writes a token value.**
  *
- * This replaces `renderTokens(dna)` once the selection pipeline writes a
- * spec (§6.3, task C3). Both exist meanwhile: the running stage still emits
- * a `DesignDna`, and swapping it before the sampler exists would leave the
- * pipeline unable to produce the input this function needs.
+ * This replaced `renderTokens(dna)` in C3; the DNA renderers are deleted
+ * rather than left beside it, because an unused generator in the design
+ * folder is indistinguishable from a second supported path.
  */
 export function renderSpecTokens(spec: DesignSpec): string {
   const steps = buildScale(spec);
@@ -21,6 +22,12 @@ export function renderSpecTokens(spec: DesignSpec): string {
   if (problems.length > 0) {
     throw new Error(
       `generated scale violates design-rules.md §4:\n- ${problems.join("\n- ")}`,
+    );
+  }
+  const contrast = rampViolations(spec);
+  if (contrast.length > 0) {
+    throw new Error(
+      `generated ramp fails WCAG AA:\n- ${contrast.join("\n- ")}`,
     );
   }
 
@@ -49,10 +56,7 @@ ${renderRamp(spec)}
   --foreground: var(--ink-900);
   --brand-accent: ${accent(spec)};
 
-  --font-display: var(--font-display-face);
-  --font-sans: var(--font-body-face);${
-    type.mono === undefined ? "" : "\n  --font-mono: var(--font-mono-face);"
-  }
+${renderFontVars(spec)}
 
   /* shape (§4.2) */
   --radius: ${shape.radius === 999 ? "9999px" : `${shape.radius / 16}rem`};
@@ -179,35 +183,173 @@ function renderStep(step: TypeStep): string {
 }
 
 /**
+ * Point `--font-display` / `--font-sans` / `--font-mono` at whichever
+ * variable the font module actually declares.
+ *
+ * It cannot be assumed: when a direction pairs a face with itself the module
+ * declares one font and `--font-body-face` is never defined, and an
+ * undefined custom property in `font-family` makes the whole declaration
+ * invalid — the page silently falls back to system-ui. That is precisely how
+ * `--ink-400` went undetected in the template for a whole phase.
+ */
+function renderFontVars(spec: DesignSpec): string {
+  const roles = fontRoles(spec);
+  const varOf = (role: FontRoleName): string | undefined =>
+    roles.find((r) => r.role === role)?.variable;
+
+  const lines = [
+    `  --font-display: var(${varOf("display")!});`,
+    `  --font-sans: var(${varOf("body")!});`,
+  ];
+  const mono = varOf("mono");
+  if (mono !== undefined) lines.push(`  --font-mono: var(${mono});`);
+  return lines.join("\n");
+}
+
+/** Lightness of each paper step, lightest first. */
+const PAPER_L = {
+  light: [0.99, 0.975, 0.95, 0.91, 0.86, 0.8],
+  dark: [0.22, 0.19, 0.16, 0.14, 0.12, 0.1],
+} as const;
+
+/**
+ * Lightness of each ink step: 900, 800, 700, 600, 400.
+ *
+ * `ink-400` is the muted step — `.meta`, captions, the rule colour — and it
+ * is the one these numbers exist for. It was L 0.64 in light mode, which
+ * measures **2.83:1** on `paper-200` at hue 10 and failed axe the first time
+ * a real page rendered it. The whole light ramp is re-spaced rather than
+ * just that step so the muted tone is still visibly a step away from
+ * `ink-600`; `rampViolations` checks the result instead of trusting it.
+ */
+const INK_L = {
+  light: [0.18, 0.26, 0.34, 0.42, 0.5],
+  dark: [0.97, 0.92, 0.85, 0.76, 0.66],
+} as const;
+
+const INK_STEPS = [900, 800, 700, 600, 400] as const;
+const PAPER_STEPS = [50, 100, 200, 300, 400, 500] as const;
+
+/**
+ * Chroma of paper step `i` as a multiple of `brandC`.
+ *
+ * Rounded because this number is printed into the stylesheet: `0.18 * 1.15`
+ * is `0.20699999999999996` in binary floating point, and a token file the
+ * operator reads should not say that.
+ */
+const paperChroma = (strategy: DesignSpec["color"]["strategy"], i: number): number =>
+  round3((strategy === "photo-led" ? 0.3 : 0.18) * (1 + i * 0.15));
+
+/** Chroma of ink step `i` as a multiple of `brandC`. */
+const inkChroma = (i: number): number => round3(0.35 - i * 0.05);
+
+const round3 = (n: number): number => Math.round(n * 1000) / 1000;
+
+/**
  * The paper/ink ramp.
  *
- * `paperLightness` is the direction's; `mode` decides which end the page
- * sits at. The darks are the client's own hue pushed to near-black with a
- * trace of chroma left in, never `#0B0B0B` — a neutral dark makes every
- * photograph look pasted on (§5).
+ * `mode` decides which end the page sits at. The darks are the client's own
+ * hue pushed to near-black with a trace of chroma left in, never `#0B0B0B` —
+ * a neutral dark makes every photograph look pasted on (§5).
+ *
+ * The direction's `color.paperLightness` is NOT read here: this ramp uses
+ * fixed per-step lightnesses so `rampViolations` can guarantee contrast for
+ * any hue a client's photographs produce. `paperLightness` currently decides
+ * only the polarity of a `split` mode, in `sample-spec.ts`; sampling the
+ * page's own lightness from that range would mean re-deriving the contrast
+ * floors per draw, which is A4 work this does not pretend to have done.
  */
 function renderRamp(spec: DesignSpec): string {
   const { mode, strategy } = spec.color;
   const dark = mode === "dark";
   // Chroma tapers toward both ends so an extreme hue stays in gamut.
-  const paper = dark
-    ? [0.22, 0.19, 0.16, 0.14, 0.12, 0.1]
-    : [0.99, 0.975, 0.95, 0.91, 0.86, 0.8];
-  const ink = dark ? [0.97, 0.93, 0.87, 0.78, 0.6] : [0.18, 0.26, 0.36, 0.46, 0.64];
-  const paperC = strategy === "photo-led" ? 0.3 : 0.18;
+  const paper = PAPER_L[dark ? "dark" : "light"];
+  const ink = INK_L[dark ? "dark" : "light"];
 
   const line = (name: string, l: number, cMul: number): string =>
     `  --${name}: oklch(${l} calc(var(--brand-c) * ${cMul}) var(--brand-h));`;
 
   return [
     `  /* paper: ${mode}, ${strategy} */`,
-    ...paper.map((l, i) =>
-      line(`paper-${[50, 100, 200, 300, 400, 500][i]}`, l, paperC * (1 + i * 0.15)),
-    ),
+    ...paper.map((l, i) => line(`paper-${PAPER_STEPS[i]}`, l, paperChroma(strategy, i))),
     "",
     "  /* ink */",
-    ...ink.map((l, i) => line(`ink-${[900, 800, 700, 600, 400][i]}`, l, 0.35 - i * 0.05)),
+    ...ink.map((l, i) => line(`ink-${INK_STEPS[i]}`, l, inkChroma(i))),
   ].join("\n");
+}
+
+/**
+ * Lightness of the accent, which is a background for `paper-50` text on
+ * every primary button and the sticky CTA.
+ *
+ * Light mode is 0.48 rather than the 0.52 the template's own tokens note
+ * recommends, because that note bounds itself at "moderate chroma (≤ ~0.15)"
+ * and `swiss-grid` declares a ceiling of 0.18. At 0.18 and hue 190 — a plain
+ * cyan, nothing exotic — L 0.52 measures 4.15:1 and fails. The directions
+ * are allowed their chroma; the accent gives way.
+ */
+const ACCENT_L = { light: 0.48, dark: 0.72 } as const;
+
+/**
+ * Every text-on-background pair the generated ramp can produce, checked
+ * against WCAG AA at the worst hue.
+ *
+ * Measured rather than asserted by eye, and run on every generated spec
+ * rather than only in tests, for the reason the last three of these cost:
+ * the failure appears in a browser, at one hue, in one direction, inside the
+ * playwright gate — by which point a plan and a generate session have been
+ * paid for. The ramp is a pure function of four numbers, so it can be
+ * checked before anything renders.
+ *
+ * Returns a human-readable line per violation; empty means clean.
+ */
+export function rampViolations(spec: DesignSpec): string[] {
+  const { mode, strategy, brandC } = spec.color;
+  const dark = mode === "dark";
+  const paper = PAPER_L[dark ? "dark" : "light"];
+  const ink = INK_L[dark ? "dark" : "light"];
+  const out: string[] = [];
+
+  // Sections sit on paper-50, the page on paper-100, and a banded section on
+  // paper-200. Beyond that the paper steps are fills and borders, not text
+  // backgrounds — `rule-color` is checked as a rule, not as text.
+  for (let bg = 0; bg < 3; bg += 1) {
+    const background = { l: paper[bg]!, c: brandC * paperChroma(strategy, bg) };
+    for (let i = 0; i < ink.length; i += 1) {
+      const { ratio, hue } = worstContrast(
+        { l: ink[i]!, c: brandC * inkChroma(i) },
+        background,
+      );
+      if (ratio < AA_TEXT) {
+        out.push(
+          `ink-${INK_STEPS[i]} on paper-${PAPER_STEPS[bg]} is ${ratio}:1 at hue ` +
+            `${hue} (needs ${AA_TEXT}:1) — it is used for text`,
+        );
+      }
+    }
+  }
+
+  // paper-50 text on the accent: every primary button, and `bg-brand-600`
+  // wherever a component reaches for it. `photo-led` is checked too, against
+  // its ink-700 fallback — skipping it is how a dark `quiet-luxury` page
+  // shipped a button whose label failed, since ink-700 inverts to a LIGHT
+  // colour and the button's text had been hardcoded white.
+  const accentColor =
+    strategy === "photo-led"
+      ? { l: ink[2]!, c: brandC * inkChroma(2) }
+      : { l: ACCENT_L[dark ? "dark" : "light"], c: brandC };
+  const onAccent = worstContrast(
+    { l: paper[0]!, c: brandC * paperChroma(strategy, 0) },
+    accentColor,
+  );
+  if (onAccent.ratio < AA_TEXT) {
+    out.push(
+      `paper-50 on the accent is ${onAccent.ratio}:1 at hue ${onAccent.hue} ` +
+        `(needs ${AA_TEXT}:1) — that is every primary button`,
+    );
+  }
+
+  return out;
 }
 
 /**
@@ -220,8 +362,7 @@ function renderRamp(spec: DesignSpec): string {
  */
 function accent(spec: DesignSpec): string {
   if (spec.color.strategy === "photo-led") return "var(--ink-700)";
-  const l = spec.color.mode === "dark" ? 0.72 : 0.52;
-  return `oklch(${l} var(--brand-c) var(--brand-h))`;
+  return `oklch(${ACCENT_L[spec.color.mode === "dark" ? "dark" : "light"]} var(--brand-c) var(--brand-h))`;
 }
 
 /**
