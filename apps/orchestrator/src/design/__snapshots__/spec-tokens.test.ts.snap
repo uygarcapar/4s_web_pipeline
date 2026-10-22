@@ -202,6 +202,208 @@ body {
 "
 `;
 
+exports[`gallery-wall > matches its snapshot 1`] = `
+"/* Generated from design.json by the design stage — do not hand-edit.
+   direction: gallery-wall · seed: gallery-wall-fixture
+   Every value below is derived from the spec: the scale from scaleRatio
+   5.25, the ramp from brandH 318 / brandC 0.04
+   (light, photo-led). design-rules.md §4 owns the eight steps;
+   the numbers are gallery-wall's. */
+
+@import "tailwindcss";
+
+:root {
+  --brand-h: 318;
+  --brand-c: 0.04;
+
+  /* paper: light, photo-led */
+  --paper-50: oklch(0.99 calc(var(--brand-c) * 0.3) var(--brand-h));
+  --paper-100: oklch(0.975 calc(var(--brand-c) * 0.345) var(--brand-h));
+  --paper-200: oklch(0.95 calc(var(--brand-c) * 0.39) var(--brand-h));
+  --paper-300: oklch(0.91 calc(var(--brand-c) * 0.435) var(--brand-h));
+  --paper-400: oklch(0.86 calc(var(--brand-c) * 0.48) var(--brand-h));
+  --paper-500: oklch(0.8 calc(var(--brand-c) * 0.525) var(--brand-h));
+
+  /* ink */
+  --ink-900: oklch(0.18 calc(var(--brand-c) * 0.35) var(--brand-h));
+  --ink-800: oklch(0.26 calc(var(--brand-c) * 0.3) var(--brand-h));
+  --ink-700: oklch(0.34 calc(var(--brand-c) * 0.25) var(--brand-h));
+  --ink-600: oklch(0.42 calc(var(--brand-c) * 0.2) var(--brand-h));
+  --ink-400: oklch(0.5 calc(var(--brand-c) * 0.15) var(--brand-h));
+
+  --background: var(--paper-100);
+  --foreground: var(--ink-900);
+  --brand-accent: var(--ink-700);
+
+  --font-display: var(--font-display-face);
+  --font-sans: var(--font-display-face);
+  --font-mono: var(--font-mono-face);
+
+  /* shape (§4.2) */
+  --radius: 0rem;
+  --rule-width: 0px;
+  --rule-color: transparent;
+
+  /* How a photograph meets the page (bleed). An archetype reads
+     these rather than branching on the frame name, so a new frame is a token
+     change and not an edit to every section that shows a picture. */
+  --image-radius: 0px;
+  --image-inset: 0rem;
+  --image-aspect: 4 / 3;
+
+  /* grid (§4.2), as tokens so an archetype never branches on the direction
+     name. left-flush: a centred language and a left-flush one are the
+     same markup with a different anchor. */
+  --text-align: left;
+  --align-items: flex-start;
+  /* How far a secondary column is pushed off the baseline grid. Zero unless
+     the direction is asymmetric, which is the only one that offsets. */
+  --offset-y: 0rem;
+
+  /* rhythm, from grid.density (standard) */
+  --section-y: 5.5rem;
+  --section-y-lg: 8rem;
+  /* line length < 80ch (design-rules.md §4) */
+  --measure: 72ch;
+}
+
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-paper-50: var(--paper-50);
+  --color-paper-100: var(--paper-100);
+  --color-paper-200: var(--paper-200);
+  --color-paper-300: var(--paper-300);
+  --color-paper-400: var(--paper-400);
+  --color-paper-500: var(--paper-500);
+  --color-ink-900: var(--ink-900);
+  --color-ink-800: var(--ink-800);
+  --color-ink-700: var(--ink-700);
+  --color-ink-600: var(--ink-600);
+  --color-ink-400: var(--ink-400);
+  --color-accent: var(--brand-accent);
+
+  /* The template's own components and globals.css's shadcn mapping are still
+     written against brand-*; without these aliases every one of them
+     resolves to nothing the moment this file replaces tokens.css. */
+  --color-brand-50: var(--paper-50);
+  --color-brand-100: var(--paper-100);
+  --color-brand-200: var(--paper-200);
+  --color-brand-300: var(--paper-300);
+  --color-brand-400: var(--brand-accent);
+  --color-brand-500: var(--paper-500);
+  --color-brand-600: var(--brand-accent);
+  --color-brand-700: var(--ink-700);
+  --color-brand-800: var(--ink-800);
+  --color-brand-900: var(--ink-900);
+  --color-brand-950: var(--ink-900);
+
+  --font-display: var(--font-display);
+  --font-sans: var(--font-sans);
+}
+
+html {
+  scrollbar-width: thin;
+  scrollbar-color: var(--paper-400) transparent;
+}
+
+body {
+  background: var(--background);
+  color: var(--foreground);
+  font-family: var(--font-sans), system-ui, sans-serif;
+  overflow-x: hidden;
+}
+
+::selection {
+  background: var(--ink-900);
+  color: var(--paper-100);
+}
+
+/* ---- type scale ----------------------------------------------------------
+   Eight steps (design-rules.md §4), generated from scaleRatio 5.25.
+   Big type only reads as big against a quiet floor: the supporting sizes are
+   placed on a geometric run and deliberately not raised to meet the
+   headline. */
+
+.t-display {
+  font-family: var(--font-display), system-ui, sans-serif;
+  font-size: clamp(2.25rem, min(8.4vw, 14.28vmin), 5.906rem);
+  font-weight: 400;
+  line-height: 0.96;
+  letter-spacing: 0;
+  overflow-wrap: break-word;
+}
+
+.t-h2 {
+  font-family: var(--font-display), system-ui, sans-serif;
+  font-size: clamp(2.41rem, 8vw, 4.382rem);
+  font-weight: 400;
+  line-height: 1;
+  letter-spacing: 0;
+  overflow-wrap: break-word;
+}
+
+.t-h2-col {
+  font-family: var(--font-display), system-ui, sans-serif;
+  font-size: clamp(1.766rem, 4vw, 2.943rem);
+  font-weight: 400;
+  line-height: 0.95;
+  letter-spacing: 0;
+  overflow-wrap: break-word;
+}
+
+.t-h3 {
+  font-family: var(--font-display), system-ui, sans-serif;
+  font-size: clamp(1.582rem, 2.2vw, 1.977rem);
+  font-weight: 400;
+  line-height: 1.1;
+  letter-spacing: 0;
+  overflow-wrap: break-word;
+}
+
+.t-lead {
+  font-family: var(--font-sans), system-ui, sans-serif;
+  font-size: clamp(1.125rem, 1.6vw, 1.467rem);
+  font-weight: 400;
+  line-height: 1.45;
+  letter-spacing: 0;
+}
+
+.t-body {
+  font-family: var(--font-sans), system-ui, sans-serif;
+  font-size: clamp(1rem, 1.1vw, 1.125rem);
+  font-weight: 400;
+  line-height: 1.6;
+  letter-spacing: 0;
+}
+
+.meta {
+  font-family: var(--font-mono), ui-monospace, monospace;
+  font-size: clamp(0.75rem, 0.9vw, 0.875rem);
+  font-weight: 500;
+  line-height: 1.2;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+
+.btn-label {
+  font-family: var(--font-mono), ui-monospace, monospace;
+  font-size: clamp(0.875rem, 1vw, 1rem);
+  font-weight: 500;
+  line-height: 1;
+  letter-spacing: 0.02em;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+
+/* The measure every running-text block is capped to. */
+.measure {
+  max-width: var(--measure);
+}
+"
+`;
+
 exports[`kinetic-bold > matches its snapshot 1`] = `
 "/* Generated from design.json by the design stage — do not hand-edit.
    direction: kinetic-bold · seed: kinetic-bold-fixture
@@ -401,6 +603,211 @@ body {
 .measure {
   max-width: var(--measure);
 }
+"
+`;
+
+exports[`night-ruled > matches its snapshot 1`] = `
+"/* Generated from design.json by the design stage — do not hand-edit.
+   direction: night-ruled · seed: night-ruled-fixture
+   Every value below is derived from the spec: the scale from scaleRatio
+   6, the ramp from brandH 318 / brandC 0.06
+   (dark, photo-led). design-rules.md §4 owns the eight steps;
+   the numbers are night-ruled's. */
+
+@import "tailwindcss";
+
+:root {
+  --brand-h: 318;
+  --brand-c: 0.06;
+
+  /* paper: dark, photo-led */
+  --paper-50: oklch(0.22 calc(var(--brand-c) * 0.3) var(--brand-h));
+  --paper-100: oklch(0.19 calc(var(--brand-c) * 0.345) var(--brand-h));
+  --paper-200: oklch(0.16 calc(var(--brand-c) * 0.39) var(--brand-h));
+  --paper-300: oklch(0.14 calc(var(--brand-c) * 0.435) var(--brand-h));
+  --paper-400: oklch(0.12 calc(var(--brand-c) * 0.48) var(--brand-h));
+  --paper-500: oklch(0.1 calc(var(--brand-c) * 0.525) var(--brand-h));
+
+  /* ink */
+  --ink-900: oklch(0.97 calc(var(--brand-c) * 0.35) var(--brand-h));
+  --ink-800: oklch(0.92 calc(var(--brand-c) * 0.3) var(--brand-h));
+  --ink-700: oklch(0.85 calc(var(--brand-c) * 0.25) var(--brand-h));
+  --ink-600: oklch(0.76 calc(var(--brand-c) * 0.2) var(--brand-h));
+  --ink-400: oklch(0.66 calc(var(--brand-c) * 0.15) var(--brand-h));
+
+  --background: var(--paper-100);
+  --foreground: var(--ink-900);
+  --brand-accent: var(--ink-700);
+
+  --font-display: var(--font-display-face);
+  --font-sans: var(--font-body-face);
+  --font-mono: var(--font-mono-face);
+
+  /* shape (§4.2) */
+  --radius: 0rem;
+  --rule-width: 1px;
+  --rule-color: var(--ink-400);
+
+  /* How a photograph meets the page (bleed). An archetype reads
+     these rather than branching on the frame name, so a new frame is a token
+     change and not an edit to every section that shows a picture. */
+  --image-radius: 0px;
+  --image-inset: 0rem;
+  --image-aspect: 4 / 3;
+
+  /* grid (§4.2), as tokens so an archetype never branches on the direction
+     name. left-flush: a centred language and a left-flush one are the
+     same markup with a different anchor. */
+  --text-align: left;
+  --align-items: flex-start;
+  /* How far a secondary column is pushed off the baseline grid. Zero unless
+     the direction is asymmetric, which is the only one that offsets. */
+  --offset-y: 0rem;
+
+  /* rhythm, from grid.density (poster) */
+  --section-y: 7rem;
+  --section-y-lg: 11rem;
+  /* line length < 80ch (design-rules.md §4) */
+  --measure: 72ch;
+}
+
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-paper-50: var(--paper-50);
+  --color-paper-100: var(--paper-100);
+  --color-paper-200: var(--paper-200);
+  --color-paper-300: var(--paper-300);
+  --color-paper-400: var(--paper-400);
+  --color-paper-500: var(--paper-500);
+  --color-ink-900: var(--ink-900);
+  --color-ink-800: var(--ink-800);
+  --color-ink-700: var(--ink-700);
+  --color-ink-600: var(--ink-600);
+  --color-ink-400: var(--ink-400);
+  --color-accent: var(--brand-accent);
+
+  /* The template's own components and globals.css's shadcn mapping are still
+     written against brand-*; without these aliases every one of them
+     resolves to nothing the moment this file replaces tokens.css. */
+  --color-brand-50: var(--paper-50);
+  --color-brand-100: var(--paper-100);
+  --color-brand-200: var(--paper-200);
+  --color-brand-300: var(--paper-300);
+  --color-brand-400: var(--brand-accent);
+  --color-brand-500: var(--paper-500);
+  --color-brand-600: var(--brand-accent);
+  --color-brand-700: var(--ink-700);
+  --color-brand-800: var(--ink-800);
+  --color-brand-900: var(--ink-900);
+  --color-brand-950: var(--ink-900);
+
+  --font-display: var(--font-display);
+  --font-sans: var(--font-sans);
+}
+
+html {
+  scrollbar-width: thin;
+  scrollbar-color: var(--paper-400) transparent;
+}
+
+body {
+  background: var(--background);
+  color: var(--foreground);
+  font-family: var(--font-sans), system-ui, sans-serif;
+  overflow-x: hidden;
+}
+
+::selection {
+  background: var(--ink-900);
+  color: var(--paper-100);
+}
+
+/* ---- type scale ----------------------------------------------------------
+   Eight steps (design-rules.md §4), generated from scaleRatio 6.
+   Big type only reads as big against a quiet floor: the supporting sizes are
+   placed on a geometric run and deliberately not raised to meet the
+   headline. */
+
+.t-display {
+  font-family: var(--font-display), system-ui, sans-serif;
+  font-size: clamp(2.25rem, min(9.6vw, 16.32vmin), 6.75rem);
+  font-weight: 400;
+  line-height: 0.86;
+  letter-spacing: -0.01em;
+  overflow-wrap: break-word;
+}
+
+.t-h2 {
+  font-family: var(--font-display), system-ui, sans-serif;
+  font-size: clamp(2.689rem, 8vw, 4.889rem);
+  font-weight: 400;
+  line-height: 0.9;
+  letter-spacing: -0.009em;
+  overflow-wrap: break-word;
+}
+
+.t-h2-col {
+  font-family: var(--font-display), system-ui, sans-serif;
+  font-size: clamp(1.908rem, 4vw, 3.18rem);
+  font-weight: 400;
+  line-height: 0.95;
+  letter-spacing: -0.008em;
+  overflow-wrap: break-word;
+}
+
+.t-h3 {
+  font-family: var(--font-display), system-ui, sans-serif;
+  font-size: clamp(1.655rem, 2.2vw, 2.069rem);
+  font-weight: 400;
+  line-height: 1.1;
+  letter-spacing: -0.006em;
+  overflow-wrap: break-word;
+}
+
+.t-lead {
+  font-family: var(--font-sans), system-ui, sans-serif;
+  font-size: clamp(1.125rem, 1.6vw, 1.498rem);
+  font-weight: 400;
+  line-height: 1.45;
+  letter-spacing: 0;
+}
+
+.t-body {
+  font-family: var(--font-sans), system-ui, sans-serif;
+  font-size: clamp(1rem, 1.1vw, 1.125rem);
+  font-weight: 400;
+  line-height: 1.6;
+  letter-spacing: 0;
+}
+
+.meta {
+  font-family: var(--font-mono), ui-monospace, monospace;
+  font-size: clamp(0.75rem, 0.9vw, 0.875rem);
+  font-weight: 500;
+  line-height: 1.2;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+
+.btn-label {
+  font-family: var(--font-mono), ui-monospace, monospace;
+  font-size: clamp(0.875rem, 1vw, 1rem);
+  font-weight: 500;
+  line-height: 1;
+  letter-spacing: 0.02em;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+
+/* The measure every running-text block is capped to. */
+.measure {
+  max-width: var(--measure);
+}
+
+/* A dark page still has to pass the axe contrast gate: the ink steps above
+   are light-on-dark and the ramp is inverted, not merely re-pointed. */
 "
 `;
 
@@ -621,19 +1028,19 @@ exports[`swiss-grid > matches its snapshot 1`] = `
   --brand-c: 0.08;
 
   /* paper: light, accent-block */
-  --paper-50: oklch(0.99 calc(var(--brand-c) * 0.18) var(--brand-h));
-  --paper-100: oklch(0.975 calc(var(--brand-c) * 0.207) var(--brand-h));
-  --paper-200: oklch(0.95 calc(var(--brand-c) * 0.234) var(--brand-h));
-  --paper-300: oklch(0.91 calc(var(--brand-c) * 0.261) var(--brand-h));
-  --paper-400: oklch(0.86 calc(var(--brand-c) * 0.288) var(--brand-h));
-  --paper-500: oklch(0.8 calc(var(--brand-c) * 0.315) var(--brand-h));
+  --paper-50: oklch(0.99 calc(var(--brand-c) * 0.05) var(--brand-h));
+  --paper-100: oklch(0.975 calc(var(--brand-c) * 0.057) var(--brand-h));
+  --paper-200: oklch(0.95 calc(var(--brand-c) * 0.065) var(--brand-h));
+  --paper-300: oklch(0.91 calc(var(--brand-c) * 0.073) var(--brand-h));
+  --paper-400: oklch(0.86 calc(var(--brand-c) * 0.08) var(--brand-h));
+  --paper-500: oklch(0.8 calc(var(--brand-c) * 0.088) var(--brand-h));
 
   /* ink */
-  --ink-900: oklch(0.18 calc(var(--brand-c) * 0.35) var(--brand-h));
-  --ink-800: oklch(0.26 calc(var(--brand-c) * 0.3) var(--brand-h));
-  --ink-700: oklch(0.34 calc(var(--brand-c) * 0.25) var(--brand-h));
-  --ink-600: oklch(0.42 calc(var(--brand-c) * 0.2) var(--brand-h));
-  --ink-400: oklch(0.5 calc(var(--brand-c) * 0.15) var(--brand-h));
+  --ink-900: oklch(0.18 calc(var(--brand-c) * 0.1) var(--brand-h));
+  --ink-800: oklch(0.26 calc(var(--brand-c) * 0.085) var(--brand-h));
+  --ink-700: oklch(0.34 calc(var(--brand-c) * 0.07) var(--brand-h));
+  --ink-600: oklch(0.42 calc(var(--brand-c) * 0.055) var(--brand-h));
+  --ink-400: oklch(0.5 calc(var(--brand-c) * 0.04) var(--brand-h));
 
   --background: var(--paper-100);
   --foreground: var(--ink-900);
@@ -768,6 +1175,208 @@ body {
 .t-lead {
   font-family: var(--font-sans), system-ui, sans-serif;
   font-size: clamp(1.125rem, 1.6vw, 1.455rem);
+  font-weight: 400;
+  line-height: 1.45;
+  letter-spacing: 0;
+}
+
+.t-body {
+  font-family: var(--font-sans), system-ui, sans-serif;
+  font-size: clamp(1rem, 1.1vw, 1.125rem);
+  font-weight: 400;
+  line-height: 1.6;
+  letter-spacing: 0;
+}
+
+.meta {
+  font-family: var(--font-mono), ui-monospace, monospace;
+  font-size: clamp(0.75rem, 0.9vw, 0.875rem);
+  font-weight: 500;
+  line-height: 1.2;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+
+.btn-label {
+  font-family: var(--font-mono), ui-monospace, monospace;
+  font-size: clamp(0.875rem, 1vw, 1rem);
+  font-weight: 500;
+  line-height: 1;
+  letter-spacing: 0.02em;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+
+/* The measure every running-text block is capped to. */
+.measure {
+  max-width: var(--measure);
+}
+"
+`;
+
+exports[`technical-accent > matches its snapshot 1`] = `
+"/* Generated from design.json by the design stage — do not hand-edit.
+   direction: technical-accent · seed: technical-accent-fixture
+   Every value below is derived from the spec: the scale from scaleRatio
+   5.75, the ramp from brandH 318 / brandC 0.08
+   (light, accent-block). design-rules.md §4 owns the eight steps;
+   the numbers are technical-accent's. */
+
+@import "tailwindcss";
+
+:root {
+  --brand-h: 318;
+  --brand-c: 0.08;
+
+  /* paper: light, accent-block */
+  --paper-50: oklch(0.99 calc(var(--brand-c) * 0.05) var(--brand-h));
+  --paper-100: oklch(0.975 calc(var(--brand-c) * 0.057) var(--brand-h));
+  --paper-200: oklch(0.95 calc(var(--brand-c) * 0.065) var(--brand-h));
+  --paper-300: oklch(0.91 calc(var(--brand-c) * 0.073) var(--brand-h));
+  --paper-400: oklch(0.86 calc(var(--brand-c) * 0.08) var(--brand-h));
+  --paper-500: oklch(0.8 calc(var(--brand-c) * 0.088) var(--brand-h));
+
+  /* ink */
+  --ink-900: oklch(0.18 calc(var(--brand-c) * 0.1) var(--brand-h));
+  --ink-800: oklch(0.26 calc(var(--brand-c) * 0.085) var(--brand-h));
+  --ink-700: oklch(0.34 calc(var(--brand-c) * 0.07) var(--brand-h));
+  --ink-600: oklch(0.42 calc(var(--brand-c) * 0.055) var(--brand-h));
+  --ink-400: oklch(0.5 calc(var(--brand-c) * 0.04) var(--brand-h));
+
+  --background: var(--paper-100);
+  --foreground: var(--ink-900);
+  --brand-accent: oklch(0.48 var(--brand-c) var(--brand-h));
+
+  --font-display: var(--font-display-face);
+  --font-sans: var(--font-body-face);
+  --font-mono: var(--font-mono-face);
+
+  /* shape (§4.2) */
+  --radius: 0rem;
+  --rule-width: 1px;
+  --rule-color: var(--ink-400);
+
+  /* How a photograph meets the page (inset). An archetype reads
+     these rather than branching on the frame name, so a new frame is a token
+     change and not an edit to every section that shows a picture. */
+  --image-radius: var(--radius);
+  --image-inset: 1.5rem;
+  --image-aspect: 4 / 3;
+
+  /* grid (§4.2), as tokens so an archetype never branches on the direction
+     name. left-flush: a centred language and a left-flush one are the
+     same markup with a different anchor. */
+  --text-align: left;
+  --align-items: flex-start;
+  /* How far a secondary column is pushed off the baseline grid. Zero unless
+     the direction is asymmetric, which is the only one that offsets. */
+  --offset-y: 0rem;
+
+  /* rhythm, from grid.density (standard) */
+  --section-y: 5.5rem;
+  --section-y-lg: 8rem;
+  /* line length < 80ch (design-rules.md §4) */
+  --measure: 72ch;
+}
+
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-paper-50: var(--paper-50);
+  --color-paper-100: var(--paper-100);
+  --color-paper-200: var(--paper-200);
+  --color-paper-300: var(--paper-300);
+  --color-paper-400: var(--paper-400);
+  --color-paper-500: var(--paper-500);
+  --color-ink-900: var(--ink-900);
+  --color-ink-800: var(--ink-800);
+  --color-ink-700: var(--ink-700);
+  --color-ink-600: var(--ink-600);
+  --color-ink-400: var(--ink-400);
+  --color-accent: var(--brand-accent);
+
+  /* The template's own components and globals.css's shadcn mapping are still
+     written against brand-*; without these aliases every one of them
+     resolves to nothing the moment this file replaces tokens.css. */
+  --color-brand-50: var(--paper-50);
+  --color-brand-100: var(--paper-100);
+  --color-brand-200: var(--paper-200);
+  --color-brand-300: var(--paper-300);
+  --color-brand-400: var(--brand-accent);
+  --color-brand-500: var(--paper-500);
+  --color-brand-600: var(--brand-accent);
+  --color-brand-700: var(--ink-700);
+  --color-brand-800: var(--ink-800);
+  --color-brand-900: var(--ink-900);
+  --color-brand-950: var(--ink-900);
+
+  --font-display: var(--font-display);
+  --font-sans: var(--font-sans);
+}
+
+html {
+  scrollbar-width: thin;
+  scrollbar-color: var(--paper-400) transparent;
+}
+
+body {
+  background: var(--background);
+  color: var(--foreground);
+  font-family: var(--font-sans), system-ui, sans-serif;
+  overflow-x: hidden;
+}
+
+::selection {
+  background: var(--ink-900);
+  color: var(--paper-100);
+}
+
+/* ---- type scale ----------------------------------------------------------
+   Eight steps (design-rules.md §4), generated from scaleRatio 5.75.
+   Big type only reads as big against a quiet floor: the supporting sizes are
+   placed on a geometric run and deliberately not raised to meet the
+   headline. */
+
+.t-display {
+  font-family: var(--font-display), system-ui, sans-serif;
+  font-size: clamp(2.25rem, min(9.2vw, 15.64vmin), 6.469rem);
+  font-weight: 600;
+  line-height: 0.96;
+  letter-spacing: -0.03em;
+  overflow-wrap: break-word;
+}
+
+.t-h2 {
+  font-family: var(--font-display), system-ui, sans-serif;
+  font-size: clamp(2.597rem, 8vw, 4.722rem);
+  font-weight: 600;
+  line-height: 1;
+  letter-spacing: -0.027em;
+  overflow-wrap: break-word;
+}
+
+.t-h2-col {
+  font-family: var(--font-display), system-ui, sans-serif;
+  font-size: clamp(1.862rem, 4vw, 3.103rem);
+  font-weight: 600;
+  line-height: 0.95;
+  letter-spacing: -0.024em;
+  overflow-wrap: break-word;
+}
+
+.t-h3 {
+  font-family: var(--font-display), system-ui, sans-serif;
+  font-size: clamp(1.631rem, 2.2vw, 2.039rem);
+  font-weight: 600;
+  line-height: 1.1;
+  letter-spacing: -0.018em;
+  overflow-wrap: break-word;
+}
+
+.t-lead {
+  font-family: var(--font-sans), system-ui, sans-serif;
+  font-size: clamp(1.125rem, 1.6vw, 1.488rem);
   font-weight: 400;
   line-height: 1.45;
   letter-spacing: 0;

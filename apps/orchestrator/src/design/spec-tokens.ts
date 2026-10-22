@@ -237,11 +237,42 @@ const PAPER_STEPS = [50, 100, 200, 300, 400, 500] as const;
  * is `0.20699999999999996` in binary floating point, and a token file the
  * operator reads should not say that.
  */
-const paperChroma = (strategy: DesignSpec["color"]["strategy"], i: number): number =>
-  round3((strategy === "photo-led" ? 0.3 : 0.18) * (1 + i * 0.15));
+const PAPER_CHROMA_BASE: Record<DesignSpec["color"]["strategy"], number> = {
+  // The photographs set the temperature, so the paper leans into them.
+  "photo-led": 0.3,
+  // Two-tone imagery, so the paper is part of the image's own palette and
+  // leans the same way. No direction declares it yet; it is in the schema,
+  // and a missing key here would be a type error rather than a decision.
+  duotone: 0.3,
+  "mono-hue": 0.18,
+  // Near-neutral, for the same reason `accent-block`'s ink is: the accent
+  // is only the one colour on the page if the page is not already that
+  // colour. At brandC 0.17 the 0.18 base put the hue into the paper at
+  // L 0.975, which renders as lavender — and `technical-accent`'s reference
+  // is off-white with one orange mark on it.
+  "accent-block": 0.05,
+};
 
-/** Chroma of ink step `i` as a multiple of `brandC`. */
-const inkChroma = (i: number): number => round3(0.35 - i * 0.05);
+const paperChroma = (strategy: DesignSpec["color"]["strategy"], i: number): number =>
+  round3(PAPER_CHROMA_BASE[strategy] * (1 + i * 0.15));
+
+/**
+ * Chroma of ink step `i` as a multiple of `brandC`.
+ *
+ * **`accent-block` keeps its ink nearly neutral**, and that is the whole
+ * meaning of the strategy. The ink chroma is a multiple of `brandC`, so a
+ * direction that raises `brandC` to afford a hot accent was tinting every
+ * headline, every paragraph and every rule the same hue — `technical-accent`
+ * at chroma 0.19 rendered an entirely purple page, when its reference is
+ * neutral grey with one orange mark on it. The accent cannot read as the
+ * only colour on the page if it is sharing its hue with the text.
+ *
+ * Found by looking at the render. The numbers were all in range and
+ * `rampViolations` passed, because tinted ink is perfectly legible — it is
+ * just not what the direction says it is.
+ */
+const inkChroma = (strategy: DesignSpec["color"]["strategy"], i: number): number =>
+  round3((strategy === "accent-block" ? 0.1 : 0.35) - i * (strategy === "accent-block" ? 0.015 : 0.05));
 
 const round3 = (n: number): number => Math.round(n * 1000) / 1000;
 
@@ -274,7 +305,7 @@ function renderRamp(spec: DesignSpec): string {
     ...paper.map((l, i) => line(`paper-${PAPER_STEPS[i]}`, l, paperChroma(strategy, i))),
     "",
     "  /* ink */",
-    ...ink.map((l, i) => line(`ink-${INK_STEPS[i]}`, l, inkChroma(i))),
+    ...ink.map((l, i) => line(`ink-${INK_STEPS[i]}`, l, inkChroma(strategy, i))),
   ].join("\n");
 }
 
@@ -317,7 +348,7 @@ export function rampViolations(spec: DesignSpec): string[] {
     const background = { l: paper[bg]!, c: brandC * paperChroma(strategy, bg) };
     for (let i = 0; i < ink.length; i += 1) {
       const { ratio, hue } = worstContrast(
-        { l: ink[i]!, c: brandC * inkChroma(i) },
+        { l: ink[i]!, c: brandC * inkChroma(strategy, i) },
         background,
       );
       if (ratio < AA_TEXT) {
@@ -336,7 +367,7 @@ export function rampViolations(spec: DesignSpec): string[] {
   // and the button's text had been hardcoded white.
   const accentColor =
     strategy === "photo-led"
-      ? { l: ink[2]!, c: brandC * inkChroma(2) }
+      ? { l: ink[2]!, c: brandC * inkChroma(strategy, 2) }
       : { l: ACCENT_L[dark ? "dark" : "light"], c: brandC };
   const onAccent = worstContrast(
     { l: paper[0]!, c: brandC * paperChroma(strategy, 0) },

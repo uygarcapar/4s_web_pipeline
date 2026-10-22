@@ -1632,6 +1632,53 @@ a render after every automated gate had passed.
   so. It takes the list from `design.json` now, which is where the decision
   was already made.
 
+## Phase E — seven directions, because four was measured and found short
+
+Four directions produced **11 mutually-distinct sites across sectors and 6
+within one**, against a §12 ship test of ten. Three more, built from four
+reference sites the operator picked off awwwards after rejecting everything
+video- or WebGL-based:
+
+| direction | from | what it adds |
+|---|---|---|
+| `technical-accent` | heronaiapp.com | the catalog's first real accent colour — drafting paper, crop marks, mono labels, one hot mark |
+| `gallery-wall` | almirakho.com | many photographs tiled edge to edge, type laid on them |
+| `night-ruled` | offforum.com | a second dark direction — ruled info table over a dark photograph |
+
+Capacity after: **28 across sectors, ~11–12 within one.** Measured, not
+projected; the greedy count is order-dependent, so treat the same-sector
+figure as approximate.
+
+### `swiss-grid` could only ever serve one client
+
+Found by the capacity probe, not by a gate. It declared exactly one value
+for colour mode, motion profile, alignment, image frame, radius **and**
+density — twelve of §8.1's eighteen points frozen, leaving a ceiling of
+0.333 against a 0.40 threshold. Two `swiss-grid` clients could never be far
+enough apart, so the second was always rejected and the direction yielded
+one site. It had been in the catalog through four merges.
+
+`maxInternalDistance` computes that ceiling and `internal-distance.test.ts`
+fails any direction below the threshold, so the next one is caught at the
+commit rather than by a probe. Four of swiss-grid's axes are unfrozen and
+each is argued where it sits; `radius` stays at 0 deliberately, because
+buying distance by rounding the corners would trade away the thing being
+measured. Its yield went 1 → 4.
+
+### `accent-block` was tinting the whole page
+
+`technical-accent` rendered entirely lavender. Both the ink and the paper
+chroma are multiples of `brandC`, so a direction that raises `brandC` to
+afford a hot accent was putting that hue into every headline, every
+paragraph and the background. The accent cannot read as the only colour on
+the page if the page is already that colour.
+
+`accent-block` now keeps ink and paper near-neutral and spends the chroma
+on the accent alone — which is what the strategy name always meant. Found
+by looking at the render: every number was in range and `rampViolations`
+passed, because tinted ink is perfectly legible. It is just not what the
+direction says it is.
+
 ## Next
 
 **§8.3 calibration — operator.** ~30 labelled pairs. Both thresholds move to
