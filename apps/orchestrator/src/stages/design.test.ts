@@ -113,8 +113,16 @@ describe("design stage — the spec path", () => {
   beforeEach(() => {
     dir = mkdtempSync(join(tmpdir(), "design-"));
     store = openStore({ memory: true });
+    // §8.2 builds a Next app per candidate. These stores start empty so the
+    // gate would no-op anyway, but setting it explicitly means a future
+    // fixture that seeds a vector does not silently turn every one of these
+    // into a two-minute build.
+    process.env.PIPELINE_SKIP_PRERENDER = "1";
   });
-  afterEach(() => rmSync(dir, { recursive: true, force: true }));
+  afterEach(() => {
+    rmSync(dir, { recursive: true, force: true });
+    delete process.env.PIPELINE_SKIP_PRERENDER;
+  });
 
   it("writes a design.json that validates as a DesignSpec", async () => {
     seedRun(dir);

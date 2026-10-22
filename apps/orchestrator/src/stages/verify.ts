@@ -4,6 +4,7 @@ import { join } from "node:path";
 import type { StageContext, StageModule } from "./types.js";
 import { runFixLoop } from "./fix-loop.js";
 import { runDesignJudge } from "./design-judge.js";
+import { recordFinalVector } from "../design/final-vector.js";
 
 /**
  * Run the quality gates (template/scripts/verify.mjs) inside the generated
@@ -76,6 +77,7 @@ export const verifyStage: StageModule = {
     // judge is never looking at a broken build.
     if (process.env.SKIP_DESIGN_JUDGE === "1") {
       ctx.log("design judge skipped (SKIP_DESIGN_JUDGE=1)");
+      await recordFinalVector(ctx, siteDir, specSeed(ctx));
       return { ok: true, costUsd, data: { fixIterations } };
     }
     const judge = await runDesignJudge(ctx, siteDir);
@@ -103,6 +105,11 @@ export const verifyStage: StageModule = {
         };
       }
     }
+    // §8.2's second vector: the shipped page, which is what later runs
+    // compare against. Never a gate on this run — it runs after every gate
+    // has already passed, and its own failure is logged and swallowed.
+    await recordFinalVector(ctx, siteDir, specSeed(ctx));
+
     return {
       ok: true,
       costUsd,
@@ -114,4 +121,16 @@ export const verifyStage: StageModule = {
 /** Exposed for the design-judge pass, which reuses the digest path. */
 export function digestPath(ctx: StageContext): string {
   return join(ctx.runDir, "generate", "verify-digest.md");
+}
+
+/** The spec seed this site was built from, for the vector's provenance. */
+function specSeed(ctx: StageContext): string {
+  try {
+    const spec = JSON.parse(
+      readFileSync(join(ctx.runDir, "design", "design.json"), "utf8"),
+    ) as { seed?: unknown };
+    return typeof spec.seed === "string" ? spec.seed : ctx.domain;
+  } catch {
+    return ctx.domain;
+  }
 }

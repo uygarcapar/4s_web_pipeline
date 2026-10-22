@@ -128,6 +128,18 @@ CREATE TABLE IF NOT EXISTS costs (
   created_at TEXT NOT NULL
 );
 CREATE INDEX IF NOT EXISTS idx_costs_domain ON costs(domain);
+CREATE TABLE IF NOT EXISTS vectors (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  domain TEXT NOT NULL,
+  stage TEXT NOT NULL,
+  fold TEXT NOT NULL,
+  seed TEXT NOT NULL,
+  model TEXT NOT NULL,
+  embedding BLOB NOT NULL,
+  created_at TEXT NOT NULL
+);
+CREATE INDEX IF NOT EXISTS idx_vectors_lookup ON vectors(stage, fold, created_at);
+CREATE INDEX IF NOT EXISTS idx_vectors_domain ON vectors(domain);
 `;
 
 /**

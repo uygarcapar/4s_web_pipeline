@@ -1439,13 +1439,100 @@ Two deliberate choices around that ceiling:
   archetypes, not a lower threshold (design-rules §12: fix the detector
   before the site, and never the other way round).
 
+## C5 — visual distance (§8.2)
+
+Each candidate that clears §8.1 is now built and photographed, both folds,
+and compared against the sites that already shipped. A rejection moves to
+the next candidate; it never enters the fix loop, and it costs no model
+spend, because the whole thing runs before `generate`.
+
+Three pieces:
+
+- **`prerender.ts`** — a buildable `SiteConfig` from the spec plus the
+  client's raw crawl, no model call. Not a site and never shipped: the
+  tokens, archetypes and photographs are exactly what the real site will
+  use, which is what makes the comparison mean anything, but the copy is
+  the client's own unedited text. Where a required field has no source the
+  fallback is another piece of their text or an obviously-synthetic marker,
+  never a plausible sentence — a plausible sentence in a measurement
+  artifact is one somebody later mistakes for a fact. `testimonials` and
+  `process` are skipped outright rather than filled.
+- **`shots.ts`** — production `next build`, serve, screenshot 1350×940 and
+  an iPhone 13. Folds, not full pages: a full-page shot would make
+  similarity a function of how much the client wrote, so a chatty dentist
+  and a terse one would read as different designs. Reduced motion is forced
+  on, or a shot taken mid-fade measures whatever opacity the animation
+  happened to be at and the gate becomes a coin flip.
+- **`embed.ts` / `visual.ts`** — DINOv2-small through
+  `@huggingface/transformers`, CLS token, L2-normalised, stored in a
+  `vectors` table. Either fold rejects: several archetypes collapse to one
+  column under `sm`, so a site that repeats only on a phone is still a
+  repeat, and most of these visitors are on a phone.
+
+**Node, not Python** (operator decision, 2026-10-22). §8.2 says "a small
+local Python tool"; this machine has no torch and Python 3.14, where the
+wheels are doubtful. What §8.2 actually guarantees is that embedding is
+local and no client render leaves the machine (§13 Q4), and that holds
+either way — with one toolchain instead of two.
+
+### §8.2's threshold was wrong, and the measurement says so
+
+`docs/D10-visual-calibration.md` has the full matrix: eight candidates from
+one client, two draws per direction, every pair scored on both folds.
+
+| pair | desktop | mobile | by eye |
+|---|---|---|---|
+| `swiss-grid` ×2, both `offset-grid` | 0.971 | 0.932 | the same site |
+| `kinetic-bold` ×2, both `marquee` | 0.939 | 0.958 | the same site |
+| `kinetic-bold` vs `quiet-luxury` | 0.811 | 0.910 | nothing alike |
+| `quiet-luxury` vs `swiss-grid` | 0.679 | 0.687 | nothing alike |
+
+The detector orders these the way a person does — the 0.679 pair is a
+near-black serif page against a light ruled grid, and both were looked at,
+not just measured. But **0.85 would reject correct candidates**: several
+pairs a person calls different sit between 0.85 and 0.91. The code uses
+0.93, which is where the data separates, with two cautions recorded in that
+file: the margin is 0.02, and identical copy with no photographs inflates
+every number. §8.3 still owes thirty labelled pairs.
+
+### The gate, exercised end to end
+
+Ship `swiss-grid/index` for one client, then run the stage for a second
+with the same brief:
+
+```
+candidate ikinci-klinik.com-0 rejected — desktop fold is 0.960 similar
+  to ilk-klinik.com (threshold 0.93)
+chose swiss-grid/offset-grid
+```
+
+It also shows the two halves are not redundant: §8.1 passed that candidate,
+because its rules read the `designs` ledger and the first client existed
+only as a vector. The structural check measures the decisions we chose to
+name; this one measures the result.
+
+### Three rules it follows
+
+- **A gate never fails a run on its own failure.** A pre-render that will
+  not build — a client with no hours and no `hoursNote`, say — is a fact
+  about the crawl, not the candidate. It is logged, §8.1's verdict stands,
+  and the run continues.
+- **It compares against shipped sites only.** §8.2 is explicit that the
+  post-verify vector is what later runs measure against. A candidate vector
+  belongs to a page that may never have shipped, and gating on the
+  pipeline's own rejected proposals would narrow the space for nothing.
+  Candidate vectors are stored anyway, for provenance.
+- **The scaffold is deleted after the screenshots.** A built Next copy is
+  ~200 MB and a run can draw two dozen candidates. The PNGs stay — they are
+  what the operator reviews and what §8.3 will calibrate against.
+
+`PIPELINE_SKIP_PRERENDER=1` turns off the §8.2 half; §8.1 still gates.
+
 ## Next
 
-§8.2 visual distance (C5): pre-render each surviving candidate from its spec
-plus the client's own text and photographs, screenshot both folds, embed
-locally, reject on cosine similarity. Q4 is settled — local only, no client
-render leaves the machine. Then §8.3 calibration, which is an operator task:
-~30 labelled pairs, and the thresholds above move to match the labels.
+**§8.3 calibration — operator.** ~30 labelled pairs. Both thresholds move to
+match: the structural 0.40/0.55 and the visual 0.93. A threshold that
+disagrees with the operator's eye is a broken detector (design-rules §12).
 
 Phase D's signature section and judge work follow.
 
