@@ -7,21 +7,43 @@ import { composeDna } from "../design/dna.js";
 import { recentDesigns, recordDesign, sectionsFromFacts } from "../design/ledger.js";
 import { takeInventory } from "../design/inventory.js";
 import { foldForMatch } from "../design/fold.js";
-import { renderTokens } from "../design/tokens.js";
-import { renderFonts } from "../design/fonts.js";
+import { designSpecSchema } from "@pipeline/core";
+import { DIRECTIONS, DIRECTION_IDS } from "../design/directions/index.js";
+import { recentDirectionUsage } from "../design/ledger.js";
+import { photoQualityFrom, rankDirections } from "../design/score.js";
+import { pickArchetypes, sampleSpec } from "../design/sample-spec.js";
+import { renderSpecTokens } from "../design/spec-tokens.js";
+import { assertVendored, planLocalFonts } from "../design/local-fonts.js";
 
 /**
- * Derive the site's design DNA before any copy or markup exists.
+ * Choose this site's design before any copy or markup exists.
  *
- * This stage is deliberately deterministic and model-free. The palette comes
- * from the client's own photographs, the structure from which facts actually
- * exist, the typography from their sector — and the combination is
- * fingerprinted against recent runs so two businesses in the same trade
- * cannot be handed the same site (docs/DECISIONS.md D6).
+ * Deterministic and model-free throughout. Two decisions are made here and
+ * nothing downstream may revisit either (D10 §5):
+ *
+ *  - **Which direction.** Scored from the brief's four classifications and
+ *    the measured photographs, minus a penalty for every recent run that
+ *    already used it (§6.2). The direction fixes the type pairing, the
+ *    colour mode, the motion vocabulary and the archetype shortlist.
+ *  - **Which spec.** Sampled from that direction's declared ranges with a
+ *    seed derived from the domain (§6.3), so the same client always gets the
+ *    same site and two clients on the same direction do not.
+ *
+ * The palette's HUE still comes from the client's own photographs (§13 Q3),
+ * and which sections exist is still a function of which facts exist (D6) —
+ * the direction decides how a page looks, never what is on it.
+ *
+ * The DNA composed below is now only the fingerprint ledger and the palette;
+ * its typography and motion no longer reach the site. It is kept because the
+ * ledger is what makes "no two neighbours get the same site" checkable, and
+ * is written to `dna.json` for anything still reading it.
  *
  * Output:
- *   runs/<domain>/design/design.json  — the DNA, read by plan and generate
- *   runs/<domain>/design/tokens.css   — copied into the generated site
+ *   runs/<domain>/design/design.json  — the DesignSpec, read by plan,
+ *                                       generate and the design judge
+ *   runs/<domain>/design/dna.json     — the fingerprint and palette
+ *   runs/<domain>/design/tokens.css   — generated from the spec
+ *   runs/<domain>/design/fonts.ts     — generated from the spec
  */
 export const designStage: StageModule = {
   stage: "design",
@@ -63,6 +85,11 @@ export const designStage: StageModule = {
       emphasis?: unknown;
       statementUsable?: unknown;
       evidence?: { statementCandidate?: unknown };
+      // D10 §6.1 — the four scales the direction scorer reads.
+      tone?: unknown;
+      tier?: unknown;
+      audience?: unknown;
+      contentVolume?: unknown;
     }>(join(ctx.runDir, "brief", "brief.json"));
 
     const hasStatement =
@@ -106,29 +133,135 @@ export const designStage: StageModule = {
       { fingerprint: dna.fingerprint, sector, recentInSector: recent.length },
     );
 
-    recordDesign(ctx.store, { domain: ctx.domain, sector, dna });
+    // 4. Direction, scored (§6.2).
+    const scoringBrief = {
+      tone: asEnum(brief?.tone, "clinical"),
+      tier: asEnum(brief?.tier, "mid"),
+      audience: asEnum(brief?.audience, "local-everyday"),
+      contentVolume: asEnum(brief?.contentVolume, "standard"),
+      photoProfile: {
+        usableCount: sources.length,
+        quality: photoQualityFrom(sources.length, largePhotoCount(manifest)),
+      },
+    };
+    const usage = recentDirectionUsage(ctx.store);
+    const ranked = rankDirections(
+      DIRECTION_IDS.map((id) => DIRECTIONS[id]!),
+      scoringBrief,
+      usage,
+    );
+    const winner = ranked[0]!;
+    const direction = DIRECTIONS[winner.id]!;
+    ctx.log(
+      `direction ${winner.id} (score ${winner.score}): ${winner.reason}`,
+      {
+        direction: winner.id,
+        brief: scoringBrief,
+        runnersUp: ranked.slice(1).map((r) => `${r.id} ${r.score}`),
+        recentUsage: usage,
+      },
+    );
+
+    // 5. Spec, sampled from that direction's ranges (§6.3), then overridden
+    //    on the two axes that belong to the client rather than the direction.
+    const sampled = sampleSpec(direction, ctx.domain, 0);
+    const spec = designSpecSchema.parse({
+      ...sampled,
+      color: {
+        ...sampled.color,
+        brandH: palette.hue,
+        brandC: brandChroma(palette.chroma, direction.color.maxChroma),
+      },
+      sections: pickArchetypes(direction, sections, ctx.domain),
+      // §9 (the signature section) and §6.4 (compose) are D-phase work. Until
+      // they land, the bold element is the hero and the concept names the
+      // direction's own argument, so the plan stage has something true to
+      // read rather than a placeholder that reads as a decision.
+      signature: { sectionIndex: 0, concept: `${winner.id} hero` },
+      rejected: ranked.slice(1).map((r) => ({
+        direction: r.id,
+        reason: r.reason,
+        // No visual-distance metric exists yet (C4); this is the score gap,
+        // which is a distance in the only space currently measured.
+        distance: Number((winner.score - r.score).toFixed(3)),
+      })),
+    });
+
+    recordDesign(ctx.store, {
+      domain: ctx.domain,
+      sector,
+      dna,
+      direction: spec.direction,
+    });
+
+    // 6. Generate the stylesheet and the font module. Both derived — the
+    //    model never writes a token value (§5).
+    const fonts = planLocalFonts(spec);
+    assertVendored(fonts, ctx.repoRoot);
+    const tokens = renderSpecTokens(spec);
 
     const outDir = join(ctx.runDir, "design");
     mkdirSync(outDir, { recursive: true });
+    writeFileSync(join(outDir, "tokens.css"), tokens);
+    writeFileSync(join(outDir, "fonts.ts"), fonts.module);
     writeFileSync(
-      join(outDir, "design.json"),
+      join(outDir, "dna.json"),
       JSON.stringify({ sector, sections, ...dna }, null, 2) + "\n",
     );
-    writeFileSync(join(outDir, "tokens.css"), renderTokens(dna));
-    writeFileSync(join(outDir, "fonts.ts"), renderFonts(dna));
+    // design.json last: it is this stage's idempotency artifact, so it must
+    // not exist until everything beside it does.
+    writeFileSync(join(outDir, "design.json"), JSON.stringify(spec, null, 2) + "\n");
+
+    ctx.log(
+      `spec: ${spec.type.display}/${spec.type.body} at ${spec.type.displayWeight}, ` +
+        `${spec.color.mode}/${spec.color.strategy}, ${spec.motion.profile}`,
+      { seed: spec.seed, faces: fonts.faces.map((f) => f.family) },
+    );
 
     return {
       ok: true,
       data: {
+        direction: spec.direction,
+        seed: spec.seed,
         paletteName: palette.name,
-        typePair: dna.typePair.id,
-        density: dna.density,
+        typePair: `${spec.type.display}/${spec.type.body}`,
+        density: spec.grid.density,
         fingerprint: dna.fingerprint,
         sections: sections.length,
       },
     };
   },
 };
+
+/** A brief enum, or the least opinionated value if the brief predates D10. */
+function asEnum(value: unknown, fallback: string): string {
+  return typeof value === "string" && value.length > 0 ? value : fallback;
+}
+
+/** Images large enough to have come from a camera rather than a theme. */
+function largePhotoCount(manifest: { width?: number; height?: number }[]): number {
+  return manifest.filter((m) => (m.width ?? 0) * (m.height ?? 0) > 1_000_000).length;
+}
+
+/**
+ * The client's photographs decide how colourful the accent is; the direction
+ * decides how colourful it is *allowed* to be.
+ *
+ * These are two different units and conflating them is how a site comes out
+ * grey: `palette.chroma` is HSL-ish saturation on 0–1, `brandC` is OKLCH
+ * chroma on 0–0.4, where 0.14 is already vivid. So the saturation is used as
+ * a FRACTION of the direction's ceiling, never as a chroma value.
+ *
+ * The 0.4 floor is deliberate. A client whose photographs are all grey
+ * interiors would otherwise get a colourless accent, and the accent is what
+ * marks the one call to action on the page — the direction's ceiling is
+ * already the cap on loudness, so there is nothing to protect by going
+ * quieter than this.
+ */
+export function brandChroma(saturation: number, maxChroma: number): number {
+  const fraction = Math.min(1, Math.max(0.4, saturation / 0.5));
+  return Number((maxChroma * fraction).toFixed(3));
+}
 
 /**
  * Reorder the fact-derived sections by the brief's emphasis.
