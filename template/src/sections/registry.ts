@@ -22,6 +22,7 @@ import { Visit } from "@/sections/visit";
 import { ServicesAccordion } from "@/sections/services/accordion";
 import { ServicesAlternating } from "@/sections/services/alternating";
 import { ServicesImageGrid } from "@/sections/services/image-grid";
+import { ServicesIndex } from "@/sections/services/index-columns";
 import { ServicesRailPinned } from "@/sections/services/rail-pinned";
 import { TeamStickySwap } from "@/sections/team/sticky-swap";
 import { Testimonials } from "@/sections/testimonials";
@@ -87,6 +88,7 @@ const archetypeRegistry: {
     "alternating": ServicesAlternating,
     "accordion": ServicesAccordion,
     "image-grid": ServicesImageGrid,
+    "index": ServicesIndex,
   },
   team: { "sticky-swap": TeamStickySwap },
 };
