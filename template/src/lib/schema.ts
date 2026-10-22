@@ -141,7 +141,9 @@ export const testimonialsSectionSchema = z
   .object({
     ...sectionBase,
     type: z.literal("testimonials"),
-    variant: z.enum(["default", "compact"]).optional(),
+    variant: z
+      .enum(["default", "compact", "single-large", "ruled-list"])
+      .optional(),
     title: z.string().min(1).optional(),
     items: z
       .array(
@@ -160,7 +162,9 @@ export const faqSectionSchema = z
   .object({
     ...sectionBase,
     type: z.literal("faq"),
-    variant: z.enum(["default", "compact"]).optional(),
+    variant: z
+      .enum(["default", "compact", "two-column", "rows"])
+      .optional(),
     title: z.string().min(1).optional(),
     items: z
       .array(
@@ -217,7 +221,7 @@ export const statementSectionSchema = z
   .object({
     ...sectionBase,
     type: z.literal("statement"),
-    variant: z.enum(["word-reveal"]).optional(),
+    variant: z.enum(["word-reveal", "static", "quote-split"]).optional(),
     text: z.string().min(40),
   })
   .strict();
@@ -232,7 +236,7 @@ export const visitSectionSchema = z
   .object({
     ...sectionBase,
     type: z.literal("visit"),
-    variant: z.enum(["rows"]).optional(),
+    variant: z.enum(["rows", "map-split", "stacked", "card"]).optional(),
     title: z.string().min(1).optional(),
   })
   .strict();
@@ -250,7 +254,7 @@ export const closingSectionSchema = z
   .object({
     ...sectionBase,
     type: z.literal("closing"),
-    variant: z.enum(["statement-cta"]).optional(),
+    variant: z.enum(["statement-cta", "split-panel", "banner"]).optional(),
     headline: z.string().min(1),
     body: z.string().min(1).optional(),
     ctaPrimary: ctaSchema,
@@ -270,7 +274,7 @@ export const marqueeSectionSchema = z
   .object({
     ...sectionBase,
     type: z.literal("marquee"),
-    variant: z.enum(["ticker"]).optional(),
+    variant: z.enum(["ticker", "static-band"]).optional(),
     /** Three is the minimum that reads as a list rather than a slogan. */
     items: z.array(z.string().min(1)).min(3),
   })

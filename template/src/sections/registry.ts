@@ -2,6 +2,18 @@ import type { ComponentType } from "react";
 
 import type { SectionConfig, SectionType, SiteConfig } from "@/lib/schema";
 import { Closing } from "@/sections/closing";
+import { ClosingBanner } from "@/sections/closing/banner";
+import { ClosingSplitPanel } from "@/sections/closing/split-panel";
+import { FaqRows } from "@/sections/faq/rows";
+import { FaqTwoColumn } from "@/sections/faq/two-column";
+import { MarqueeStaticBand } from "@/sections/marquee/static-band";
+import { StatementQuoteSplit } from "@/sections/statement/quote-split";
+import { StatementStatic } from "@/sections/statement/static-display";
+import { TestimonialsRuledList } from "@/sections/testimonials/ruled-list";
+import { TestimonialsSingleLarge } from "@/sections/testimonials/single-large";
+import { VisitCard } from "@/sections/visit/card";
+import { VisitMapSplit } from "@/sections/visit/map-split";
+import { VisitStacked } from "@/sections/visit/stacked";
 import { Contact } from "@/sections/contact";
 import { Faq } from "@/sections/faq";
 import { Gallery } from "@/sections/gallery";
@@ -85,16 +97,32 @@ const archetypeRegistry: {
     "offset-grid": HeroOffsetGrid,
     "marquee": HeroMarquee,
   },
-  statement: { "word-reveal": Statement },
-  visit: { "rows": Visit },
+  statement: {
+    "word-reveal": Statement,
+    "static": StatementStatic,
+    "quote-split": StatementQuoteSplit,
+  },
+  visit: {
+    "rows": Visit,
+    "map-split": VisitMapSplit,
+    "stacked": VisitStacked,
+    "card": VisitCard,
+  },
   gallery: {
     "mosaic": GalleryMosaic,
     "full-bleed": GalleryFullBleed,
     "pairs": GalleryPairs,
     "contact-sheet": GalleryContactSheet,
   },
-  closing: { "statement-cta": Closing },
-  marquee: { "ticker": Marquee },
+  closing: {
+    "statement-cta": Closing,
+    "split-panel": ClosingSplitPanel,
+    "banner": ClosingBanner,
+  },
+  marquee: {
+    "ticker": Marquee,
+    "static-band": MarqueeStaticBand,
+  },
   services: {
     "rail-pinned": ServicesRailPinned,
     "alternating": ServicesAlternating,
@@ -108,6 +136,14 @@ const archetypeRegistry: {
     "roster": TeamRoster,
     "lead": TeamLead,
     "portrait-rows": TeamPortraitRows,
+  },
+  faq: {
+    "two-column": FaqTwoColumn,
+    "rows": FaqRows,
+  },
+  testimonials: {
+    "single-large": TestimonialsSingleLarge,
+    "ruled-list": TestimonialsRuledList,
   },
 };
 
