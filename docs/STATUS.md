@@ -914,11 +914,41 @@ choice.
 
 `verify` exits 0 on both fixtures. 326 tests.
 
+## B4 · `hero/offset-grid`
+
+Fifth B4 archetype. Merged without a prior review, per the operator's
+instruction of 2026-10-22 ("dont ask me to merge, merge it") — the workflow
+rule in `CLAUDE.md` and the runbook now say the same, so a future session
+does not re-introduce the stop.
+
+A regular twelve-column grid whose cells are nudged off the baseline.
+Composition from `aspensearch`. **Not `collage`**: that one is irregular by
+design, a different aspect per cell and no shared row; this is regular, every
+cell on the same grid, with a single vertical offset as the only
+irregularity. Two archetypes differing only in cell count would be one
+archetype with a prop (§7.2) — these differ in whether a grid exists at all.
+
+`--offset-y` is the direction's own asymmetry: `4rem` under `kinetic-bold`
+and `swiss-grid`, `0` under the two that are centred or left-flush. Same
+markup, a stepped grid under one direction and a square one under another.
+
+**A defect the screenshots caught.** The first version defined cells with
+borders alone, so under `editorial-serif` and `quiet-luxury` — whose `rules`
+are `none`, setting `--rule-width` to 0 — there was no visible grid at all,
+the one thing the archetype is named for. It read as loose blocks. Cells now
+carry a `--paper-200` surface as well, which is what makes a cell a cell
+when a direction uses no rules; the border still adds definition where one
+does. This is the third time a measurement passed something only a
+screenshot caught, after `hero/type-only`'s invisible CTA and the library's
+404'd images.
+
+Measured across four directions × two widths: five cells, no overflow, zero
+tap targets under 44px. `verify` exits 0 on both fixtures.
+
 ## Next
 
-B4 continues — §7.1 wants 7 heroes and the template has 6 selectable
-(`photo-full`, `type-only`, `split`, `index`, `collage`, plus the legacy
-`default` the design stage will not pick). Remaining: offset grid, marquee
-hero. Then services, which has 2 of 6. Both blocking decisions are settled: `verify` is green on both fixtures and
+Heroes are 6 of 7 (`photo-full`, `type-only`, `split`, `index`, `collage`,
+`offset-grid`, plus the legacy `default` the design stage will not pick).
+Only `marquee hero` remains, then services, which has 2 of 6. Both blocking decisions are settled: `verify` is green on both fixtures and
 `/library` renders each direction's own faces, so an archetype review can
 now judge type as well as composition.
