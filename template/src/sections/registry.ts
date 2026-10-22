@@ -7,6 +7,7 @@ import { Faq } from "@/sections/faq";
 import { Gallery } from "@/sections/gallery";
 import { Hero } from "@/sections/hero";
 import { HeroPhotoFull } from "@/sections/hero/photo-full";
+import { HeroTypeOnly } from "@/sections/hero/type-only";
 import { Hours } from "@/sections/hours";
 import { Marquee } from "@/sections/marquee";
 import { MapEmbed } from "@/sections/map";
@@ -60,9 +61,11 @@ export const sectionRegistry: { [T in SectionType]: SectionComponent<T> } = {
 const archetypeRegistry: {
   [T in SectionType]?: Record<string, SectionComponent<T>>;
 } = {
-  hero: { "photo-full": HeroPhotoFull },
+  hero: { "photo-full": HeroPhotoFull, "type-only": HeroTypeOnly },
   statement: { "word-reveal": Statement },
   visit: { "rows": Visit },
+  closing: { "statement-cta": Closing },
+  marquee: { "ticker": Marquee },
   services: { "rail-pinned": ServicesRailPinned },
   team: { "sticky-swap": TeamStickySwap },
 };

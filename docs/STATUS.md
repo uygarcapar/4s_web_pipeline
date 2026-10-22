@@ -657,8 +657,71 @@ and a real regression would fail consistently rather than once.
 
 `/library` now lists 13 archetypes against §7.1's target of 45.
 
+## B4 · `hero/type-only` — **awaiting operator review**
+
+First B4 archetype. PR open, **not merged**: every B4 session ends in a
+review in `/library`.
+
+Chosen first because `photo-full` needs a photograph good enough to fill a
+screen and most crawled SMB sites do not have one — `quiet-luxury` already
+scores thin-imagery clients away from itself for that reason. Without a
+type-only hero those clients get a full-bleed hero built on a weak
+photograph, which is the most visible way a generated site looks cheap.
+
+Composition from `aspensearch` (headline owning a cell, facts ruled off
+beneath) and `leoparpeix` (headline given most of a screen). Composition
+only.
+
+Measured across all four directions at both widths: no horizontal overflow,
+three facts present, zero tap targets under 44px, headline above the fold
+everywhere. Display renders 112 / 68 / 90 / 90 px at weight 700 / 300 / 400 /
+300, left-anchored except `quiet-luxury` which centres, on a dark page for
+that one alone.
+
+**Two defects the screenshots caught that the measurements did not:**
+
+1. Under a direction whose `rules` are `none`, `--rule-width` is `0`, so the
+   secondary CTA had no border *and* no background — indistinguishable from
+   body text. It now carries a tinted surface, with the border still adding
+   definition where a direction uses rules. A measurement of "is the button
+   present" passes either way; only looking catches it.
+2. The facts row forced `text-align: left` while `quiet-luxury` centres
+   everything else, which reads as a mistake rather than a choice. It
+   follows the direction's anchor now.
+
+Both are the argument for B4's shape — a rejection points at a composition,
+not a diff.
+
+Two gaps this surfaced, neither fixed here:
+
+- **A pinned font weight silently defeats the direction's weight range.**
+  `fonts.ts` loads Archivo at `weight: ["800"]`, so a direction asking for
+  300 gets 800 glyphs while `getComputedStyle` reports 300 — **DJ16 passes a
+  page that visibly contradicts its direction.** A5's `local-fonts.ts`
+  generator already fixes this and is unwired until C3; until then the
+  library's weight column is describing CSS, not pixels.
+- `closing/statement-cta` and `marquee/ticker` were registered only as type
+  defaults, so the named variants would have fallen back silently.
+  `archetypes.test.ts` caught it — the test added in an earlier session for
+  exactly this. Both are explicit archetype entries now, in both tables.
+
+## Open: LCP is over budget on the reference fixture
+
+`verify` exits 1 on the reference config, on LHCI
+`largest-contentful-paint`: **3576 / 3581 / 3589 ms against a 3500 budget**
+across three of the last five runs. The calm fixture passes.
+
+I previously recorded this as noise after two passing runs. That was wrong —
+it is bimodal and consistently just over. The cause is mine: **B2 changed the
+reference hero from `default` to `photo-full`** so the motion flags would be
+exercised, and that moved LCP from comfortably under to borderline.
+
+Not fixed here, because the fix is its own task (font preload, hero image
+sizing) and not part of an archetype review. Flagged rather than re-rolled
+until green: a gate that is re-run until it passes is a gate that has stopped
+meaning anything.
+
 ## Next
 
-**B4** — archetypes one at a time, each ending in an operator review in
-`/library`. That is the bulk of the remaining work (~39–45 sessions) and
-every one of those sessions stops before merge.
+The rest of B4, one archetype at a time — §7.1 wants 8 heroes and the
+template now has 3.

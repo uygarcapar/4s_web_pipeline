@@ -41,6 +41,15 @@ exports[`editorial-serif > matches its snapshot 1`] = `
   --rule-width: 0px;
   --rule-color: transparent;
 
+  /* grid (§4.2), as tokens so an archetype never branches on the direction
+     name. left-flush: a centred language and a left-flush one are the
+     same markup with a different anchor. */
+  --text-align: left;
+  --align-items: flex-start;
+  /* How far a secondary column is pushed off the baseline grid. Zero unless
+     the direction is asymmetric, which is the only one that offsets. */
+  --offset-y: 0rem;
+
   /* rhythm, from grid.density (editorial) */
   --section-y: 4.5rem;
   --section-y-lg: 6.5rem;
@@ -225,6 +234,15 @@ exports[`kinetic-bold > matches its snapshot 1`] = `
   --rule-width: 1px;
   --rule-color: var(--ink-400);
 
+  /* grid (§4.2), as tokens so an archetype never branches on the direction
+     name. left-flush: a centred language and a left-flush one are the
+     same markup with a different anchor. */
+  --text-align: left;
+  --align-items: flex-start;
+  /* How far a secondary column is pushed off the baseline grid. Zero unless
+     the direction is asymmetric, which is the only one that offsets. */
+  --offset-y: 0rem;
+
   /* rhythm, from grid.density (standard) */
   --section-y: 5.5rem;
   --section-y-lg: 8rem;
@@ -407,6 +425,15 @@ exports[`quiet-luxury > matches its snapshot 1`] = `
   --radius: 0rem;
   --rule-width: 0px;
   --rule-color: transparent;
+
+  /* grid (§4.2), as tokens so an archetype never branches on the direction
+     name. centered: a centred language and a left-flush one are the
+     same markup with a different anchor. */
+  --text-align: center;
+  --align-items: center;
+  /* How far a secondary column is pushed off the baseline grid. Zero unless
+     the direction is asymmetric, which is the only one that offsets. */
+  --offset-y: 0rem;
 
   /* rhythm, from grid.density (poster) */
   --section-y: 7rem;
@@ -594,6 +621,15 @@ exports[`swiss-grid > matches its snapshot 1`] = `
   --radius: 0rem;
   --rule-width: 2px;
   --rule-color: var(--ink-400);
+
+  /* grid (§4.2), as tokens so an archetype never branches on the direction
+     name. asymmetric: a centred language and a left-flush one are the
+     same markup with a different anchor. */
+  --text-align: left;
+  --align-items: flex-start;
+  /* How far a secondary column is pushed off the baseline grid. Zero unless
+     the direction is asymmetric, which is the only one that offsets. */
+  --offset-y: 4rem;
 
   /* rhythm, from grid.density (standard) */
   --section-y: 5.5rem;
