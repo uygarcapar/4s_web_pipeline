@@ -97,6 +97,7 @@ export const ARCHETYPES = {
   // B3: the last screen, and the band of the client's own phrases.
   closing: ["statement-cta", "split-panel", "banner"],
   marquee: ["ticker", "static-band"],
+  process: ["numbered", "timeline", "rail"],
   services: [
     "rail-pinned",
     "alternating",

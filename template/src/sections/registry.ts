@@ -14,6 +14,9 @@ import { TestimonialsSingleLarge } from "@/sections/testimonials/single-large";
 import { VisitCard } from "@/sections/visit/card";
 import { VisitMapSplit } from "@/sections/visit/map-split";
 import { VisitStacked } from "@/sections/visit/stacked";
+import { ProcessNumbered } from "@/sections/process/numbered";
+import { ProcessRail } from "@/sections/process/rail";
+import { ProcessTimeline } from "@/sections/process/timeline";
 import { Contact } from "@/sections/contact";
 import { Faq } from "@/sections/faq";
 import { Gallery } from "@/sections/gallery";
@@ -64,6 +67,7 @@ export const sectionRegistry: { [T in SectionType]: SectionComponent<T> } = {
   visit: Visit,
   closing: Closing,
   marquee: Marquee,
+  process: ProcessNumbered,
   services: ServicesIndex,
   team: TeamStickySwap,
   gallery: Gallery,
@@ -122,6 +126,11 @@ const archetypeRegistry: {
   marquee: {
     "ticker": Marquee,
     "static-band": MarqueeStaticBand,
+  },
+  process: {
+    "numbered": ProcessNumbered,
+    "timeline": ProcessTimeline,
+    "rail": ProcessRail,
   },
   services: {
     "rail-pinned": ServicesRailPinned,
