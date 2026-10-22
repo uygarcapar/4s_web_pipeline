@@ -1317,12 +1317,63 @@ drops the invalid declaration and the element inherits, which on this
 template meant near-black text on white: exactly what was wanted, for none
 of the right reasons, until something finally defined the token.
 
+## C3 `compose` — the archetype rotates, and the DNA is gone
+
+§6.4's other half: "archetype per section from `direction.archetypes[type]`,
+preferring archetypes not used by the last N runs". Which sections exist is
+unchanged — still a function of which facts exist (D6).
+
+`composeArchetypes` draws a seeded index and then scans **from that index**
+for an option the last 12 runs did not use. Scanning from 0 would have been
+the obvious implementation and the wrong one: it hands every client with a
+fresh catalog the same first option, so "prefer unused" degrades into
+"always option [0]" — less variety than no rule at all. When every option is
+in play the seeded draw stands and the choice is logged as `recycled`, which
+is what distinguishes "this direction's shortlist is smaller than the
+window" from "this client happened to match".
+
+### The DNA had become a fingerprint over things nobody sees
+
+C2/C3 moved every decision the `DesignDna` made — type pairing, density,
+motion, archetypes — into the spec. What was left was a parallel object
+composed on every run purely to produce a fingerprint, and that fingerprint
+was over values that no longer reached the page: two sites could collide on
+it while looking entirely different, or differ on it while looking
+identical. The ledger's guarantee only means something if it fingerprints
+what ships.
+
+So `dna.ts` is deleted — `composeDna`, `TYPE_PAIRS`, `chooseTypePair`,
+`chooseDensity`, `chooseArchetypes`, `chooseMotion`, `HEADLINE_GRAMMARS`,
+`fingerprintOf` — along with `dna.json`. `fingerprintSpec` hashes the spec:
+direction, type pairing, colour mode and bucketed hue, alignment and
+density, motion profile, archetypes. The ledger row is the spec, and
+`recentArchetypes` reads it back.
+
+The `ARCHETYPES` table went with it. It was a second list of layouts beside
+the direction catalog's, and once the directions decided what ships it was
+describing choices nothing could make — the same two-sources-of-truth trap
+that produced the fictional archetype names. What survives is
+`sections.ts`, the vocabulary alone. The guarantee the table's test
+carried is kept and repointed: every archetype the template implements must
+be reachable from at least one direction, or it is a component that was
+built, reviewed, and can never appear on a client's site.
+
+### One smaller fix
+
+`recentArchetypes` orders by `createdAt DESC, id DESC`. `createdAt` alone is
+not a sort key — two runs in the same millisecond order arbitrarily, and
+with a `LIMIT` that means the window silently contains the wrong rows. A
+batch of sites queued together is exactly when this ledger matters most.
+Found because a test recording two rows in a loop could not reproduce its
+own ordering.
+
 ## Next
 
-Phase C's remaining halves: §6.4 `compose` (which sections, in what order,
-from the brief rather than carried over from the DNA), §8 structural and
-visual distance, and calibration. Then Phase D's signature section and the
-judge work.
+Phase C's remaining halves: §6.3's multi-candidate draw (two specs from each
+of the top three directions, the judge picking among survivors), §8
+structural and visual distance, and calibration. Both of the first two
+depend on §8, so §8 is the next one. Then Phase D's signature section and
+the judge work.
 
 Smaller things this turn left open, none blocking:
 

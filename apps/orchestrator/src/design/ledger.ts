@@ -1,33 +1,18 @@
 import { desc, eq, gte, isNotNull, and } from "drizzle-orm";
-import { designs, type Store } from "@pipeline/core";
-import type { DesignDna, SectionType } from "./dna.js";
+import { designs, type DesignSpec, type Store } from "@pipeline/core";
+
+import { ARCHETYPE_WINDOW, fingerprintSpec } from "./compose.js";
+import type { SectionType } from "./sections.js";
 
 /**
- * The fingerprint ledger. Reading it is what lets a new run know which
- * designs its neighbours already got; writing to it is what makes the next
- * run's check meaningful (template/design-rules.md §10.4).
+ * The design ledger. Reading it is what lets a new run know what its
+ * neighbours already got; writing to it is what makes the next run's check
+ * meaningful (template/design-rules.md §10.4).
+ *
+ * Every row is now a `DesignSpec`, not a `DesignDna`. The DNA's palette,
+ * type pairing, density and motion stopped reaching the page at C3, so a
+ * ledger over them was recording decisions no visitor could see.
  */
-
-/** How far back a sector's history counts as "recent". */
-export const RECENT_WINDOW = 25;
-
-export function recentDesigns(
-  store: Store,
-  sector: string,
-  limit = RECENT_WINDOW,
-): { fingerprint: string; typePairId: string; domain: string }[] {
-  return store
-    .select({
-      fingerprint: designs.fingerprint,
-      typePairId: designs.typePairId,
-      domain: designs.domain,
-    })
-    .from(designs)
-    .where(eq(designs.sector, sector))
-    .orderBy(desc(designs.createdAt))
-    .limit(limit)
-    .all();
-}
 
 /** How far back a direction counts as "recently used" (D10 §6.2). */
 export const DIRECTION_WINDOW_DAYS = 30;
@@ -66,21 +51,83 @@ export function recentDirectionUsage(
   return out;
 }
 
-export function recordDesign(
+/**
+ * How many of the last `limit` runs used each `type/archetype`.
+ *
+ * Keyed `services/accordion` rather than nested, because that is the shape
+ * `composeArchetypes` asks about and flattening at the call site would put
+ * the same `${type}/${archetype}` template in two files.
+ *
+ * Counted across all sectors for the same reason the direction penalty is
+ * (§6.2): the operator reviews every run, so a repeated layout is noticed
+ * whether or not the two businesses are in the same trade.
+ */
+export function recentArchetypes(
+  store: Store,
+  limit = ARCHETYPE_WINDOW,
+): Record<string, number> {
+  const rows = store
+    .select({ archetypes: designs.archetypes })
+    .from(designs)
+    // `id` breaks the tie, because `createdAt` does not: two runs in the
+    // same millisecond sort arbitrarily, and with a LIMIT that means the
+    // window silently contains the wrong rows. A batch of sites queued
+    // together is exactly when this ledger is most load-bearing.
+    .orderBy(desc(designs.createdAt), desc(designs.id))
+    .limit(limit)
+    .all();
+
+  const out: Record<string, number> = {};
+  for (const row of rows) {
+    let parsed: unknown;
+    try {
+      parsed = JSON.parse(row.archetypes);
+    } catch {
+      // A row written before C3 holds the DNA's own shape, or nothing
+      // parseable. Skipping it costs one run's worth of rotation; guessing
+      // at it would mean avoiding layouts nobody was served.
+      continue;
+    }
+    if (!Array.isArray(parsed)) continue;
+    for (const entry of parsed) {
+      if (
+        typeof entry !== "object" ||
+        entry === null ||
+        typeof (entry as { type?: unknown }).type !== "string" ||
+        typeof (entry as { archetype?: unknown }).archetype !== "string"
+      ) {
+        continue;
+      }
+      const { type, archetype } = entry as { type: string; archetype: string };
+      const key = `${type}/${archetype}`;
+      out[key] = (out[key] ?? 0) + 1;
+    }
+  }
+  return out;
+}
+
+/**
+ * Record what this client was actually built as.
+ *
+ * `paletteName` and `paletteHue` are passed separately because they are the
+ * one thing the spec does not own: the hue comes from the client's own
+ * photographs (§13 Q3) and the name is the Turkish colour family used in
+ * logs and the admin panel.
+ */
+export function recordSpec(
   store: Store,
   input: {
     domain: string;
     sector: string;
-    dna: DesignDna;
-    /** The D10 direction, once the spec path has chosen one. */
-    direction?: string;
+    spec: DesignSpec;
+    palette: { name: string; hue: number };
   },
 ): void {
-  const { domain, sector, dna } = input;
+  const { domain, sector, spec, palette } = input;
 
   // A re-run of the same client replaces its own row rather than piling up —
-  // otherwise a client that is rebuilt three times crowds its own sector's
-  // window and starts pushing other businesses' designs out of view.
+  // otherwise a client rebuilt three times crowds the window and starts
+  // pushing other businesses' designs out of view.
   store.delete(designs).where(eq(designs.domain, domain)).run();
 
   store
@@ -88,21 +135,21 @@ export function recordDesign(
     .values({
       domain,
       sector,
-      fingerprint: dna.fingerprint,
-      paletteName: dna.palette.name,
-      paletteHue: dna.palette.hue,
-      typePairId: dna.typePair.id,
-      density: dna.density,
-      headlineGrammar: dna.headlineGrammar,
-      archetypes: JSON.stringify(dna.archetypes),
-      motion: JSON.stringify(dna.motion),
-      direction: input.direction ?? null,
+      fingerprint: fingerprintSpec(spec),
+      paletteName: palette.name,
+      paletteHue: palette.hue,
+      typePairId: `${spec.type.display}/${spec.type.body}`,
+      density: spec.grid.density,
+      headlineGrammar: spec.type.displayCase,
+      archetypes: JSON.stringify(spec.sections),
+      motion: JSON.stringify(spec.motion),
+      direction: spec.direction,
       createdAt: new Date().toISOString(),
     })
     .run();
 }
 
-/** Sections the DNA should choose archetypes for, given what the crawl found. */
+/** Sections the site should have, given what the crawl found. */
 export function sectionsFromFacts(input: {
   hasServices: boolean;
   hasTeam: boolean;

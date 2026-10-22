@@ -1,8 +1,8 @@
 import { readFileSync } from "node:fs";
 import { join } from "node:path";
 import { describe, expect, it } from "vitest";
-import { ARCHETYPES } from "./dna.js";
 import { DIRECTIONS, DIRECTION_IDS } from "./directions/index.js";
+import { SECTION_TYPES } from "./sections.js";
 
 /**
  * The design stage and the template keep two separate lists of layout
@@ -52,44 +52,50 @@ function archetypesInTemplate(): Record<string, string[]> {
   return out;
 }
 
-describe("archetype tables stay in step", () => {
+/**
+ * Every archetype the template implements must be reachable from at least
+ * one direction.
+ *
+ * This used to check the D6 `ARCHETYPES` table, which C3 deleted: it was a
+ * second list of layouts beside the direction catalog's, and once the
+ * directions decided what ships, the table was describing choices nothing
+ * could make. The guarantee it carried is worth keeping, though — an
+ * archetype that no direction lists is a component that was built,
+ * reviewed, and can never appear on a client's site.
+ */
+describe("every built archetype is reachable", () => {
   const template = archetypesInTemplate();
 
-  it("the template actually implements every archetype the design stage can pick", () => {
-    const missing: string[] = [];
-    for (const [type, options] of Object.entries(ARCHETYPES)) {
-      for (const archetype of options) {
-        // "default" is the registry's own fallback, not an archetype file
-        if (archetype === "default") continue;
-        if (!template[type]?.includes(archetype)) {
-          missing.push(`${type}/${archetype}`);
-        }
+  it("no archetype is built but unreachable", () => {
+    const reachable = new Set<string>();
+    for (const id of DIRECTION_IDS) {
+      for (const [type, options] of Object.entries(DIRECTIONS[id]!.archetypes)) {
+        for (const archetype of options) reachable.add(`${type}/${archetype}`);
       }
     }
-    expect(
-      missing,
-      `the design stage can choose these, but the template cannot render them: ${missing.join(", ")}`,
-    ).toEqual([]);
-  });
 
-  it("every archetype the template implements is reachable from the design stage", () => {
     const unreachable: string[] = [];
     for (const [type, keys] of Object.entries(template)) {
       for (const key of keys) {
-        const options: readonly string[] = ARCHETYPES[type as keyof typeof ARCHETYPES] ?? [];
-        if (!options.includes(key)) unreachable.push(`${type}/${key}`);
+        if (!reachable.has(`${type}/${key}`)) unreachable.push(`${type}/${key}`);
       }
     }
     expect(
       unreachable,
-      `built but never chosen: ${unreachable.join(", ")}`,
+      `built but no direction can choose them: ${unreachable.join(", ")}`,
     ).toEqual([]);
   });
 
-  it("every section type offers at least one archetype", () => {
-    for (const [type, options] of Object.entries(ARCHETYPES)) {
-      expect(options.length, `${type} has no archetype`).toBeGreaterThan(0);
-    }
+  /**
+   * The vocabulary and the registry are still two lists, and this is the
+   * one assertion keeping them in step: a section type the template can
+   * render but `sectionsFromFacts` can never emit is dead code, and one it
+   * emits but cannot render is a crash.
+   */
+  it("the section vocabulary matches the template's", () => {
+    const rendered = Object.keys(template).sort();
+    const known = SECTION_TYPES.filter((t) => t !== "contact").sort();
+    expect(rendered).toEqual(known);
   });
 });
 

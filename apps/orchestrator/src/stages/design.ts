@@ -3,23 +3,27 @@ import { join } from "node:path";
 import type { StageModule } from "./types.js";
 import { derivePalette } from "../design/palette.js";
 import { readManifest, samplePhotographs } from "../design/sample.js";
-import { composeDna } from "../design/dna.js";
-import { recentDesigns, recordDesign, sectionsFromFacts } from "../design/ledger.js";
+import {
+  recentArchetypes,
+  recentDirectionUsage,
+  recordSpec,
+  sectionsFromFacts,
+} from "../design/ledger.js";
+import { composeArchetypes, fingerprintSpec } from "../design/compose.js";
 import { takeInventory } from "../design/inventory.js";
 import { foldForMatch } from "../design/fold.js";
 import { designSpecSchema } from "@pipeline/core";
 import { DIRECTIONS, DIRECTION_IDS } from "../design/directions/index.js";
-import { recentDirectionUsage } from "../design/ledger.js";
 import { photoQualityFrom, rankDirections } from "../design/score.js";
-import { pickArchetypes, sampleSpec } from "../design/sample-spec.js";
+import { sampleSpec } from "../design/sample-spec.js";
 import { renderSpecTokens } from "../design/spec-tokens.js";
 import { assertVendored, planLocalFonts } from "../design/local-fonts.js";
 
 /**
  * Choose this site's design before any copy or markup exists.
  *
- * Deterministic and model-free throughout. Two decisions are made here and
- * nothing downstream may revisit either (D10 §5):
+ * Deterministic and model-free throughout. Three decisions are made here and
+ * nothing downstream may revisit any of them (D10 §5):
  *
  *  - **Which direction.** Scored from the brief's four classifications and
  *    the measured photographs, minus a penalty for every recent run that
@@ -28,20 +32,21 @@ import { assertVendored, planLocalFonts } from "../design/local-fonts.js";
  *  - **Which spec.** Sampled from that direction's declared ranges with a
  *    seed derived from the domain (§6.3), so the same client always gets the
  *    same site and two clients on the same direction do not.
+ *  - **Which layout per section.** From the direction's own shortlist,
+ *    preferring archetypes the recent runs did not use (§6.4).
  *
  * The palette's HUE still comes from the client's own photographs (§13 Q3),
  * and which sections exist is still a function of which facts exist (D6) —
  * the direction decides how a page looks, never what is on it.
  *
- * The DNA composed below is now only the fingerprint ledger and the palette;
- * its typography and motion no longer reach the site. It is kept because the
- * ledger is what makes "no two neighbours get the same site" checkable, and
- * is written to `dna.json` for anything still reading it.
+ * The D6 `DesignDna` is gone: every decision it made — type pairing,
+ * density, motion, archetypes — is the spec's now, so composing one in
+ * parallel would have been fingerprinting values no visitor could see.
+ * The ledger it existed for survives, recording what actually ships.
  *
  * Output:
  *   runs/<domain>/design/design.json  — the DesignSpec, read by plan,
  *                                       generate and the design judge
- *   runs/<domain>/design/dna.json     — the fingerprint and palette
  *   runs/<domain>/design/tokens.css   — generated from the spec
  *   runs/<domain>/design/fonts.ts     — generated from the spec
  */
@@ -112,28 +117,7 @@ export const designStage: StageModule = {
       { sections },
     );
 
-    // 3. Typography, motion and layout — re-rolled until the fingerprint is
-    //    unlike every recent run in this sector.
-    const recent = recentDesigns(ctx.store, sector);
-    const dna = composeDna({
-      domain: ctx.domain,
-      sector,
-      palette,
-      contentBlocks: inventory.contentBlocks,
-      sections,
-      recent,
-    });
-
-    for (const r of dna.rejected) {
-      ctx.log(`rejected fingerprint ${r.fingerprint}: ${r.reason}`);
-    }
-    ctx.log(
-      `design fingerprint ${dna.fingerprint} — ${dna.typePair.id}, ${dna.density}, ` +
-        `handoff:${dna.motion.handoff} text:${dna.motion.textTransform}`,
-      { fingerprint: dna.fingerprint, sector, recentInSector: recent.length },
-    );
-
-    // 4. Direction, scored (§6.2).
+    // 3. Direction, scored (§6.2).
     const scoringBrief = {
       tone: asEnum(brief?.tone, "clinical"),
       tier: asEnum(brief?.tier, "mid"),
@@ -162,8 +146,30 @@ export const designStage: StageModule = {
       },
     );
 
+    // 4. Compose (§6.4): one archetype per section, preferring layouts the
+    //    recent runs did not use. Which sections exist is already settled
+    //    above, by which facts exist — the direction decides how a page
+    //    looks, never what is on it.
+    const archetypeUsage = recentArchetypes(ctx.store);
+    const composed = composeArchetypes({
+      direction,
+      sections,
+      seed: ctx.domain,
+      recentUsage: archetypeUsage,
+    });
+    const recycled = composed.filter((c) => c.recycled);
+    if (recycled.length > 0) {
+      // Not a failure: it means this direction's shortlist for those types
+      // is smaller than the rotation window. Worth a line, because the
+      // answer is to build more archetypes, not to widen the window.
+      ctx.log(
+        `every option recently used for: ${recycled.map((c) => c.type).join(", ")}`,
+        { recycled: recycled.map((c) => `${c.type}/${c.archetype}`) },
+      );
+    }
+
     // 5. Spec, sampled from that direction's ranges (§6.3), then overridden
-    //    on the two axes that belong to the client rather than the direction.
+    //    on the axes that belong to the client rather than the direction.
     const sampled = sampleSpec(direction, ctx.domain, 0);
     const spec = designSpecSchema.parse({
       ...sampled,
@@ -172,11 +178,11 @@ export const designStage: StageModule = {
         brandH: palette.hue,
         brandC: brandChroma(palette.chroma, direction.color.maxChroma),
       },
-      sections: pickArchetypes(direction, sections, ctx.domain),
-      // §9 (the signature section) and §6.4 (compose) are D-phase work. Until
-      // they land, the bold element is the hero and the concept names the
-      // direction's own argument, so the plan stage has something true to
-      // read rather than a placeholder that reads as a decision.
+      sections: composed.map(({ type, archetype }) => ({ type, archetype })),
+      // §9 (the signature section) is D-phase work. Until it lands the bold
+      // element is the hero and the concept names the direction's own
+      // argument, so the plan stage reads something true rather than a
+      // placeholder that reads as a decision.
       signature: { sectionIndex: 0, concept: `${winner.id} hero` },
       rejected: ranked.slice(1).map((r) => ({
         direction: r.id,
@@ -187,11 +193,16 @@ export const designStage: StageModule = {
       })),
     });
 
-    recordDesign(ctx.store, {
+    recordSpec(ctx.store, {
       domain: ctx.domain,
       sector,
-      dna,
-      direction: spec.direction,
+      spec,
+      palette,
+    });
+    ctx.log(`design fingerprint ${fingerprintSpec(spec)}`, {
+      fingerprint: fingerprintSpec(spec),
+      sector,
+      archetypes: spec.sections.map((s) => `${s.type}/${s.archetype}`),
     });
 
     // 6. Generate the stylesheet and the font module. Both derived — the
@@ -204,10 +215,6 @@ export const designStage: StageModule = {
     mkdirSync(outDir, { recursive: true });
     writeFileSync(join(outDir, "tokens.css"), tokens);
     writeFileSync(join(outDir, "fonts.ts"), fonts.module);
-    writeFileSync(
-      join(outDir, "dna.json"),
-      JSON.stringify({ sector, sections, ...dna }, null, 2) + "\n",
-    );
     // design.json last: it is this stage's idempotency artifact, so it must
     // not exist until everything beside it does.
     writeFileSync(join(outDir, "design.json"), JSON.stringify(spec, null, 2) + "\n");
@@ -226,7 +233,7 @@ export const designStage: StageModule = {
         paletteName: palette.name,
         typePair: `${spec.type.display}/${spec.type.body}`,
         density: spec.grid.density,
-        fingerprint: dna.fingerprint,
+        fingerprint: fingerprintSpec(spec),
         sections: sections.length,
       },
     };
