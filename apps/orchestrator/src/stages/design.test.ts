@@ -2,7 +2,13 @@ import { mkdtempSync, mkdirSync, readFileSync, rmSync, writeFileSync } from "nod
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
-import { createRunState, designSpecSchema, openStore, type Store } from "@pipeline/core";
+import {
+  createRunState,
+  designSpecSchema,
+  openStore,
+  type DesignSpec,
+  type Store,
+} from "@pipeline/core";
 
 import { brandChroma, designStage } from "./design.js";
 import type { StageContext } from "./types.js";
@@ -91,6 +97,13 @@ function seedRun(
       evidence: { statementCandidate: "Yirmi yıldır Moda'dayız." },
       ...brief,
     }),
+  );
+}
+
+/** The spec the stage actually wrote. */
+function specIn(runDir: string): DesignSpec {
+  return designSpecSchema.parse(
+    JSON.parse(readFileSync(join(runDir, "design", "design.json"), "utf8")),
   );
 }
 
@@ -213,6 +226,44 @@ describe("design stage — the spec path", () => {
     for (const direction of new Set(chosen)) {
       const used = chosen.filter((c) => c === direction).length;
       expect(used, `${direction} took ${used} of 6: ${chosen.join(", ")}`).toBeLessThan(5);
+    }
+  });
+
+  /**
+   * §6.4 through the stage, not the unit: what matters is that the archetype
+   * the ledger records and the archetype the next run avoids are the same
+   * string. A unit test of `composeArchetypes` cannot show that.
+   */
+  it("gives the next client a different hero", async () => {
+    seedRun(dir);
+    const first = await designStage.run(makeCtx(dir, store));
+    expect(first.ok, first.error).toBe(true);
+    const firstHero = specIn(dir).sections.find((s) => s.type === "hero")!.archetype;
+
+    const next = mkdtempSync(join(tmpdir(), "design-"));
+    try {
+      seedRun(next);
+      const second = await designStage.run(makeCtx(next, store, "ikinci-klinik.com"));
+      expect(second.ok, second.error).toBe(true);
+      const secondHero = specIn(next).sections.find((s) => s.type === "hero")!.archetype;
+      expect(secondHero).not.toBe(firstHero);
+    } finally {
+      rmSync(next, { recursive: true, force: true });
+    }
+  });
+
+  /** The fingerprint has to be over what ships, or it guarantees nothing. */
+  it("records a fingerprint that changes with the archetypes", async () => {
+    seedRun(dir);
+    const first = await designStage.run(makeCtx(dir, store));
+
+    const next = mkdtempSync(join(tmpdir(), "design-"));
+    try {
+      seedRun(next);
+      const second = await designStage.run(makeCtx(next, store, "ikinci-klinik.com"));
+      expect(second.data?.fingerprint).not.toBe(first.data?.fingerprint);
+    } finally {
+      rmSync(next, { recursive: true, force: true });
     }
   });
 
