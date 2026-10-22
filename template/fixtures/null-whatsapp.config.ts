@@ -57,7 +57,7 @@ const config: SiteConfigInput = {
     {
       type: "hero",
       id: "hero",
-      variant: "default",
+      variant: "type-only",
       headline: "Küçükçekmece'de cilt ve bakım",
       subheadline:
         "Atakent Güzellik Merkezi'nde cilt bakımı, lazer epilasyon ve bölgesel incelme uygulamaları deneyimli ekibimizle yapılır. Randevu için bizi arayın.",
@@ -73,7 +73,7 @@ const config: SiteConfigInput = {
     {
       type: "services",
       id: "services",
-      variant: "default",
+      variant: "accordion",
       title: "Hizmetlerimiz",
       items: [
         {

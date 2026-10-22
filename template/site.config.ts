@@ -83,7 +83,7 @@ const config: SiteConfigInput = {
     {
       type: "services",
       id: "services",
-      variant: "default",
+      variant: "alternating",
       title: "Hizmetlerimiz",
       items: [
         {
