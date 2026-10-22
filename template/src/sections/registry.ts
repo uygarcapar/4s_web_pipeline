@@ -7,6 +7,7 @@ import { Faq } from "@/sections/faq";
 import { Gallery } from "@/sections/gallery";
 import { Hero } from "@/sections/hero";
 import { HeroPhotoFull } from "@/sections/hero/photo-full";
+import { HeroCollage } from "@/sections/hero/collage";
 import { HeroIndex } from "@/sections/hero/index-list";
 import { HeroSplit } from "@/sections/hero/split";
 import { HeroTypeOnly } from "@/sections/hero/type-only";
@@ -68,6 +69,7 @@ const archetypeRegistry: {
     "type-only": HeroTypeOnly,
     "split": HeroSplit,
     "index": HeroIndex,
+    "collage": HeroCollage,
   },
   statement: { "word-reveal": Statement },
   visit: { "rows": Visit },

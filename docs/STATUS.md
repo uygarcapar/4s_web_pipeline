@@ -881,11 +881,44 @@ face — gave 3.9 / 4.3 / 3.0 s. Two preloaded faces compete for bandwidth
 under throttling. The reverted configuration gives 3.1 / 3.2 / 3.1 / 3.5.
 Recorded so the idea is not retried from scratch.
 
+## B4 · `hero/collage` — **awaiting operator review**
+
+Fourth B4 archetype. PR open, **not merged**.
+
+Several of the business's own photographs at mixed sizes and offsets, rather
+than one picture doing all the work. The case: a business with five usable
+photographs and no single great one — `photo-full` would pick the least bad
+and blow it up, `split` shows one and wastes the rest. Composition from
+`noho-ink` and `belgradearbor`.
+
+Pictures come from the hero's own `image` plus the gallery section's, via
+`config.sections` — the same rule `index` follows for services. One source,
+no duplication, nothing stated that the client did not publish.
+
+Irregular by design: a tall lead cell and two squares, the second nudged by
+`--offset-y`, which is the direction's own asymmetry (`4rem` under
+`kinetic-bold` and `swiss-grid`, `0` under the two that are centred or
+left-flush). **Not `offset grid`** — that one, still unbuilt, is a regular
+grid whose cells are nudged; this is deliberately irregular, with a
+different aspect per cell and no shared row. Two archetypes differing only
+in cell count would be one archetype with a prop (§7.2).
+
+Measured across four directions × two widths: three pictures, all loading,
+no overflow, zero tap targets under 44px.
+
+It degrades rather than inventing — with one picture it renders one, and the
+empty cells do not exist. That is D8 applied to composition. The selector
+should still score it away from a client whose `photoProfile.usableCount` is
+under three (§6.2): degrading gracefully is not the same as being the right
+choice.
+
+`verify` exits 0 on both fixtures. 326 tests.
+
 ## Next
 
-The rest of B4 — §7.1 now wants 7 heroes and the template has 5 selectable
-(`photo-full`, `type-only`, `split`, `index`, plus the legacy `default`
-which the design stage will not pick). Remaining: collage, offset grid,
-marquee hero. Both blocking decisions are settled: `verify` is green on both fixtures and
+B4 continues — §7.1 wants 7 heroes and the template has 6 selectable
+(`photo-full`, `type-only`, `split`, `index`, `collage`, plus the legacy
+`default` the design stage will not pick). Remaining: offset grid, marquee
+hero. Then services, which has 2 of 6. Both blocking decisions are settled: `verify` is green on both fixtures and
 `/library` renders each direction's own faces, so an archetype review can
 now judge type as well as composition.
