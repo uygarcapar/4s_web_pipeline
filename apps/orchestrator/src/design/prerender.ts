@@ -122,9 +122,9 @@ export function prerenderConfig(input: PrerenderInput): Record<string, unknown> 
     /**
      * The direction's motion flags. **Load-bearing for the measurement**,
      * not boilerplate: `motion` defaults to the pre-D10 kinetic language if
-     * absent, so a `quiet-luxury` candidate would render with a hero
-     * entrance and smooth scroll it explicitly disables — and §8.2 would be
-     * comparing screenshots of a page no client will ever get.
+     * absent, so a `calm`-profile candidate would render with the kinetic
+     * entrance and smooth scroll its direction may not want — and §8.2
+     * would be comparing screenshots of a page no client will ever get.
      */
     motion: {
       profile: spec.motion.profile,

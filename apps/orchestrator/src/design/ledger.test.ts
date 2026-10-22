@@ -45,20 +45,20 @@ describe("recentDirectionUsage", () => {
   /** The whole point: D6's ledger was per-sector, §6.2's is not. */
   it("counts across sectors, not within one", () => {
     const store = openStore({ memory: true });
-    record(store, "dentist.com", "dentist", "quiet-luxury");
-    record(store, "barber.com", "barber", "quiet-luxury");
+    record(store, "dentist.com", "dentist", "cinematic-calm");
+    record(store, "barber.com", "barber", "cinematic-calm");
 
-    expect(recentDirectionUsage(store)["quiet-luxury"]).toBe(2);
+    expect(recentDirectionUsage(store)["cinematic-calm"]).toBe(2);
   });
 
   it("forgets a direction once it falls out of the window", () => {
     const store = openStore({ memory: true });
-    record(store, "old.com", "dentist", "editorial-serif");
+    record(store, "old.com", "dentist", "stark-display");
 
     const inside = new Date(Date.now() + 29 * 24 * 60 * 60 * 1000);
     const outside = new Date(Date.now() + 31 * 24 * 60 * 60 * 1000);
-    expect(recentDirectionUsage(store, inside)["editorial-serif"]).toBe(1);
-    expect(recentDirectionUsage(store, outside)["editorial-serif"]).toBeUndefined();
+    expect(recentDirectionUsage(store, inside)["stark-display"]).toBe(1);
+    expect(recentDirectionUsage(store, outside)["stark-display"]).toBeUndefined();
   });
 
   it("does not double-count a client that is rebuilt", () => {

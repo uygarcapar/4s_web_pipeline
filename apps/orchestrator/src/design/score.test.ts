@@ -18,12 +18,12 @@ const brief = (over: Partial<ScoringBrief> = {}): ScoringBrief => ({
 describe("scoreDirection", () => {
   it("rewards a direction whose tone the brief matches", () => {
     const traditional = scoreDirection(
-      DIRECTIONS["editorial-serif"]!,
-      brief({ tone: "traditional", contentVolume: "editorial" }),
+      DIRECTIONS["stark-display"]!,
+      brief({ tone: "technical", contentVolume: "standard" }),
       0,
     );
     const playful = scoreDirection(
-      DIRECTIONS["editorial-serif"]!,
+      DIRECTIONS["stark-display"]!,
       brief({ tone: "playful", contentVolume: "editorial" }),
       0,
     );
@@ -31,18 +31,20 @@ describe("scoreDirection", () => {
   });
 
   /**
-   * The condition recorded against Q1: `quiet-luxury` is carried by
+   * The condition recorded against Q1: `cinematic-calm` is carried by
    * photographs, so a thin-imagery client must score away from it rather
-   * than be built in it and repaired.
+   * than be built in it and repaired. Sharper than its predecessor's was,
+   * because `quiet-luxury` declared `photo-led` and still rendered without
+   * one — the failure the 2026-10-22 review surfaced.
    */
-  it("scores quiet-luxury away from a client with no photographs", () => {
+  it("scores cinematic-calm away from a client with no photographs", () => {
     const withPhotos = scoreDirection(
-      DIRECTIONS["quiet-luxury"]!,
+      DIRECTIONS["cinematic-calm"]!,
       brief({ photoProfile: { usableCount: 14, quality: "pro" } }),
       0,
     );
     const without = scoreDirection(
-      DIRECTIONS["quiet-luxury"]!,
+      DIRECTIONS["cinematic-calm"]!,
       brief({ photoProfile: { usableCount: 0, quality: "stock-heavy" } }),
       0,
     );
@@ -53,7 +55,7 @@ describe("scoreDirection", () => {
       brief({ photoProfile: { usableCount: 0, quality: "stock-heavy" } }),
       {},
     );
-    expect(ranked[0]!.id).not.toBe("quiet-luxury");
+    expect(ranked[0]!.id).not.toBe("cinematic-calm");
   });
 
   it("penalises recent use", () => {
@@ -70,7 +72,7 @@ describe("scoreDirection", () => {
 });
 
 describe("rankDirections", () => {
-  it("puts a technical, text-heavy, photo-poor client on swiss-grid or editorial-serif", () => {
+  it("puts a technical, text-heavy, photo-poor client on swiss-grid or stark-display", () => {
     const ranked = rankDirections(
       ALL,
       brief({
@@ -81,16 +83,16 @@ describe("rankDirections", () => {
       }),
       {},
     );
-    expect(["swiss-grid", "editorial-serif"]).toContain(ranked[0]!.id);
+    expect(["swiss-grid", "stark-display"]).toContain(ranked[0]!.id);
   });
 
-  it("puts a premium client with real photographs on quiet-luxury", () => {
+  it("puts a premium client with real photographs on cinematic-calm", () => {
     const ranked = rankDirections(
       ALL,
       brief({ tone: "premium", tier: "premium", photoProfile: { usableCount: 18, quality: "pro" } }),
       {},
     );
-    expect(ranked[0]!.id).toBe("quiet-luxury");
+    expect(ranked[0]!.id).toBe("cinematic-calm");
   });
 
   /** The point of the penalty: the same brief twice must not give the same site. */

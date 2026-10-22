@@ -210,10 +210,10 @@ describe("design stage — the spec path", () => {
    *     swiss swiss editorial swiss editorial swiss editorial kinetic …
    *
    * — swiss-grid wins its affinity by 3 points, so one use (−2) is not
-   * enough to unseat it and two are; then editorial-serif carries its own
+   * enough to unseat it and two are; then stark-display carries its own
    * penalty and swiss-grid comes back. That is the intended trade: the
    * penalty exists to break sameness, not to hand a photo-less clinical
-   * client `quiet-luxury` for the sake of a clean rotation.
+   * client `cinematic-calm` for the sake of a clean rotation.
    */
   it("does not give six identical briefs the same direction", async () => {
     const chosen: string[] = [];
@@ -304,23 +304,38 @@ describe("design stage — the spec path", () => {
     }
   });
 
-  it("records why each rejected candidate lost", async () => {
-    seedRun(dir);
-    await designStage.run(makeCtx(dir, store));
-
-    const next = mkdtempSync(join(tmpdir(), "design-"));
-    try {
-      seedRun(next);
-      await designStage.run(makeCtx(next, store, "ikinci.com"));
-      const spec = specIn(next);
-      expect(spec.rejected.length).toBeGreaterThan(0);
-      for (const r of spec.rejected) {
-        expect(r.reason).toMatch(/all-sectors|same-sector|recent-runs/);
-        expect(r.distance).toBeGreaterThanOrEqual(0);
+  /**
+   * Asserted over a run of clients rather than against the second one.
+   *
+   * It used to assume the second client always rejects something, which was
+   * true of the old catalog — its top scorer repeated, so the first
+   * candidate always collided. The 2026-10-22 catalog ties `stark-display`
+   * and `swiss-grid` at the top for a clinical photo-poor brief, so they
+   * alternate cleanly and the second client's first candidate is already
+   * far enough away. That is better behaviour, and the test was wrong to
+   * depend on the worse kind.
+   */
+  it("records why every rejected candidate lost", async () => {
+    let seen = 0;
+    for (let i = 0; i < 5; i += 1) {
+      const d = mkdtempSync(join(tmpdir(), "design-"));
+      try {
+        seedRun(d);
+        const result = await designStage.run(makeCtx(d, store, `klinik-${i}.com`));
+        expect(result.ok, result.error).toBe(true);
+        for (const r of specIn(d).rejected) {
+          seen += 1;
+          expect(r.reason).toMatch(/all-sectors|same-sector|recent-runs|visual/);
+          expect(r.distance).toBeGreaterThanOrEqual(0);
+          expect(r.direction.length).toBeGreaterThan(0);
+        }
+      } finally {
+        rmSync(d, { recursive: true, force: true });
       }
-    } finally {
-      rmSync(next, { recursive: true, force: true });
     }
+    // Five identical briefs against a four-direction catalog cannot all
+    // clear on their first draw; if they do, the gate is not gating.
+    expect(seen, "no candidate was rejected in five identical runs").toBeGreaterThan(0);
   });
 
   /** The ledger has to round-trip, or every distance is measured as 1. */

@@ -14,7 +14,7 @@ import { hashSeed, mulberry32 } from "./rng.js";
  * This replaces the D6 DNA's `chooseArchetypes`. The DNA picked from its own
  * table and re-rolled on a fingerprint collision; the spec picks from the
  * direction's shortlist, which is the point of having directions at all —
- * `quiet-luxury` must not be able to draw `services/index`, however novel
+ * `cinematic-calm` must not be able to draw `services/index`, however novel
  * that would be for the ledger.
  */
 

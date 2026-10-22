@@ -34,8 +34,8 @@ function inRange(rng: () => number, [min, max]: [number, number]): number {
  * `split` names a page that is part dark and part light, and the half of
  * that which exists today is the page's own polarity. The token generator
  * only knows `mode`, so a spec left saying `split` was rendered as light —
- * which for `quiet-luxury`, whose `paperLightness` is [0.12, 0.28], meant a
- * near-black direction producing a white page.
+ * which for the old `quiet-luxury`, whose `paperLightness` was
+ * [0.12, 0.28], meant a near-black direction producing a white page.
  *
  * The answer comes from `color.paperLightness`, which the catalog has
  * declared since A3 and nothing read: below 0.5 the page is dark, above it

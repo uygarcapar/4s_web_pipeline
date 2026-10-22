@@ -45,7 +45,7 @@ const LAMBDA = 2;
 /**
  * Affinities are summed, as §6.2 specifies — not vetoed.
  *
- * `quiet-luxury` scores −4 on `stock-heavy`, which is enough to lose to a
+ * `cinematic-calm` scores −6 on `stock-heavy`, which is enough to lose to a
  * direction that does not need photographs but not enough to make its total
  * negative for a client whose tone and tier it otherwise suits. That is
  * deliberate: the ranking only has to put the right direction *first*, and a

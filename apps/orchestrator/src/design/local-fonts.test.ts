@@ -138,9 +138,21 @@ describe("the registry is the gate", () => {
     expect(new Set(slugs).size).toBe(slugs.length);
   });
 
+  /**
+   * Every direction in the catalog currently declares a mono accent, so the
+   * negative case is built rather than borrowed. Pinning it to whichever
+   * direction happened to have `mono: []` is what broke this test when the
+   * 2026-10-22 review replaced two of them — and the next catalog change
+   * would have broken it again.
+   */
   it("includes the mono accent only where the direction has one", () => {
-    expect(planLocalFonts(specFor("swiss-grid")).module).toContain("monoFont");
-    // editorial-serif declares `mono: []`.
-    expect(planLocalFonts(specFor("editorial-serif")).module).not.toContain("monoFont");
+    const withMono = specFor("swiss-grid");
+    expect(planLocalFonts(withMono).module).toContain("monoFont");
+
+    const withoutMono = { ...withMono.type };
+    delete withoutMono.mono;
+    expect(
+      planLocalFonts({ ...withMono, type: withoutMono }).module,
+    ).not.toContain("monoFont");
   });
 });
