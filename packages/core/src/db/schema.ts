@@ -1,4 +1,5 @@
 import {
+  blob,
   integer,
   real,
   sqliteTable,
@@ -160,5 +161,39 @@ export const designs = sqliteTable("designs", {
    * Nullable: rows written before C4 do not have it.
    */
   spec: text("spec"),
+  createdAt: text("created_at").notNull(),
+});
+
+/**
+ * Screenshot embeddings for the visual-distance gate (D10 §8.2).
+ *
+ * Two rows per run — one per fold — because a desktop layout and a phone
+ * layout can diverge sharply and a site that repeats only on mobile is
+ * still a repeat.
+ *
+ * `stage` distinguishes the two vectors §8.2 asks for: `candidate` is the
+ * pre-render measured *before* `generate`, which is what gates this run;
+ * `final` is the shipped site, embedded after verify, which is what later
+ * runs compare against. They are stored in one table because they are the
+ * same measurement of the same page at two points in its life, and keeping
+ * them apart would mean two schemas that must agree on dimensions.
+ */
+export const vectors = sqliteTable("vectors", {
+  id: integer("id").primaryKey({ autoIncrement: true }),
+  domain: text("domain").notNull(),
+  /** "candidate" | "final" */
+  stage: text("stage").notNull(),
+  /** "desktop" | "mobile" */
+  fold: text("fold").notNull(),
+  /** The spec seed this vector was measured from, for provenance. */
+  seed: text("seed").notNull(),
+  /**
+   * The model that produced it. Vectors from different models are not
+   * comparable, and a silent model change would make every similarity
+   * meaningless while still returning a number.
+   */
+  model: text("model").notNull(),
+  /** Float32, little-endian, L2-normalised. */
+  embedding: blob("embedding", { mode: "buffer" }).notNull(),
   createdAt: text("created_at").notNull(),
 });
