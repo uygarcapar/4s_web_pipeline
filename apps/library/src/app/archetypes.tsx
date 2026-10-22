@@ -18,6 +18,7 @@ import { Marquee } from "@/sections/marquee";
 import { Services } from "@/sections/services";
 import { ServicesAccordion } from "@/sections/services/accordion";
 import { ServicesAlternating } from "@/sections/services/alternating";
+import { ServicesImageGrid } from "@/sections/services/image-grid";
 import { ServicesRailPinned } from "@/sections/services/rail-pinned";
 import { Statement } from "@/sections/statement";
 import { Testimonials } from "@/sections/testimonials";
@@ -90,6 +91,7 @@ export const LIBRARY_ARCHETYPES: LibraryArchetype[] = [
   entry("services/rail-pinned", "services", "rail-pinned", ServicesRailPinned, bySectionType("services")),
   entry("services/alternating", "services", "alternating", ServicesAlternating, bySectionType("services")),
   entry("services/accordion", "services", "accordion", ServicesAccordion, bySectionType("services")),
+  entry("services/image-grid", "services", "image-grid", ServicesImageGrid, bySectionType("services")),
   entry("visit/default", "visit", "default", Visit, VISIT),
   entry("marquee/ticker", "marquee", "ticker", Marquee, bySectionType("marquee")),
   entry("closing/statement-cta", "closing", "statement-cta", Closing, bySectionType("closing")),
