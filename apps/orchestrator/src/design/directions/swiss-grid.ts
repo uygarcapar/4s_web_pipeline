@@ -48,15 +48,23 @@ export const swissGrid: Direction = {
     heroEntrance: false,
     smoothScroll: true,
   },
+  // The ruled, columnar half of the library. `marquee/static-band` rather
+  // than `ticker` and `statement/static` rather than `word-reveal` for the
+  // same reason this direction's motion profile is `calm`: nothing here
+  // moves to be noticed.
   archetypes: {
-    hero: ["statement-left", "grid-split"],
-    statement: ["quote-rule"],
-    services: ["grid-bordered", "list-rule", "rail-pinned"],
-    gallery: ["grid-bordered"],
-    testimonials: ["quote-rule"],
-    faq: ["accordion-rule"],
-    visit: ["map-split"],
-    contact: ["split-form"],
+    hero: ["index", "offset-grid", "split"],
+    statement: ["static"],
+    services: ["index", "image-grid", "accordion"],
+    team: ["grid", "roster"],
+    gallery: ["contact-sheet", "mosaic"],
+    testimonials: ["ruled-list"],
+    visit: ["rows", "stacked"],
+    faq: ["two-column", "rows"],
+    process: ["numbered", "timeline"],
+    marquee: ["static-band"],
+    closing: ["split-panel", "banner"],
+    contact: ["default"],
   },
   affinity: {
     tone: { technical: 3, clinical: 3, premium: 1, warm: -2, playful: -3 },
