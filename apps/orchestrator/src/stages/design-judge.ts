@@ -104,6 +104,8 @@ export async function runDesignJudge(
   try {
     await waitForServer(`http://localhost:${port}/`, 60_000);
 
+    const context = judgeContext(ctx);
+
     const result = await runLlmSession({
       prompt: `Judge the site at http://localhost:${port}/ against the rubric in
 ${join(ctx.repoRoot, "template", "design-rules.md")} §11.
@@ -112,8 +114,14 @@ Answer DJ1-DJ9, DJ11-DJ15 and DJ18. Do NOT answer DJ10, DJ16 or DJ17: the
 first two are measured in code against this run's direction and the third is
 enforced in the design stage.
 
-Read the rubric first, then inspect the running site with the Playwright MCP
-tools. Take your own screenshots at 375px and 1440px wide before answering.
+Read the rubric first, then
+${join(ctx.repoRoot, "docs", "D10-judge-examples.md")} — worked examples of
+passing and failing answers for the questions that are easiest to get
+wrong, each one a real page this pipeline produced. Then inspect the
+running site with the Playwright MCP tools. Take your own screenshots at
+375px and 1440px wide before answering.
+
+${context}
 
 For each question you answer: the id, pass (true/false,
 or null when it genuinely cannot be determined visually), and one sentence of
@@ -278,4 +286,88 @@ async function waitForServer(url: string, timeoutMs: number): Promise<void> {
     if (Date.now() > deadline) throw new Error(`server at ${url} did not start in time`);
     await new Promise((r) => setTimeout(r, 1000));
   }
+}
+
+/**
+ * What the judge needs to see besides the page itself (D10 task D2).
+ *
+ * Two of the rubric's questions compare the page against something that is
+ * not on the page, and until D2 neither comparison had its other half:
+ *
+ *  - **DJ18** asks whether the signature section "resembles its direction's
+ *    reference set more than the default kit". The judge was asked that
+ *    without ever being shown the reference set — a question about a
+ *    comparison, with one side missing. The screenshots are given by
+ *    absolute path, and the Read tool renders them.
+ *  - **DJ11** asks whether the one bold element is actually present. Whether
+ *    the §9 loop converged is a fact recorded in
+ *    `runs/<domain>/signature/result.json`, and a judge that does not know
+ *    the default shipped will read a correct fallback as a missing element.
+ */
+export function judgeContext(ctx: StageContext): string {
+  const spec = readJson<{ direction?: string; signature?: { concept?: string } }>(
+    join(ctx.runDir, "design", "design.json"),
+  );
+  const direction = resolveDirection(spec?.direction);
+  const refs = direction.refs
+    .map((r) => join(ctx.repoRoot, r))
+    .filter((r) => existsSync(r));
+
+  const signature = readJson<{ built?: boolean; reason?: string; rounds?: number }>(
+    join(ctx.runDir, "signature", "result.json"),
+  );
+
+  const lines = [
+    `## This run's direction: ${direction.id} — ${direction.label}`,
+    "",
+    direction.intent,
+    "",
+    "What this direction refuses to do:",
+    ...direction.avoid.map((a) => `- ${a}`),
+  ];
+
+  if (refs.length > 0) {
+    lines.push(
+      "",
+      "### The direction's reference screenshots — DJ18 compares against these",
+      "",
+      "Open every one of them before answering DJ18. They are what the page",
+      "is supposed to belong beside; the question is not whether the page is",
+      "good but whether it is recognisably the same argument.",
+      "",
+      ...refs.map((r) => `- ${r}`),
+    );
+  } else {
+    lines.push(
+      "",
+      "### No reference screenshots are available for this direction",
+      "",
+      "Answer DJ18 `null` rather than guessing: the comparison it asks for",
+      "has no other side.",
+    );
+  }
+
+  lines.push("", "### The signature section (DJ11, DJ18)", "");
+  if (spec?.signature?.concept) {
+    lines.push(`design.json's concept: ${spec.signature.concept}`, "");
+  }
+  if (signature === null) {
+    lines.push("The signature stage left no result — treat the section as absent.");
+  } else if (signature.built === true) {
+    lines.push(
+      `A bespoke signature was written and accepted in round ${signature.rounds ?? "?"}.`,
+      "DJ11 should find it, and DJ18 is a real comparison.",
+    );
+  } else {
+    lines.push(
+      `No bespoke signature: ${signature.reason ?? "the loop did not converge"}.`,
+      "",
+      "The DEFAULT signature section shipped, which §9 explicitly permits —",
+      "a finished site is never blocked for taste. DJ11 passes if the bold",
+      "element is present at all; DJ18 should say the default kit shipped",
+      "and is a design note, not a failure.",
+    );
+  }
+
+  return lines.join("\n");
 }
