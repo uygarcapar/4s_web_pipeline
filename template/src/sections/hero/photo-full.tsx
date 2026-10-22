@@ -77,7 +77,7 @@ export function HeroPhotoFull({
       id={section.id}
       // ink, not paper, so the fallback behind a still-loading photograph is
       // the colour the light text is written for
-      className="relative h-svh overflow-hidden bg-ink-900 text-paper-100"
+      className="relative h-svh min-h-[36rem] overflow-hidden bg-ink-900 text-paper-100"
     >
       {section.image !== undefined && (
         <div className="absolute inset-0">
@@ -107,6 +107,15 @@ export function HeroPhotoFull({
         </div>
       )}
 
+      {/*
+        `min-h-[36rem]` alongside `h-svh`: on a 390px-tall landscape phone the
+        viewport height is less than this hero's own content, and `h-svh`
+        alone clipped nothing but let the CTA row overflow the section and
+        land on the next section's heading — the overlap detector caught it
+        the moment a services heading sat directly beneath. The hero grows
+        past the fold there instead, which is the correct trade: a landscape
+        phone scrolls anyway.
+      */}
       {/* The hero is h-svh, so layout.tsx's pb-16 — which pushes everything
           *after* the hero clear of the mobile sticky CTA — does not move this
           section's own bottom row. Without its own bottom padding the address

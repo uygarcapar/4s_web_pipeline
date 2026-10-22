@@ -121,6 +121,40 @@ const config: SiteConfigInput = {
       ],
     },
     {
+      type: "team",
+      id: "team",
+      variant: "portrait-rows",
+      title: "Hekim kadromuz",
+      intro:
+        "Kliniğimizde iki hekim ve bir ağız ve diş sağlığı teknikeri görev yapıyor.",
+      members: [
+        {
+          name: "Dr. Dt. Selin Aydın",
+          role: "Kurucu hekim, protez uzmanı",
+          bio:
+            "Marmara Üniversitesi Diş Hekimliği mezunu. 2009'dan bu yana Kadıköy'de implant ve protez tedavileri uyguluyor.",
+          photo: {
+            src: "/images/gallery-1.svg",
+            alt: "Dr. Dt. Selin Aydın muayene odasında",
+          },
+        },
+        {
+          name: "Dt. Mert Kavas",
+          role: "Ortodonti",
+          bio:
+            "Şeffaf plak ve tel tedavilerini yürütüyor; çocuk hastalarla ilgileniyor.",
+          photo: {
+            src: "/images/gallery-4.svg",
+            alt: "Dt. Mert Kavas klinik girişinde",
+          },
+        },
+        {
+          name: "Ayça Demir",
+          role: "Ağız ve diş sağlığı teknikeri",
+        },
+      ],
+    },
+    {
       type: "gallery",
       id: "gallery",
       variant: "default",

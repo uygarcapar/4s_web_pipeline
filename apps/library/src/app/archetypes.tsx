@@ -20,6 +20,11 @@ import { ServicesImageGrid } from "@/sections/services/image-grid";
 import { ServicesIndex } from "@/sections/services/index-columns";
 import { ServicesRailPinned } from "@/sections/services/rail-pinned";
 import { Statement } from "@/sections/statement";
+import { TeamGrid } from "@/sections/team/grid";
+import { TeamLead } from "@/sections/team/lead";
+import { TeamPortraitRows } from "@/sections/team/portrait-rows";
+import { TeamRoster } from "@/sections/team/roster";
+import { TeamStickySwap } from "@/sections/team/sticky-swap";
 import { Testimonials } from "@/sections/testimonials";
 import { Visit } from "@/sections/visit";
 import { siteConfig } from "~config";
@@ -93,6 +98,11 @@ export const LIBRARY_ARCHETYPES: LibraryArchetype[] = [
   entry("visit/default", "visit", "default", Visit, VISIT),
   entry("marquee/ticker", "marquee", "ticker", Marquee, bySectionType("marquee")),
   entry("closing/statement-cta", "closing", "statement-cta", Closing, bySectionType("closing")),
+  entry("team/sticky-swap", "team", "sticky-swap", TeamStickySwap, bySectionType("team")),
+  entry("team/grid", "team", "grid", TeamGrid, bySectionType("team")),
+  entry("team/roster", "team", "roster", TeamRoster, bySectionType("team")),
+  entry("team/lead", "team", "lead", TeamLead, bySectionType("team")),
+  entry("team/portrait-rows", "team", "portrait-rows", TeamPortraitRows, bySectionType("team")),
   entry("gallery/default", "gallery", "default", Gallery, bySectionType("gallery")),
   entry("testimonials/default", "testimonials", "default", Testimonials, bySectionType("testimonials")),
   entry("faq/default", "faq", "default", Faq, bySectionType("faq")),

@@ -45,6 +45,119 @@
   --color-brand-950: oklch(0.25 calc(var(--brand-c) * 0.45) var(--brand-h));
 }
 
+:root {
+  /* shape (§4.2) */
+  --radius: 0.25rem;
+  --rule-width: 1px;
+  --rule-color: var(--ink-400);
+
+  /* How a photograph meets the page (masked). An archetype reads
+     these rather than branching on the frame name, so a new frame is a token
+     change and not an edit to every section that shows a picture. */
+  --image-radius: var(--radius);
+  --image-inset: 0rem;
+  --image-aspect: 3 / 4;
+
+  /* grid (§4.2), as tokens so an archetype never branches on the direction
+     name. asymmetric: a centred language and a left-flush one are the
+     same markup with a different anchor. */
+  --text-align: left;
+  --align-items: flex-start;
+  /* How far a secondary column is pushed off the baseline grid. Zero unless
+     the direction is asymmetric, which is the only one that offsets. */
+  --offset-y: 4rem;
+
+  /* rhythm, from grid.density (standard) */
+  --section-y: 5.5rem;
+  --section-y-lg: 8rem;
+  /* line length < 80ch (design-rules.md §4) */
+  --measure: 72ch;
+}
+
+/* ---- type scale (design-rules.md §4) ---------------------------------
+   The template's OWN default scale, generated from `kinetic-bold` by
+   apps/orchestrator/src/design/spec-tokens.ts so it cannot drift from
+   what a run produces. Until the spec path goes live at C3 this is what
+   every archetype in the template actually renders against — before it
+   existed the eight step classes were undefined here and every archetype
+   fell back to browser defaults, correct only inside /library. */
+
+.t-display {
+  font-family: var(--font-display), system-ui, sans-serif;
+  font-size: clamp(2.273rem, min(10.776vw, 17.5vmin), 7.577rem);
+  font-weight: 700;
+  line-height: 0.86;
+  letter-spacing: -0.034em;
+  overflow-wrap: break-word;
+}
+
+.t-h2 {
+  font-family: var(--font-display), system-ui, sans-serif;
+  font-size: clamp(2.956rem, 8vw, 5.375rem);
+  font-weight: 700;
+  line-height: 0.9;
+  letter-spacing: -0.031em;
+  overflow-wrap: break-word;
+}
+
+.t-h2-col {
+  font-family: var(--font-display), system-ui, sans-serif;
+  font-size: clamp(2.041rem, 4vw, 3.401rem);
+  font-weight: 700;
+  line-height: 0.95;
+  letter-spacing: -0.027em;
+  overflow-wrap: break-word;
+}
+
+.t-h3 {
+  font-family: var(--font-display), system-ui, sans-serif;
+  font-size: clamp(1.722rem, 2.2vw, 2.152rem);
+  font-weight: 700;
+  line-height: 1.1;
+  letter-spacing: -0.02em;
+  overflow-wrap: break-word;
+}
+
+.t-lead {
+  font-family: var(--font-sans), system-ui, sans-serif;
+  font-size: clamp(1.125rem, 1.6vw, 1.526rem);
+  font-weight: 400;
+  line-height: 1.45;
+  letter-spacing: 0;
+}
+
+.t-body {
+  font-family: var(--font-sans), system-ui, sans-serif;
+  font-size: clamp(1rem, 1.1vw, 1.125rem);
+  font-weight: 400;
+  line-height: 1.6;
+  letter-spacing: 0;
+}
+
+.meta {
+  font-family: var(--font-mono), ui-monospace, monospace;
+  font-size: clamp(0.75rem, 0.9vw, 0.875rem);
+  font-weight: 500;
+  line-height: 1.2;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+
+.btn-label {
+  font-family: var(--font-mono), ui-monospace, monospace;
+  font-size: clamp(0.875rem, 1vw, 1rem);
+  font-weight: 500;
+  line-height: 1;
+  letter-spacing: 0.02em;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+
+.measure {
+  max-width: var(--measure);
+}
+
 @theme inline {
   /* Font variables are injected on <html> by next/font in layout.tsx. */
   --font-sans: var(--font-body);

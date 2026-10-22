@@ -104,7 +104,7 @@ export const ARCHETYPES = {
     "image-grid",
     "index",
   ],
-  team: ["sticky-swap"],
+  team: ["sticky-swap", "grid", "roster", "lead", "portrait-rows"],
   // Not yet rebuilt — these still render through the template's original
   // component. Listing "default" keeps that explicit rather than implied.
   gallery: ["default"],

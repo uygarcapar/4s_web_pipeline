@@ -164,7 +164,12 @@ function renderStep(step: TypeStep): string {
   font-weight: ${step.weight};
   line-height: ${step.lineHeight};
   letter-spacing: ${em(step.tracking)};${
-    step.uppercase ? "\n  text-transform: uppercase;" : ""
+    // A label that wraps is not a label: `.meta` and `.btn-label` are
+    // eyebrows, button text and field captions, and the site nav's brand
+    // link was measured 15px wide with the name broken one character per
+    // line because this was missing. §7 says the same thing about a phone
+    // number, for the same reason.
+    step.uppercase ? "\n  text-transform: uppercase;\n  white-space: nowrap;" : ""
   }${
     // §4: an unexpected long word must break ugly rather than land on top of
     // its neighbour. Turkish compounds make this routine, not exotic.
