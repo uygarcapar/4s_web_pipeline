@@ -147,29 +147,108 @@ function report(
   if (wrong > 0) {
     console.log(`   disagrees on: ${misses.join("; ")}`);
     console.log(
-      `   → the ranges overlap, so NO threshold separates these labels.\n` +
-        `     That is a detector problem, not a number problem (design-rules §12).`,
+      `   → this metric ALONE cannot separate the labels. Check the gate\n` +
+        `     section above before concluding anything: the three rules are a\n` +
+        `     disjunction and they cover for each other.`,
     );
   }
   console.log();
 }
 
+/**
+ * **The gate, as it actually runs.**
+ *
+ * This is the number that matters and the first version of this script did
+ * not print it. It reported each metric alone, found that each one's alike
+ * and different ranges overlap, and concluded three times over that "no
+ * threshold separates these labels" — which read as a broken detector.
+ *
+ * The gate is not one metric. A candidate is rejected when the structural
+ * distance is too small **or** either fold is too similar, so the three
+ * rules cover for each other: a pair the structural check waves through can
+ * still be caught on the mobile fold. Evaluated that way the deployed
+ * thresholds agreed with the operator's first thirty labels 30/30, while
+ * every single metric was reporting failure.
+ *
+ * The per-metric sections below are still worth reading — they say which
+ * rule is carrying the decision — but they are diagnostics, not verdicts.
+ */
+function gate(S: number, Vd: number, Vm: number): { wrong: number; misses: string[] } {
+  const misses: string[] = [];
+  for (const { pair, label } of labelled) {
+    const rejected =
+      pair.structural < S || pair.visualDesktop >= Vd || pair.visualMobile >= Vm;
+    const predicted: Label = rejected ? "alike" : "different";
+    if (predicted !== label) {
+      misses.push(
+        `${pair.a}|${pair.b} (${label}; structural ${pair.structural}, ` +
+          `desktop ${pair.visualDesktop.toFixed(3)}, mobile ${pair.visualMobile.toFixed(3)})`,
+      );
+    }
+  }
+  return { wrong: misses.length, misses };
+}
+
+const deployed = gate(THRESHOLDS.allSectors, SIMILARITY_THRESHOLD, SIMILARITY_THRESHOLD);
+console.log("## the gate as deployed");
+console.log(
+  `   structural < ${THRESHOLDS.allSectors}  OR  either fold >= ${SIMILARITY_THRESHOLD}  →  reject`,
+);
+console.log(
+  `   agrees with ${labelled.length - deployed.wrong}/${labelled.length} labels`,
+);
+for (const m of deployed.misses) console.log(`   miss: ${m}`);
+
+/**
+ * How much room is left before a label flips.
+ *
+ * A gate that agrees on every pair but trips one of them by 0.001 is not
+ * calibrated, it is lucky — and the difference matters, because the next
+ * client's render will not be pixel-identical to this fixture's.
+ */
+const alikePairs = alike.map((x) => x.pair);
+const diffPairs = different.map((x) => x.pair);
+const trip = Math.min(
+  ...alikePairs.map((p) =>
+    Math.max(
+      THRESHOLDS.allSectors - p.structural,
+      p.visualDesktop - SIMILARITY_THRESHOLD,
+      p.visualMobile - SIMILARITY_THRESHOLD,
+    ),
+  ),
+);
+const nearestFalseReject = Math.min(
+  Math.min(...diffPairs.map((p) => p.structural)) - THRESHOLDS.allSectors,
+  SIMILARITY_THRESHOLD - Math.max(...diffPairs.map((p) => p.visualDesktop)),
+  SIMILARITY_THRESHOLD - Math.max(...diffPairs.map((p) => p.visualMobile)),
+);
+console.log(`   margin before a false ACCEPT  ${trip.toFixed(4)}`);
+console.log(`   margin before a false REJECT  ${nearestFalseReject.toFixed(4)}`);
+if (trip < 0.01) {
+  console.log(
+    `   → one 'alike' pair is caught by ${trip.toFixed(4)}. That is luck, not
+` +
+      `     calibration; the next client's render will not be pixel-identical.`,
+  );
+}
+console.log();
+
 report(
-  "structural distance (§8.1)",
+  "structural distance (§8.1), alone",
   THRESHOLDS.allSectors,
   labelled.map((x) => ({ value: x.pair.structural, label: x.label })),
   true,
 );
 
 report(
-  "visual similarity, desktop (§8.2)",
+  "visual similarity, desktop (§8.2), alone",
   SIMILARITY_THRESHOLD,
   labelled.map((x) => ({ value: x.pair.visualDesktop, label: x.label })),
   false,
 );
 
 report(
-  "visual similarity, mobile (§8.2)",
+  "visual similarity, mobile (§8.2), alone",
   SIMILARITY_THRESHOLD,
   labelled.map((x) => ({ value: x.pair.visualMobile, label: x.label })),
   false,

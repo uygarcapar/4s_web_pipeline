@@ -18,8 +18,8 @@
       "a": "kinetic-bold-0",
       "b": "kinetic-bold-1",
       "structural": 0.25,
-      "visualDesktop": 0.948989,
-      "visualMobile": 0.956092,
+      "visualDesktop": 0.939073,
+      "visualMobile": 0.959531,
       "sameDirection": true,
       "shared": [
         "direction",
@@ -41,8 +41,8 @@
       "a": "technical-accent-0",
       "b": "technical-accent-1",
       "structural": 0.25,
-      "visualDesktop": 0.890321,
-      "visualMobile": 0.958302,
+      "visualDesktop": 0.966373,
+      "visualMobile": 0.962995,
       "sameDirection": true,
       "shared": [
         "direction",
@@ -64,8 +64,8 @@
       "a": "swiss-grid-0",
       "b": "gallery-wall-1",
       "structural": 0.5,
-      "visualDesktop": 0.754762,
-      "visualMobile": 0.697824,
+      "visualDesktop": 0.763495,
+      "visualMobile": 0.703442,
       "sameDirection": false,
       "shared": [
         "heroArchetype",
@@ -82,32 +82,11 @@
       }
     },
     {
-      "a": "stark-display-0",
-      "b": "technical-accent-0",
-      "structural": 0.5278,
-      "visualDesktop": 0.838351,
-      "visualMobile": 0.84707,
-      "sameDirection": false,
-      "shared": [
-        "colorMode",
-        "typePair",
-        "motionProfile",
-        "gridAlignment",
-        "radius"
-      ],
-      "shots": {
-        "aDesktop": "shots/stark-display-0/desktop.png",
-        "bDesktop": "shots/technical-accent-0/desktop.png",
-        "aMobile": "shots/stark-display-0/mobile.png",
-        "bMobile": "shots/technical-accent-0/mobile.png"
-      }
-    },
-    {
       "a": "swiss-grid-0",
       "b": "technical-accent-1",
       "structural": 0.5556,
-      "visualDesktop": 0.845692,
-      "visualMobile": 0.76897,
+      "visualDesktop": 0.849911,
+      "visualMobile": 0.800338,
       "sameDirection": false,
       "shared": [
         "colorMode",
@@ -127,8 +106,8 @@
       "a": "swiss-grid-0",
       "b": "technical-accent-0",
       "structural": 0.5833,
-      "visualDesktop": 0.764962,
-      "visualMobile": 0.813415,
+      "visualDesktop": 0.839936,
+      "visualMobile": 0.733632,
       "sameDirection": false,
       "shared": [
         "colorMode",
@@ -145,11 +124,32 @@
       }
     },
     {
+      "a": "technical-accent-0",
+      "b": "gallery-wall-0",
+      "structural": 0.6111,
+      "visualDesktop": 0.698287,
+      "visualMobile": 0.650997,
+      "sameDirection": false,
+      "shared": [
+        "typePair",
+        "gridAlignment",
+        "imageFrame",
+        "radius",
+        "density"
+      ],
+      "shots": {
+        "aDesktop": "shots/technical-accent-0/desktop.png",
+        "bDesktop": "shots/gallery-wall-0/desktop.png",
+        "aMobile": "shots/technical-accent-0/mobile.png",
+        "bMobile": "shots/gallery-wall-0/mobile.png"
+      }
+    },
+    {
       "a": "kinetic-bold-0",
       "b": "technical-accent-0",
       "structural": 0.6389,
-      "visualDesktop": 0.907628,
-      "visualMobile": 0.979503,
+      "visualDesktop": 0.884849,
+      "visualMobile": 0.938226,
       "sameDirection": false,
       "shared": [
         "colorMode",
@@ -167,10 +167,10 @@
     },
     {
       "a": "stark-display-1",
-      "b": "technical-accent-1",
+      "b": "swiss-grid-0",
       "structural": 0.6389,
-      "visualDesktop": 0.884281,
-      "visualMobile": 0.854685,
+      "visualDesktop": 0.848988,
+      "visualMobile": 0.668706,
       "sameDirection": false,
       "shared": [
         "colorMode",
@@ -180,17 +180,17 @@
       ],
       "shots": {
         "aDesktop": "shots/stark-display-1/desktop.png",
-        "bDesktop": "shots/technical-accent-1/desktop.png",
+        "bDesktop": "shots/swiss-grid-0/desktop.png",
         "aMobile": "shots/stark-display-1/mobile.png",
-        "bMobile": "shots/technical-accent-1/mobile.png"
+        "bMobile": "shots/swiss-grid-0/mobile.png"
       }
     },
     {
-      "a": "technical-accent-1",
+      "a": "swiss-grid-0",
       "b": "night-ruled-1",
       "structural": 0.6389,
-      "visualDesktop": 0.874728,
-      "visualMobile": 0.868136,
+      "visualDesktop": 0.765422,
+      "visualMobile": 0.709587,
       "sameDirection": false,
       "shared": [
         "colorMode",
@@ -199,77 +199,78 @@
         "radius"
       ],
       "shots": {
-        "aDesktop": "shots/technical-accent-1/desktop.png",
+        "aDesktop": "shots/swiss-grid-0/desktop.png",
         "bDesktop": "shots/night-ruled-1/desktop.png",
-        "aMobile": "shots/technical-accent-1/mobile.png",
+        "aMobile": "shots/swiss-grid-0/mobile.png",
+        "bMobile": "shots/night-ruled-1/mobile.png"
+      }
+    },
+    {
+      "a": "kinetic-bold-1",
+      "b": "night-ruled-1",
+      "structural": 0.6667,
+      "visualDesktop": 0.83484,
+      "visualMobile": 0.864569,
+      "sameDirection": false,
+      "shared": [
+        "colorMode",
+        "gridAlignment",
+        "imageFrame",
+        "radius"
+      ],
+      "shots": {
+        "aDesktop": "shots/kinetic-bold-1/desktop.png",
+        "bDesktop": "shots/night-ruled-1/desktop.png",
+        "aMobile": "shots/kinetic-bold-1/mobile.png",
         "bMobile": "shots/night-ruled-1/mobile.png"
       }
     },
     {
       "a": "swiss-grid-1",
-      "b": "technical-accent-0",
-      "structural": 0.6667,
-      "visualDesktop": 0.723029,
-      "visualMobile": 0.817089,
-      "sameDirection": false,
-      "shared": [
-        "colorMode",
-        "gridAlignment",
-        "imageFrame",
-        "radius"
-      ],
-      "shots": {
-        "aDesktop": "shots/swiss-grid-1/desktop.png",
-        "bDesktop": "shots/technical-accent-0/desktop.png",
-        "aMobile": "shots/swiss-grid-1/mobile.png",
-        "bMobile": "shots/technical-accent-0/mobile.png"
-      }
-    },
-    {
-      "a": "kinetic-bold-1",
       "b": "night-ruled-0",
-      "structural": 0.6944,
-      "visualDesktop": 0.899435,
-      "visualMobile": 0.887614,
+      "structural": 0.6667,
+      "visualDesktop": 0.816619,
+      "visualMobile": 0.822509,
       "sameDirection": false,
       "shared": [
         "colorMode",
-        "imageFrame",
+        "motionProfile",
         "radius",
         "density"
       ],
       "shots": {
-        "aDesktop": "shots/kinetic-bold-1/desktop.png",
+        "aDesktop": "shots/swiss-grid-1/desktop.png",
         "bDesktop": "shots/night-ruled-0/desktop.png",
-        "aMobile": "shots/kinetic-bold-1/mobile.png",
+        "aMobile": "shots/swiss-grid-1/mobile.png",
         "bMobile": "shots/night-ruled-0/mobile.png"
       }
     },
     {
-      "a": "cinematic-calm-0",
-      "b": "technical-accent-1",
+      "a": "stark-display-0",
+      "b": "swiss-grid-1",
       "structural": 0.6944,
-      "visualDesktop": 0.78951,
-      "visualMobile": 0.822694,
+      "visualDesktop": 0.867229,
+      "visualMobile": 0.712496,
       "sameDirection": false,
       "shared": [
-        "heroArchetype",
+        "colorMode",
         "gridAlignment",
+        "radius",
         "density"
       ],
       "shots": {
-        "aDesktop": "shots/cinematic-calm-0/desktop.png",
-        "bDesktop": "shots/technical-accent-1/desktop.png",
-        "aMobile": "shots/cinematic-calm-0/mobile.png",
-        "bMobile": "shots/technical-accent-1/mobile.png"
+        "aDesktop": "shots/stark-display-0/desktop.png",
+        "bDesktop": "shots/swiss-grid-1/desktop.png",
+        "aMobile": "shots/stark-display-0/mobile.png",
+        "bMobile": "shots/swiss-grid-1/mobile.png"
       }
     },
     {
-      "a": "stark-display-1",
-      "b": "technical-accent-0",
+      "a": "stark-display-0",
+      "b": "night-ruled-1",
       "structural": 0.7222,
-      "visualDesktop": 0.811092,
-      "visualMobile": 0.87599,
+      "visualDesktop": 0.800951,
+      "visualMobile": 0.792753,
       "sameDirection": false,
       "shared": [
         "colorMode",
@@ -277,18 +278,18 @@
         "radius"
       ],
       "shots": {
-        "aDesktop": "shots/stark-display-1/desktop.png",
-        "bDesktop": "shots/technical-accent-0/desktop.png",
-        "aMobile": "shots/stark-display-1/mobile.png",
-        "bMobile": "shots/technical-accent-0/mobile.png"
+        "aDesktop": "shots/stark-display-0/desktop.png",
+        "bDesktop": "shots/night-ruled-1/desktop.png",
+        "aMobile": "shots/stark-display-0/mobile.png",
+        "bMobile": "shots/night-ruled-1/mobile.png"
       }
     },
     {
       "a": "kinetic-bold-0",
       "b": "stark-display-0",
       "structural": 0.75,
-      "visualDesktop": 0.900673,
-      "visualMobile": 0.846459,
+      "visualDesktop": 0.878427,
+      "visualMobile": 0.846706,
       "sameDirection": false,
       "shared": [
         "colorMode",
@@ -306,8 +307,8 @@
       "a": "kinetic-bold-0",
       "b": "night-ruled-1",
       "structural": 0.75,
-      "visualDesktop": 0.810333,
-      "visualMobile": 0.87304,
+      "visualDesktop": 0.814877,
+      "visualMobile": 0.872401,
       "sameDirection": false,
       "shared": [
         "colorMode",
@@ -325,8 +326,8 @@
       "a": "stark-display-1",
       "b": "gallery-wall-1",
       "structural": 0.75,
-      "visualDesktop": 0.639339,
-      "visualMobile": 0.670988,
+      "visualDesktop": 0.721243,
+      "visualMobile": 0.633432,
       "sameDirection": false,
       "shared": [
         "motionProfile",
@@ -344,8 +345,8 @@
       "a": "gallery-wall-1",
       "b": "night-ruled-1",
       "structural": 0.75,
-      "visualDesktop": 0.886944,
-      "visualMobile": 0.889689,
+      "visualDesktop": 0.878339,
+      "visualMobile": 0.857811,
       "sameDirection": false,
       "shared": [
         "motionProfile",
@@ -363,8 +364,8 @@
       "a": "kinetic-bold-1",
       "b": "stark-display-0",
       "structural": 0.7778,
-      "visualDesktop": 0.931061,
-      "visualMobile": 0.783101,
+      "visualDesktop": 0.933019,
+      "visualMobile": 0.8456,
       "sameDirection": false,
       "shared": [
         "colorMode",
@@ -382,8 +383,8 @@
       "a": "kinetic-bold-1",
       "b": "technical-accent-0",
       "structural": 0.7778,
-      "visualDesktop": 0.879675,
-      "visualMobile": 0.957141,
+      "visualDesktop": 0.912066,
+      "visualMobile": 0.938696,
       "sameDirection": false,
       "shared": [
         "colorMode",
@@ -401,8 +402,8 @@
       "a": "swiss-grid-1",
       "b": "cinematic-calm-0",
       "structural": 0.7778,
-      "visualDesktop": 0.619278,
-      "visualMobile": 0.647208,
+      "visualDesktop": 0.614641,
+      "visualMobile": 0.657205,
       "sameDirection": false,
       "shared": [
         "motionProfile",
@@ -417,120 +418,117 @@
       }
     },
     {
-      "a": "kinetic-bold-0",
-      "b": "gallery-wall-0",
-      "structural": 0.8056,
-      "visualDesktop": 0.705565,
-      "visualMobile": 0.70609,
+      "a": "cinematic-calm-1",
+      "b": "gallery-wall-1",
+      "structural": 0.7778,
+      "visualDesktop": 0.816087,
+      "visualMobile": 0.78214,
       "sameDirection": false,
       "shared": [
-        "gridAlignment",
-        "radius",
-        "density"
+        "colorMode",
+        "typePair"
       ],
       "shots": {
-        "aDesktop": "shots/kinetic-bold-0/desktop.png",
-        "bDesktop": "shots/gallery-wall-0/desktop.png",
-        "aMobile": "shots/kinetic-bold-0/mobile.png",
-        "bMobile": "shots/gallery-wall-0/mobile.png"
+        "aDesktop": "shots/cinematic-calm-1/desktop.png",
+        "bDesktop": "shots/gallery-wall-1/desktop.png",
+        "aMobile": "shots/cinematic-calm-1/mobile.png",
+        "bMobile": "shots/gallery-wall-1/mobile.png"
       }
     },
     {
-      "a": "stark-display-1",
-      "b": "swiss-grid-1",
+      "a": "kinetic-bold-0",
+      "b": "stark-display-1",
       "structural": 0.8333,
-      "visualDesktop": 0.865167,
-      "visualMobile": 0.751769,
+      "visualDesktop": 0.888188,
+      "visualMobile": 0.805731,
       "sameDirection": false,
       "shared": [
         "colorMode",
         "radius"
       ],
       "shots": {
-        "aDesktop": "shots/stark-display-1/desktop.png",
-        "bDesktop": "shots/swiss-grid-1/desktop.png",
-        "aMobile": "shots/stark-display-1/mobile.png",
-        "bMobile": "shots/swiss-grid-1/mobile.png"
+        "aDesktop": "shots/kinetic-bold-0/desktop.png",
+        "bDesktop": "shots/stark-display-1/desktop.png",
+        "aMobile": "shots/kinetic-bold-0/mobile.png",
+        "bMobile": "shots/stark-display-1/mobile.png"
       }
     },
     {
-      "a": "swiss-grid-1",
-      "b": "cinematic-calm-1",
-      "structural": 0.8333,
-      "visualDesktop": 0.625217,
-      "visualMobile": 0.534402,
-      "sameDirection": false,
-      "shared": [
-        "motionProfile",
-        "displayWeight"
-      ],
-      "shots": {
-        "aDesktop": "shots/swiss-grid-1/desktop.png",
-        "bDesktop": "shots/cinematic-calm-1/desktop.png",
-        "aMobile": "shots/swiss-grid-1/mobile.png",
-        "bMobile": "shots/cinematic-calm-1/mobile.png"
-      }
-    },
-    {
-      "a": "cinematic-calm-0",
-      "b": "night-ruled-1",
-      "structural": 0.8333,
-      "visualDesktop": 0.876684,
-      "visualMobile": 0.89918,
-      "sameDirection": false,
-      "shared": [
-        "gridAlignment",
-        "imageFrame"
-      ],
-      "shots": {
-        "aDesktop": "shots/cinematic-calm-0/desktop.png",
-        "bDesktop": "shots/night-ruled-1/desktop.png",
-        "aMobile": "shots/cinematic-calm-0/mobile.png",
-        "bMobile": "shots/night-ruled-1/mobile.png"
-      }
-    },
-    {
-      "a": "gallery-wall-0",
+      "a": "swiss-grid-0",
       "b": "night-ruled-0",
       "structural": 0.8333,
-      "visualDesktop": 0.700115,
-      "visualMobile": 0.662898,
+      "visualDesktop": 0.850222,
+      "visualMobile": 0.79348,
       "sameDirection": false,
       "shared": [
-        "motionProfile",
+        "colorMode",
         "radius"
       ],
       "shots": {
-        "aDesktop": "shots/gallery-wall-0/desktop.png",
+        "aDesktop": "shots/swiss-grid-0/desktop.png",
         "bDesktop": "shots/night-ruled-0/desktop.png",
-        "aMobile": "shots/gallery-wall-0/mobile.png",
+        "aMobile": "shots/swiss-grid-0/mobile.png",
         "bMobile": "shots/night-ruled-0/mobile.png"
       }
     },
     {
-      "a": "cinematic-calm-1",
-      "b": "night-ruled-1",
-      "structural": 0.8611,
-      "visualDesktop": 0.84682,
-      "visualMobile": 0.767233,
+      "a": "cinematic-calm-0",
+      "b": "technical-accent-0",
+      "structural": 0.8333,
+      "visualDesktop": 0.784604,
+      "visualMobile": 0.820531,
       "sameDirection": false,
       "shared": [
-        "imageFrame",
-        "density"
+        "heroArchetype"
+      ],
+      "shots": {
+        "aDesktop": "shots/cinematic-calm-0/desktop.png",
+        "bDesktop": "shots/technical-accent-0/desktop.png",
+        "aMobile": "shots/cinematic-calm-0/mobile.png",
+        "bMobile": "shots/technical-accent-0/mobile.png"
+      }
+    },
+    {
+      "a": "cinematic-calm-1",
+      "b": "technical-accent-1",
+      "structural": 0.8333,
+      "visualDesktop": 0.795232,
+      "visualMobile": 0.700881,
+      "sameDirection": false,
+      "shared": [
+        "heroArchetype"
       ],
       "shots": {
         "aDesktop": "shots/cinematic-calm-1/desktop.png",
-        "bDesktop": "shots/night-ruled-1/desktop.png",
+        "bDesktop": "shots/technical-accent-1/desktop.png",
         "aMobile": "shots/cinematic-calm-1/mobile.png",
-        "bMobile": "shots/night-ruled-1/mobile.png"
+        "bMobile": "shots/technical-accent-1/mobile.png"
+      }
+    },
+    {
+      "a": "swiss-grid-0",
+      "b": "cinematic-calm-0",
+      "structural": 0.8611,
+      "visualDesktop": 0.63688,
+      "visualMobile": 0.623746,
+      "sameDirection": false,
+      "shared": [
+        "gridAlignment",
+        "displayWeight"
+      ],
+      "shots": {
+        "aDesktop": "shots/swiss-grid-0/desktop.png",
+        "bDesktop": "shots/cinematic-calm-0/desktop.png",
+        "aMobile": "shots/swiss-grid-0/mobile.png",
+        "bMobile": "shots/cinematic-calm-0/mobile.png"
       }
     },
     {
       "a": "gallery-wall-1",
       "b": "night-ruled-0",
       "structural": 0.8889,
-      "visualDesktop": 0.707965,
-      "visualMobile": 0.738986,
+      "visualDesktop": 0.729578,
+      "visualMobile": 0.692347,
       "sameDirection": false,
       "shared": [
         "radius",
@@ -564,7 +562,7 @@
       "a": "kinetic-bold-1",
       "b": "gallery-wall-0",
       "structural": 0.9444,
-      "visualDesktop": 0.698619,
+      "visualDesktop": 0.686143,
       "visualMobile": 0.661158,
       "sameDirection": false,
       "shared": [
@@ -581,8 +579,8 @@
       "a": "stark-display-1",
       "b": "gallery-wall-0",
       "structural": 0.9444,
-      "visualDesktop": 0.640214,
-      "visualMobile": 0.597679,
+      "visualDesktop": 0.673749,
+      "visualMobile": 0.59239,
       "sameDirection": false,
       "shared": [
         "radius"

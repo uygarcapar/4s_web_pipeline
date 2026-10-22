@@ -1715,9 +1715,75 @@ alike pair shares is carrying the judgement; one near zero is weighted in
 §8.1 and earning nothing. That is a change to the weights, not the
 threshold, and it is the more useful of the two findings.
 
+## §8.3 calibrated — the thresholds hold, and my report was wrong
+
+Thirty labelled pairs, five "alike". **The gate as deployed agrees with all
+thirty.**
+
+```
+structural < 0.40  OR  either fold >= 0.93  →  reject       30/30
+```
+
+The first version of `calibrate:report` said the opposite. It evaluated
+each metric **alone**, found that each one's alike and different ranges
+overlap, and announced "no threshold separates these labels" three times
+over. The gate is not one metric: a candidate is rejected when the
+structural distance is too small **or** either fold is too similar, so the
+three rules cover for each other. A pair the structural check waves through
+is still caught on the mobile fold. The report now evaluates the real gate
+first and marks the per-metric sections as diagnostics.
+
+So the thresholds are **validated, not broken** — and nothing moved.
+
+Two cautions that survive:
+
+- **One pair is caught by 0.0011.** `kinetic-bold ↔ stark-display` trips only
+  on the desktop fold, 0.931 against 0.930. That is luck, not calibration;
+  the next client's render will not be pixel-identical. After the face
+  reassignment below it is 0.0030, which is better and still thin.
+- **Three of the five "alike" pairs are cross-direction.** That is a catalog
+  finding, not a threshold one.
+
+### Re-weighting does not fix it
+
+The alike pairs share `colorMode` 5/5 and `radius` 5/5 while `direction`
+scores only 2/5 — so §8.1's two highest weights are its weakest predictors.
+That looks like a re-weighting problem and is not: moving weight onto
+colorMode and radius scores 27/30, exactly what the current weights score,
+**missing the same three pairs**. Tested rather than assumed.
+
+### Archivo was the display face in six of seven directions
+
+Which is the actual explanation for three directions reading as one family:
+`kinetic-bold` and `stark-display` had *identical* face pools — Archivo,
+Anton, Bebas Neue — and `technical-accent` shared two of the three.
+
+Now disjoint: Anton and Bebas Neue are `kinetic-bold`'s alone, Archivo is
+`stark-display`'s alone, the three serifs are `night-ruled`'s alone. Bodies
+vary within each direction so `typePair` stays unfrozen.
+
+**It did not demonstrably fix the flagged pairs.** Re-rendered, one moved
+apart (mobile 0.980 → 0.938), one moved closer (0.783 → 0.846), one was
+mixed. The display face is not what was making those pages look alike. Both
+gate margins improved — false-accept 0.0011 → 0.0030, false-reject 0.0293 →
+0.0516 — which is weak positive evidence and not a result.
+
+The change stands on its own merits regardless: a catalog where six of
+seven directions set their headlines in the same face has less variety than
+it claims, whatever any metric says. Whether the three now read as distinct
+is a question only the operator's eye answers, and it needs a re-label.
+
+### `calibrate` deleted the labels
+
+`rmSync` on the whole output directory, so regenerating the pairs destroyed
+`labels.json` — an hour of the operator's judgement — the first time the
+catalog changed. Regenerating is exactly when the old labels matter most:
+they are what says whether the change did anything. It now clears only
+`shots/`, and labels key on pair names so they survive.
+
 ## Next
 
-**§8.3 calibration — operator.** ~30 labelled pairs. Both thresholds move to
+**A re-label — operator.** ~30 labelled pairs. Both thresholds move to
 match: the structural 0.40/0.55 and the visual 0.93. A threshold that
 disagrees with the operator's eye is a broken detector (design-rules §12).
 

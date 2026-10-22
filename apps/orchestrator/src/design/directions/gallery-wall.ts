@@ -24,12 +24,13 @@ export const galleryWall: Direction = {
     "restaurant, a clinic with a real gallery — where six pictures say more " +
     "than one and the page is the grid they make.",
   type: {
-    // Plain grotesks only. Type that sits on a photograph has to stay out of
-    // the way; a display face with personality fights the picture under it.
+    // Archivo dropped, as everywhere outside `stark-display`. Plain
+    // grotesks only: type that sits on a photograph has to stay out of the
+    // way of the picture under it.
     pairs: [
       { display: "Inter Tight", body: "Inter Tight" },
-      { display: "Public Sans", body: "Public Sans" },
-      { display: "Archivo", body: "Inter Tight" },
+      { display: "Public Sans", body: "Inter Tight" },
+      { display: "Karla", body: "Karla" },
     ],
     mono: ["JetBrains Mono"],
     displayWeights: [400, 600],

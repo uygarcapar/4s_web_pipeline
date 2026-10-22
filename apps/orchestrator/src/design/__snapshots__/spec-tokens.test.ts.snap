@@ -438,7 +438,7 @@ exports[`kinetic-bold > matches its snapshot 1`] = `
   --brand-accent: oklch(0.48 var(--brand-c) var(--brand-h));
 
   --font-display: var(--font-display-face);
-  --font-sans: var(--font-display-face);
+  --font-sans: var(--font-body-face);
   --font-mono: var(--font-mono-face);
 
   /* shape (§4.2) */
@@ -531,7 +531,7 @@ body {
   font-family: var(--font-display), system-ui, sans-serif;
   font-size: clamp(2.25rem, min(10vw, 17vmin), 7.031rem);
   font-weight: 700;
-  line-height: 0.86;
+  line-height: 0.96;
   letter-spacing: -0.037em;
   overflow-wrap: break-word;
 }
@@ -540,7 +540,7 @@ body {
   font-family: var(--font-display), system-ui, sans-serif;
   font-size: clamp(2.781rem, 8vw, 5.056rem);
   font-weight: 700;
-  line-height: 0.9;
+  line-height: 1;
   letter-spacing: -0.033em;
   overflow-wrap: break-word;
 }
@@ -1249,7 +1249,7 @@ exports[`technical-accent > matches its snapshot 1`] = `
   --brand-accent: oklch(0.48 var(--brand-c) var(--brand-h));
 
   --font-display: var(--font-display-face);
-  --font-sans: var(--font-body-face);
+  --font-sans: var(--font-display-face);
   --font-mono: var(--font-mono-face);
 
   /* shape (§4.2) */

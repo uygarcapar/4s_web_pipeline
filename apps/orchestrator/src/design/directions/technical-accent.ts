@@ -30,10 +30,14 @@ export const technicalAccent: Direction = {
     "laboratory — where ruled structure reads as competence and the single " +
     "accent is the only thing asking to be clicked.",
   type: {
+    // Public Sans: the neutral grotesk, which is what a drawing office
+    // sets its labels in. Not Archivo or Anton — both went elsewhere after
+    // the operator labelled this direction's renders the same site as
+    // `kinetic-bold`'s.
     pairs: [
-      { display: "Archivo", body: "Public Sans" },
-      { display: "Anton", body: "Public Sans" },
-      { display: "Archivo", body: "Inter Tight" },
+      { display: "Public Sans", body: "Public Sans" },
+      { display: "Public Sans", body: "Inter Tight" },
+      { display: "Public Sans", body: "Karla" },
     ],
     // The mono is load-bearing here, not an accent: the nav, the ruler
     // labels and the index numbers are all mono in the reference.
