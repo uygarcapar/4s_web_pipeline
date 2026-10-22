@@ -166,6 +166,42 @@ describe("the §4 invariants hold whatever the ratio", () => {
   });
 });
 
+/**
+ * The image-frame tokens an archetype reads instead of branching on the
+ * frame's name.
+ *
+ * Worth testing directly: all four directions in the catalog list `bleed` or
+ * `inset` first, so the library — which samples option `[0]` — renders the
+ * same frame for every one of them. The tokens vary; the sample does not.
+ * Without this, "the frame never changes in /library" would look like a bug
+ * in the archetype rather than a property of the fixture.
+ */
+describe("image frame", () => {
+  const base = specFor("kinetic-bold");
+  const framed = (imageFrame: DesignSpec["shape"]["imageFrame"]): string =>
+    renderSpecTokens({ ...base, shape: { ...base.shape, imageFrame } });
+
+  it("gives every frame a distinct aspect or radius", () => {
+    const rendered = (["bleed", "inset", "masked", "collage"] as const).map(framed);
+    expect(new Set(rendered).size).toBe(4);
+  });
+
+  it("makes masked a tall window rather than a wide one", () => {
+    expect(framed("masked")).toContain("--image-aspect: 3 / 4");
+    expect(framed("bleed")).toContain("--image-aspect: 4 / 3");
+  });
+
+  it("leaves a bleed frame square-cornered whatever the radius", () => {
+    expect(framed("bleed")).toContain("--image-radius: 0px");
+    expect(framed("inset")).toContain("--image-radius: var(--radius)");
+  });
+
+  it("insets only the frames that sit inside the measure", () => {
+    expect(framed("bleed")).toContain("--image-inset: 0rem");
+    expect(framed("inset")).toContain("--image-inset: 1.5rem");
+  });
+});
+
 describe("colour", () => {
   it("inverts the ramp for a dark direction rather than re-pointing it", () => {
     const css = renderSpecTokens(specFor("quiet-luxury"));

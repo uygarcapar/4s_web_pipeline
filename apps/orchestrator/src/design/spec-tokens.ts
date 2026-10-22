@@ -59,6 +59,13 @@ ${renderRamp(spec)}
   --rule-width: ${RULE_WIDTH[shape.rules]};
   --rule-color: ${shape.rules === "none" ? "transparent" : "var(--ink-400)"};
 
+  /* How a photograph meets the page (${shape.imageFrame}). An archetype reads
+     these rather than branching on the frame name, so a new frame is a token
+     change and not an edit to every section that shows a picture. */
+  --image-radius: ${IMAGE_FRAME[shape.imageFrame].radius};
+  --image-inset: ${IMAGE_FRAME[shape.imageFrame].inset};
+  --image-aspect: ${IMAGE_FRAME[shape.imageFrame].aspect};
+
   /* grid (§4.2), as tokens so an archetype never branches on the direction
      name. ${grid.alignment}: a centred language and a left-flush one are the
      same markup with a different anchor. */
@@ -211,6 +218,24 @@ function accent(spec: DesignSpec): string {
   const l = spec.color.mode === "dark" ? 0.72 : 0.52;
   return `oklch(${l} var(--brand-c) var(--brand-h))`;
 }
+
+/**
+ * How a photograph meets the page, per `shape.imageFrame` (§4.2).
+ *
+ * `bleed` runs to the edge with no corner; `inset` sits inside the measure
+ * with the direction's radius; `masked` is a tall crop that reads as a
+ * window rather than a card; `collage` is the softest and squarest, for a
+ * direction that overlaps several pictures.
+ */
+const IMAGE_FRAME: Record<
+  DesignSpec["shape"]["imageFrame"],
+  { radius: string; inset: string; aspect: string }
+> = {
+  bleed: { radius: "0px", inset: "0rem", aspect: "4 / 3" },
+  inset: { radius: "var(--radius)", inset: "1.5rem", aspect: "4 / 3" },
+  masked: { radius: "var(--radius)", inset: "0rem", aspect: "3 / 4" },
+  collage: { radius: "var(--radius)", inset: "1rem", aspect: "1 / 1" },
+};
 
 const RULE_WIDTH: Record<DesignSpec["shape"]["rules"], string> = {
   none: "0px",
