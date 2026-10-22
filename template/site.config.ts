@@ -91,6 +91,10 @@ const config: SiteConfigInput = {
           description:
             "Eksik dişleriniz için uzun ömürlü ve doğal görünümlü implant çözümleri.",
           icon: "tooth",
+          image: {
+            src: "/images/gallery-2.svg",
+            alt: "İmplant tedavisi için hazırlanan muayene ünitesi",
+          },
         },
         {
           title: "Diş Beyazlatma",
@@ -103,6 +107,10 @@ const config: SiteConfigInput = {
           description:
             "Şeffaf plak ve tel tedavileriyle her yaşta düzgün diş dizilimi.",
           icon: "smile",
+          image: {
+            src: "/images/gallery-3.svg",
+            alt: "Ortodonti tedavisinin yapıldığı sterilizasyon odası",
+          },
         },
         {
           title: "Çocuk Diş Hekimliği",

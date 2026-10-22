@@ -19,6 +19,7 @@ import { MapEmbed } from "@/sections/map";
 import { Services } from "@/sections/services";
 import { Statement } from "@/sections/statement";
 import { Visit } from "@/sections/visit";
+import { ServicesAlternating } from "@/sections/services/alternating";
 import { ServicesRailPinned } from "@/sections/services/rail-pinned";
 import { TeamStickySwap } from "@/sections/team/sticky-swap";
 import { Testimonials } from "@/sections/testimonials";
@@ -79,7 +80,10 @@ const archetypeRegistry: {
   visit: { "rows": Visit },
   closing: { "statement-cta": Closing },
   marquee: { "ticker": Marquee },
-  services: { "rail-pinned": ServicesRailPinned },
+  services: {
+    "rail-pinned": ServicesRailPinned,
+    "alternating": ServicesAlternating,
+  },
   team: { "sticky-swap": TeamStickySwap },
 };
 
