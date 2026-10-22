@@ -91,12 +91,12 @@ export const ARCHETYPES = {
     "marquee",
   ],
   // The business's own sentence, lit word by word (pattern-library.md §2.1).
-  statement: ["word-reveal"],
+  statement: ["word-reveal", "static", "quote-split"],
   // Address, hours and the number as one section, not three (§2.2).
-  visit: ["rows"],
+  visit: ["rows", "map-split", "stacked", "card"],
   // B3: the last screen, and the band of the client's own phrases.
-  closing: ["statement-cta"],
-  marquee: ["ticker"],
+  closing: ["statement-cta", "split-panel", "banner"],
+  marquee: ["ticker", "static-band"],
   services: [
     "rail-pinned",
     "alternating",
@@ -108,10 +108,10 @@ export const ARCHETYPES = {
   // Not yet rebuilt — these still render through the template's original
   // component. Listing "default" keeps that explicit rather than implied.
   gallery: ["mosaic", "full-bleed", "pairs", "contact-sheet"],
-  faq: ["default"],
+  faq: ["two-column", "rows"],
   contact: ["default"],
   hours: ["default"],
-  testimonials: ["default"],
+  testimonials: ["single-large", "ruled-list"],
 } as const satisfies Record<string, readonly string[]>;
 
 export type SectionType = keyof typeof ARCHETYPES;

@@ -2,6 +2,18 @@ import type { ComponentType } from "react";
 
 import type { SectionConfig, SiteConfig } from "@/lib/schema";
 import { Closing } from "@/sections/closing";
+import { ClosingBanner } from "@/sections/closing/banner";
+import { ClosingSplitPanel } from "@/sections/closing/split-panel";
+import { FaqRows } from "@/sections/faq/rows";
+import { FaqTwoColumn } from "@/sections/faq/two-column";
+import { MarqueeStaticBand } from "@/sections/marquee/static-band";
+import { StatementQuoteSplit } from "@/sections/statement/quote-split";
+import { StatementStatic } from "@/sections/statement/static-display";
+import { TestimonialsRuledList } from "@/sections/testimonials/ruled-list";
+import { TestimonialsSingleLarge } from "@/sections/testimonials/single-large";
+import { VisitCard } from "@/sections/visit/card";
+import { VisitMapSplit } from "@/sections/visit/map-split";
+import { VisitStacked } from "@/sections/visit/stacked";
 import { Contact } from "@/sections/contact";
 import { Faq } from "@/sections/faq";
 import { Gallery } from "@/sections/gallery";
@@ -115,5 +127,17 @@ export const LIBRARY_ARCHETYPES: LibraryArchetype[] = [
   entry("testimonials/default", "testimonials", "default", Testimonials, bySectionType("testimonials")),
   entry("faq/default", "faq", "default", Faq, bySectionType("faq")),
   entry("hours/default", "hours", "default", Hours, bySectionType("hours")),
+  entry("closing/banner", "closing", "banner", ClosingBanner, bySectionType("closing")),
+  entry("closing/split-panel", "closing", "split-panel", ClosingSplitPanel, bySectionType("closing")),
+  entry("faq/rows", "faq", "rows", FaqRows, bySectionType("faq")),
+  entry("faq/two-column", "faq", "two-column", FaqTwoColumn, bySectionType("faq")),
+  entry("marquee/static-band", "marquee", "static-band", MarqueeStaticBand, bySectionType("marquee")),
+  entry("statement/quote-split", "statement", "quote-split", StatementQuoteSplit, STATEMENT),
+  entry("statement/static", "statement", "static", StatementStatic, STATEMENT),
+  entry("testimonials/ruled-list", "testimonials", "ruled-list", TestimonialsRuledList, bySectionType("testimonials")),
+  entry("testimonials/single-large", "testimonials", "single-large", TestimonialsSingleLarge, bySectionType("testimonials")),
+  entry("visit/card", "visit", "card", VisitCard, VISIT),
+  entry("visit/map-split", "visit", "map-split", VisitMapSplit, VISIT),
+  entry("visit/stacked", "visit", "stacked", VisitStacked, VISIT),
   entry("contact/default", "contact", "default", Contact, bySectionType("contact")),
 ].filter((a): a is LibraryArchetype => a !== null);
