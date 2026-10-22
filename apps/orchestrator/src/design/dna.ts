@@ -79,11 +79,16 @@ export const ARCHETYPES = {
   // Sections rebuilt in the approved design language. "default" is
   // deliberately NOT an option here: leaving it in made the choice a coin
   // flip, and a client who lost the toss silently got the old template back.
-  hero: ["photo-full"],
+  // `type-only` carries no photograph at all, which is what most crawled
+  // SMB sites can actually support (B4).
+  hero: ["photo-full", "type-only"],
   // The business's own sentence, lit word by word (pattern-library.md §2.1).
   statement: ["word-reveal"],
   // Address, hours and the number as one section, not three (§2.2).
   visit: ["rows"],
+  // B3: the last screen, and the band of the client's own phrases.
+  closing: ["statement-cta"],
+  marquee: ["ticker"],
   services: ["rail-pinned"],
   team: ["sticky-swap"],
   // Not yet rebuilt — these still render through the template's original

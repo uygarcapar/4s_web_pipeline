@@ -52,7 +52,9 @@ export const heroSectionSchema = z
     ...sectionBase,
     type: z.literal("hero"),
     /** Layout archetype, chosen per site by the design stage (D6). */
-    variant: z.enum(["default", "centered", "photo-full", "seam-bottom"]).optional(),
+    variant: z
+      .enum(["default", "centered", "photo-full", "seam-bottom", "type-only"])
+      .optional(),
     headline: z.string().min(1),
     subheadline: z.string().min(1).optional(),
     ctaPrimary: ctaSchema,

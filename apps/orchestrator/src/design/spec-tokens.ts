@@ -59,6 +59,15 @@ ${renderRamp(spec)}
   --rule-width: ${RULE_WIDTH[shape.rules]};
   --rule-color: ${shape.rules === "none" ? "transparent" : "var(--ink-400)"};
 
+  /* grid (§4.2), as tokens so an archetype never branches on the direction
+     name. ${grid.alignment}: a centred language and a left-flush one are the
+     same markup with a different anchor. */
+  --text-align: ${grid.alignment === "centered" ? "center" : "left"};
+  --align-items: ${grid.alignment === "centered" ? "center" : "flex-start"};
+  /* How far a secondary column is pushed off the baseline grid. Zero unless
+     the direction is asymmetric, which is the only one that offsets. */
+  --offset-y: ${grid.alignment === "asymmetric" ? "4rem" : "0rem"};
+
   /* rhythm, from grid.density (${grid.density}) */
   --section-y: ${rhythm.y};
   --section-y-lg: ${rhythm.yLg};
