@@ -18,9 +18,11 @@ export type ProgressChannel = "telegram" | "none";
 const STAGE_START: Record<string, string> = {
   crawl: "📥 Eski site taranıyor — metinler, fotoğraflar, çalışma saatleri",
   audit: "📊 Mevcut site ölçülüyor — hız, erişilebilirlik, SEO",
-  design: "🎨 Tasarım DNA'sı çıkarılıyor — palet, tipografi, bölüm düzenleri",
+  brief: "🧠 İşletme okunuyor — ne yapıyor, kim geliyor, sitenin tek işi ne",
+  design: "🎨 Tasarım yönü seçiliyor — tipografi, renk, bölüm düzenleri",
   plan: "🧩 Sayfa planı hazırlanıyor",
   generate: "🛠 Yeni site üretiliyor",
+  signature: "✨ Sayfanın tek cesur bölümü yazılıyor",
   verify: "🔍 Doğrulanıyor — testler, Lighthouse, tasarım jürisi",
   notify: "📨 Bildirim hazırlanıyor",
   deploy: "🚀 Yayına alınıyor",
@@ -35,9 +37,23 @@ const STAGE_PASS: Record<string, (data: Record<string, unknown>) => string> = {
     `✓ Tarama bitti — ${num(d.pages, "sayfa")}, ${num(d.contentBlocks, "içerik bloğu")}, ${num(d.assets, "görsel")}`,
   audit: (d) =>
     `✓ Ölçüm bitti — performans ${pct(d.performance)}, erişilebilirlik ${pct(d.accessibility)}, SEO ${pct(d.seo)}`,
+  brief: (d) => `✓ Brief hazır — sitenin tek işi: ${str(d.theOneJob)}`,
+  // The direction is the most interesting fact this stage produces and the
+  // line did not carry it: it decided the whole look, and "palet nötr,
+  // tipografi Archivo/Archivo" says nothing about which of the seven
+  // languages the client got.
   design: (d) =>
-    `✓ Tasarım DNA'sı hazır — palet ${str(d.paletteName)}, tipografi ${str(d.typePair)}`,
+    `✓ Tasarım hazır — yön ${str(d.direction)}, tipografi ${str(d.typePair)}, palet ${str(d.paletteName)}`,
   plan: (d) => `✓ Plan hazır — ${num(d.sections, "bölüm")}`,
+  signature: (d) =>
+    d.built === true
+      ? `✓ Cesur bölüm yazıldı — ${num(d.rounds, "turda")}`
+      : "✓ Cesur bölüm için varsayılan kullanıldı — site bundan dolayı durmaz",
+  notify: (d) =>
+    d.delivered === true
+      ? `✓ Bildirim gönderildi (${str(d.channel)})`
+      : `⚠ Bildirim gönderilemedi (${str(d.channel)}) — site hazır, haber ulaşmadı`,
+  deploy: (d) => `✓ Yayında — ${str(d.url)}`,
   generate: (d) => `✓ Site üretildi${d.costUsd ? ` — $${Number(d.costUsd).toFixed(2)}` : ""}`,
   verify: (d) =>
     d.passed === true

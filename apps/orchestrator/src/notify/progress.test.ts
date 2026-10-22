@@ -1,4 +1,5 @@
 import { describe, expect, it } from "vitest";
+import { AUTO_STAGES } from "@pipeline/core";
 import { createProgressNotifier } from "./progress.js";
 
 function recorder() {
@@ -27,14 +28,40 @@ describe("progress notifier", () => {
     expect(r.sent[2]).toContain("438 içerik bloğu");
   });
 
-  it("stays silent for a stage with nothing worth reporting on pass", async () => {
+  /**
+   * The fallback, not a real stage. This used `notify` as its example until
+   * every stage got copy — `brief`, `signature`, `notify` and `deploy` were
+   * all passing silently, which is the opposite of what an operator
+   * watching a run wants.
+   *
+   * The mechanism still matters: a stage added later without copy should
+   * say nothing rather than post "✓ undefined".
+   */
+  it("stays silent on pass for a stage with no copy", async () => {
     const r = recorder();
     const n = createProgressNotifier({ channel: "telegram", send: r.send });
 
-    n.stagePassed("diskent.com", "notify", {});
+    n.stagePassed("diskent.com", "a-stage-added-later", {});
     await n.flush();
 
     expect(r.sent).toHaveLength(0);
+  });
+
+  /**
+   * The complement: every stage the pipeline actually runs DOES report, so
+   * a run is legible from Telegram alone. This is the regression that let
+   * four stages go quiet.
+   */
+  it("reports a pass for every stage in the chain", async () => {
+    for (const stage of AUTO_STAGES) {
+      const r = recorder();
+      const n = createProgressNotifier({ channel: "telegram", send: r.send });
+      n.stageStarted("diskent.com", stage);
+      n.stagePassed("diskent.com", stage, {});
+      await n.flush();
+      expect(r.sent, `${stage} sent nothing`).toHaveLength(2);
+      expect(r.sent[1], `${stage} posted an empty line`).not.toMatch(/undefined|^\s*$/);
+    }
   });
 
   it("reports a failure with the reason, truncated", async () => {
