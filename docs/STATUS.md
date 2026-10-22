@@ -1367,13 +1367,96 @@ batch of sites queued together is exactly when this ledger matters most.
 Found because a test recording two rows in a loop could not reproduce its
 own ordering.
 
+## C4 — structural distance, and the multi-candidate draw it unblocks
+
+§8.1 replaces the fingerprint hash with a weighted axis count, and §6.3's
+candidate draw finally has something to choose between.
+
+A hash answers one question — *is this exactly a repeat* — and the answer is
+almost always no, because two sites sharing their direction, hero layout,
+colour mode and type pairing still differ somewhere in the eighth decimal of
+a scale ratio. They are the same site to a visitor and a different string to
+SHA-256. `specDistance` counts disagreements across ten axes with §8.1's
+weights: `direction` and `heroArchetype` are worth three because they are
+what someone reads in the first second, `radius` and `displayWeight` one
+because nobody notices them alone.
+
+Three rules, all of §8.1's starting values:
+
+| rule | threshold |
+|---|---|
+| vs every run, last 30 days, **all sectors** | ≥ 0.40 |
+| vs every run in the same sector, last 90 days | ≥ 0.55 |
+| `direction` **and** `heroArchetype` may not both repeat | within 3 runs |
+
+The stage now draws two specs from each of the top three directions (§6.3),
+in preference order, and takes the first that clears all three. The check is
+arithmetic and runs before `generate`, so a rejection costs nothing — which
+is the whole reason the pipeline can afford to be picky.
+
+The ledger carries the serialized spec in a `spec` column rather than one
+column per axis, which would go stale the first time the spec gains an axis.
+Rows written before C4 have none and are skipped: a neighbour that cannot be
+measured must not silently read as "far away".
+
+### What the gate says about the catalog
+
+Measured against ten identical clinical briefs — the hardest case, since
+nothing but the rotation distinguishes those clients:
+
+```
+0: swiss-grid/split          rejected=0
+1: editorial-serif/type-only rejected=2
+2: kinetic-bold/offset-grid  rejected=4
+3: quiet-luxury/photo-full   rejected=6   (widened)
+4: quiet-luxury/collage      rejected=23  (widened)
+5: kinetic-bold/marquee      rejected=19  (widened)
+6: quiet-luxury/photo-full   rejected=24  ** fallback **
+...
+```
+
+Six distinct sites, then the catalog runs out. Four directions offer eleven
+direction/hero pairs between them, and with an identical brief the colour
+mode and type pairing are nearly fixed per direction, so two runs of the
+same direction sit well under 0.40 apart. **This is the number to watch in
+the ship test** (§12 wants ten sites, at least three sectors — real clients
+differ in brief, which widens it considerably, but not infinitely).
+
+Two deliberate choices around that ceiling:
+
+- **Widening before giving up.** §6.3 stops at six candidates because the
+  candidate judge costs a dollar a run. There is no judge yet and the
+  distance check is arithmetic, so when all six fail the stage draws from
+  the remaining directions and then four more per direction — 24 in the
+  worst case, microseconds. It moves the first fallback from the fourth site
+  to the seventh, and the survivor is sometimes the twentieth draw. When C5
+  adds the judge, the §6.3 shortlist is what it ranks and this tail stays a
+  fallback.
+- **Never failing the run.** When nothing clears, the stage ships the
+  furthest candidate and logs that it did. The operator reviews every site
+  before it goes out, so a site resembling last week's is worse than no site
+  only if nobody looks — and the real answer is more directions and more
+  archetypes, not a lower threshold (design-rules §12: fix the detector
+  before the site, and never the other way round).
+
 ## Next
 
-Phase C's remaining halves: §6.3's multi-candidate draw (two specs from each
-of the top three directions, the judge picking among survivors), §8
-structural and visual distance, and calibration. Both of the first two
-depend on §8, so §8 is the next one. Then Phase D's signature section and
-the judge work.
+§8.2 visual distance (C5): pre-render each surviving candidate from its spec
+plus the client's own text and photographs, screenshot both folds, embed
+locally, reject on cosine similarity. Q4 is settled — local only, no client
+render leaves the machine. Then §8.3 calibration, which is an operator task:
+~30 labelled pairs, and the thresholds above move to match the labels.
+
+Phase D's signature section and judge work follow.
+
+### Still open from earlier turns
+
+- `signature` is `{ sectionIndex: 0, concept: "<direction> hero" }` — a true
+  statement, not a decision. §9 owns the real one.
+- `color.paperLightness` still only decides `split`'s polarity.
+- The committed fixtures are smaller than real clients (4 services, 4
+  gallery images, 3 team members, no `process` section), so most archetypes
+  are previewed at a size a real client exceeds.
 
 Smaller things this turn left open, none blocking:
 

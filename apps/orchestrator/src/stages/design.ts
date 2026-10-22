@@ -6,15 +6,21 @@ import { readManifest, samplePhotographs } from "../design/sample.js";
 import {
   recentArchetypes,
   recentDirectionUsage,
+  recentNeighbours,
   recordSpec,
   sectionsFromFacts,
 } from "../design/ledger.js";
-import { composeArchetypes, fingerprintSpec } from "../design/compose.js";
+import { distanceRejection, THRESHOLDS } from "../design/distance.js";
+import {
+  composeArchetypes,
+  fingerprintSpec,
+  type ArchetypeChoice,
+} from "../design/compose.js";
 import { takeInventory } from "../design/inventory.js";
 import { foldForMatch } from "../design/fold.js";
-import { designSpecSchema } from "@pipeline/core";
+import { designSpecSchema, type DesignSpec, type Direction } from "@pipeline/core";
 import { DIRECTIONS, DIRECTION_IDS } from "../design/directions/index.js";
-import { photoQualityFrom, rankDirections } from "../design/score.js";
+import { photoQualityFrom, rankDirections, type DirectionScore } from "../design/score.js";
 import { sampleSpec } from "../design/sample-spec.js";
 import { renderSpecTokens } from "../design/spec-tokens.js";
 import { assertVendored, planLocalFonts } from "../design/local-fonts.js";
@@ -34,6 +40,11 @@ import { assertVendored, planLocalFonts } from "../design/local-fonts.js";
  *    same site and two clients on the same direction do not.
  *  - **Which layout per section.** From the direction's own shortlist,
  *    preferring archetypes the recent runs did not use (§6.4).
+ *
+ * Six candidates are drawn — two from each of the top three directions —
+ * and the first one far enough from every recent run wins (§8.1). The
+ * check is free and runs before `generate`, so a rejection costs nothing;
+ * that ordering is the reason the pipeline can afford to be picky.
  *
  * The palette's HUE still comes from the client's own photographs (§13 Q3),
  * and which sections exist is still a function of which facts exist (D6) —
@@ -134,64 +145,149 @@ export const designStage: StageModule = {
       scoringBrief,
       usage,
     );
-    const winner = ranked[0]!;
-    const direction = DIRECTIONS[winner.id]!;
     ctx.log(
-      `direction ${winner.id} (score ${winner.score}): ${winner.reason}`,
-      {
-        direction: winner.id,
-        brief: scoringBrief,
-        runnersUp: ranked.slice(1).map((r) => `${r.id} ${r.score}`),
-        recentUsage: usage,
-      },
+      `ranked: ${ranked.map((r) => `${r.id} ${r.score}`).join(", ")}`,
+      { brief: scoringBrief, recentUsage: usage },
     );
 
-    // 4. Compose (§6.4): one archetype per section, preferring layouts the
-    //    recent runs did not use. Which sections exist is already settled
-    //    above, by which facts exist — the direction decides how a page
-    //    looks, never what is on it.
+    // 4. Candidates (§6.3): two draws from each of the top three directions.
+    //
+    //    Not one spec from the winner. A single draw has no way to lose: if
+    //    it lands close to last week's site the only remaining move is to
+    //    rebuild it, and §8 puts the distance check before `generate`
+    //    precisely so a rejection costs nothing. Six candidates give the
+    //    check something to choose between.
     const archetypeUsage = recentArchetypes(ctx.store);
-    const composed = composeArchetypes({
-      direction,
-      sections,
-      seed: ctx.domain,
-      recentUsage: archetypeUsage,
-    });
-    const recycled = composed.filter((c) => c.recycled);
+    const neighbours = recentNeighbours(ctx.store, { sector });
+
+    const drawCandidate = (scored: DirectionScore, draw: number): Candidate => {
+      const direction = DIRECTIONS[scored.id]!;
+      // The draw index seeds the archetypes too, or two candidates from one
+      // direction would share a hero — and `heroArchetype` is one of the two
+      // axes §8.1 weights most heavily.
+      const composed = composeArchetypes({
+        direction,
+        sections,
+        seed: `${ctx.domain}-${draw}`,
+        recentUsage: archetypeUsage,
+      });
+      const sampled = sampleSpec(direction, ctx.domain, draw);
+      return {
+        scored,
+        direction,
+        composed,
+        spec: designSpecSchema.parse({
+          ...sampled,
+          color: {
+            ...sampled.color,
+            brandH: palette.hue,
+            brandC: brandChroma(palette.chroma, direction.color.maxChroma),
+          },
+          sections: composed.map(({ type, archetype }) => ({ type, archetype })),
+          // §9 (the signature section) is D-phase work. Until it lands the
+          // bold element is the hero and the concept names the direction's
+          // own argument, so the plan stage reads something true rather than
+          // a placeholder that reads as a decision.
+          signature: { sectionIndex: 0, concept: `${scored.id} hero` },
+          rejected: [],
+        }),
+      };
+    };
+
+    // The §6.3 shortlist, then everything else. Both lists are in preference
+    // order, so the first survivor anywhere is the best available answer.
+    //
+    // §6.3 stops at six because the candidate judge is a dollar a run and
+    // ranking more costs money. There is no judge yet, and the distance
+    // check is arithmetic — so when all six fail, widening is free, and free
+    // beats shipping a site flagged as a near-repeat. When C5 adds the
+    // judge, the shortlist is what it ranks; this tail stays a fallback.
+    const shortlist = ranked.slice(0, CANDIDATE_DIRECTIONS);
+    const tail = ranked.slice(CANDIDATE_DIRECTIONS);
+    const draws = Array.from({ length: DRAWS_PER_DIRECTION }, (_, i) => i);
+    const extraDraws = Array.from(
+      { length: ESCALATION_DRAWS },
+      (_, i) => DRAWS_PER_DIRECTION + i,
+    );
+
+    const candidates: Candidate[] = [
+      ...shortlist.flatMap((s) => draws.map((d) => drawCandidate(s, d))),
+      ...tail.flatMap((s) => draws.map((d) => drawCandidate(s, d))),
+      ...ranked.flatMap((s) => extraDraws.map((d) => drawCandidate(s, d))),
+    ];
+
+    // 5. Distance (§8.1). Candidates are already in preference order, so the
+    //    first survivor is the "top-scored surviving candidate" the budget
+    //    table falls back to when no judge is available. The judge itself is
+    //    §6.3's other half and needs the visual distance (§8.2, C5) to have
+    //    anything to rank.
+    const rejected: { direction: string; reason: string; distance: number }[] = [];
+    let chosen: Candidate | undefined;
+
+    for (const candidate of candidates) {
+      const tooClose = distanceRejection(candidate.spec, ctx.domain, neighbours);
+      if (tooClose === null) {
+        chosen = candidate;
+        break;
+      }
+      rejected.push({
+        direction: candidate.spec.direction,
+        reason: `${tooClose.rule}: ${tooClose.reason}`,
+        distance: tooClose.distance,
+      });
+    }
+
+    if (chosen === undefined) {
+      // Every candidate is too close to something recent. Taking the
+      // least-close one beats failing the run: the operator reviews every
+      // site before it ships, and a site that resembles last week's is a
+      // worse outcome than no site only if nobody looks. The log says so
+      // plainly, because the real answer is more directions or more
+      // archetypes, not a lower threshold.
+      let bestAt = 0;
+      for (let i = 1; i < rejected.length; i += 1) {
+        if (rejected[i]!.distance > rejected[bestAt]!.distance) bestAt = i;
+      }
+      chosen = candidates[bestAt]!;
+      ctx.log(
+        `no candidate cleared the distance thresholds after ` +
+          `${candidates.length} draws — taking the furthest ` +
+          `(${rejected[bestAt]!.distance}) and flagging it`,
+        { seed: chosen.spec.seed, thresholds: THRESHOLDS },
+      );
+    } else if (rejected.length >= shortlist.length * DRAWS_PER_DIRECTION) {
+      // Past the §6.3 shortlist. Not a failure, but the catalog is the
+      // binding constraint at this point and that is worth saying out loud.
+      ctx.log(
+        `the §6.3 shortlist was exhausted; ${chosen.spec.direction} came ` +
+          `from the widened draw`,
+        { rejectedCandidates: rejected.length },
+      );
+    }
+
+    const winner = chosen.scored;
+    const spec = designSpecSchema.parse({ ...chosen.spec, rejected });
+
+    const recycled = chosen.composed.filter((c) => c.recycled);
     if (recycled.length > 0) {
-      // Not a failure: it means this direction's shortlist for those types
-      // is smaller than the rotation window. Worth a line, because the
-      // answer is to build more archetypes, not to widen the window.
+      // Not a failure: this direction's shortlist for those types is
+      // smaller than the rotation window. Worth a line, because the answer
+      // is to build more archetypes, not to widen the window.
       ctx.log(
         `every option recently used for: ${recycled.map((c) => c.type).join(", ")}`,
         { recycled: recycled.map((c) => `${c.type}/${c.archetype}`) },
       );
     }
-
-    // 5. Spec, sampled from that direction's ranges (§6.3), then overridden
-    //    on the axes that belong to the client rather than the direction.
-    const sampled = sampleSpec(direction, ctx.domain, 0);
-    const spec = designSpecSchema.parse({
-      ...sampled,
-      color: {
-        ...sampled.color,
-        brandH: palette.hue,
-        brandC: brandChroma(palette.chroma, direction.color.maxChroma),
+    ctx.log(
+      `direction ${winner.id} (score ${winner.score}): ${winner.reason}`,
+      {
+        direction: winner.id,
+        seed: spec.seed,
+        rejectedCandidates: rejected.length,
+        ofCandidates: candidates.length,
+        neighbours: neighbours.length,
       },
-      sections: composed.map(({ type, archetype }) => ({ type, archetype })),
-      // §9 (the signature section) is D-phase work. Until it lands the bold
-      // element is the hero and the concept names the direction's own
-      // argument, so the plan stage reads something true rather than a
-      // placeholder that reads as a decision.
-      signature: { sectionIndex: 0, concept: `${winner.id} hero` },
-      rejected: ranked.slice(1).map((r) => ({
-        direction: r.id,
-        reason: r.reason,
-        // No visual-distance metric exists yet (C4); this is the score gap,
-        // which is a distance in the only space currently measured.
-        distance: Number((winner.score - r.score).toFixed(3)),
-      })),
-    });
+    );
 
     recordSpec(ctx.store, {
       domain: ctx.domain,
@@ -385,3 +481,31 @@ export function detectSector(facts: Record<string, unknown>, runDir: string): st
   return "general";
 }
 
+
+/** One sampled spec, with the direction and archetypes that produced it. */
+interface Candidate {
+  scored: DirectionScore;
+  direction: Direction;
+  composed: ArchetypeChoice[];
+  spec: DesignSpec;
+}
+
+/** Directions on the §6.3 shortlist ("the top 3"). */
+const CANDIDATE_DIRECTIONS = 3;
+
+/** Draws per direction (§6.3: "2 candidate specs" each). */
+const DRAWS_PER_DIRECTION = 2;
+
+/**
+ * Extra draws per direction, used only once the shortlist and the remaining
+ * directions have all been rejected.
+ *
+ * Four keeps the worst case at 24 candidates, which is microseconds of pure
+ * arithmetic. Measured against ten identical clinical briefs — the hardest
+ * case, since nothing but the rotation distinguishes those clients — it
+ * moves the first fallback from the fourth site to the seventh, and the
+ * surviving candidate is sometimes as deep as the twentieth draw. Beyond
+ * the seventh, four directions cannot produce another site 0.40 away from
+ * all six before it, and no number here changes that.
+ */
+const ESCALATION_DRAWS = 4;
