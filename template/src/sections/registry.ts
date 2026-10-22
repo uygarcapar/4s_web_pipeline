@@ -19,6 +19,7 @@ import { MapEmbed } from "@/sections/map";
 import { Services } from "@/sections/services";
 import { Statement } from "@/sections/statement";
 import { Visit } from "@/sections/visit";
+import { ServicesAccordion } from "@/sections/services/accordion";
 import { ServicesAlternating } from "@/sections/services/alternating";
 import { ServicesRailPinned } from "@/sections/services/rail-pinned";
 import { TeamStickySwap } from "@/sections/team/sticky-swap";
@@ -83,6 +84,7 @@ const archetypeRegistry: {
   services: {
     "rail-pinned": ServicesRailPinned,
     "alternating": ServicesAlternating,
+    "accordion": ServicesAccordion,
   },
   team: { "sticky-swap": TeamStickySwap },
 };
