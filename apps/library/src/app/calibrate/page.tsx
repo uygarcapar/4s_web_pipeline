@@ -33,8 +33,13 @@ interface PairsFile {
   pairs: CalibrationPair[];
 }
 
-export default async function CalibratePage() {
+export default async function CalibratePage({
+  searchParams,
+}: {
+  searchParams: Promise<{ only?: string }>;
+}) {
   await connection();
+  const { only } = await searchParams;
 
   const path = join(process.cwd(), "..", "..", "data", "calibration", "pairs.json");
 
@@ -60,10 +65,52 @@ export default async function CalibratePage() {
     );
   }
 
+  /**
+   * `?only=a,b,c` narrows to pairs BETWEEN the named directions.
+   *
+   * A full pass is thirty judgements and an hour. After a catalog change
+   * the question is usually much narrower than that — "are these three
+   * still one family?" — and asking for the whole hour again to answer it
+   * is how a calibration loop stops being run.
+   */
+  const focus = (only ?? "")
+    .split(",")
+    .map((s) => s.trim())
+    .filter(Boolean);
+
+  const direction = (candidate: string): string => candidate.replace(/-\d+$/, "");
+  const pairs =
+    focus.length === 0
+      ? file.pairs
+      : file.pairs.filter((p) => {
+          const a = direction(p.a);
+          const b = direction(p.b);
+          // Cross-direction only: two draws of one direction looking alike
+          // is expected and says nothing about whether two directions do.
+          return a !== b && focus.includes(a) && focus.includes(b);
+        });
+
+  if (pairs.length === 0) {
+    return (
+      <main className="mx-auto max-w-2xl px-6 py-24">
+        <h1 className="text-2xl font-semibold">No pairs match</h1>
+        <p className="mt-4 text-sm opacity-80">
+          Nothing in the current sample sits between{" "}
+          <code>{focus.join(", ")}</code>. Drop the <code>?only=</code> filter
+          to see all {file.pairs.length}.
+        </p>
+      </main>
+    );
+  }
+
   return (
     <CalibrateClient
-      pairs={file.pairs}
-      summary={`${file.generatedFrom.candidates} candidates from ${file.generatedFrom.directions.length} directions · ${file.pairs.length} of ${file.generatedFrom.pairsConsidered} pairs sampled`}
+      pairs={pairs}
+      summary={
+        focus.length > 0
+          ? `${pairs.length} pairs between ${focus.join(", ")}`
+          : `${file.generatedFrom.candidates} candidates from ${file.generatedFrom.directions.length} directions · ${file.pairs.length} of ${file.generatedFrom.pairsConsidered} pairs sampled`
+      }
     />
   );
 }
