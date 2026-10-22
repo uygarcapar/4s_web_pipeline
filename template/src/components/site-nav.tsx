@@ -38,20 +38,28 @@ export function SiteNav({ config }: { config: SiteConfig }) {
         aria-label="Ana menü"
         className="flex items-center justify-between gap-6 px-5 py-4 text-paper-50 sm:px-8"
       >
-        {/* Hidden on the narrowest phones: `.btn-label` sets white-space
-            nowrap for the whole scale, so a long business name cannot wrap or
-            truncate and pushed the bar past a 344px fold viewport. The hero
-            and the footer both carry the name there; what the bar must keep
-            at every width is the call. */}
+        {/*
+          Hidden on the narrowest phones: `.btn-label` sets `nowrap`, so a
+          long business name cannot wrap, and at 344px it would push the bar
+          wider than the fold. The hero and the footer both carry the name
+          there; what the bar must keep at every width is the call.
+
+          `shrink-0`, not `min-w-0`: in a flex row the name was being crushed
+          to **zero width** at 768–844px once a team section added another
+          anchor — `nowrap` kept it on one line and the flex algorithm took
+          the width away instead, which the geometry gate reads (correctly)
+          as a 0×44 tap target. The link list moves to `lg` for the same
+          reason: a crowded nav at tablet width is worse than a shorter one.
+        */}
         <a
           href="#hero"
-          className="btn-label pointer-events-auto -my-3 hidden min-h-11 min-w-0 items-center focus-visible:ring-2 focus-visible:ring-paper-50 focus-visible:outline-none min-[380px]:inline-flex"
+          className="btn-label pointer-events-auto -my-3 hidden min-h-11 shrink-0 items-center focus-visible:ring-2 focus-visible:ring-paper-50 focus-visible:outline-none min-[380px]:inline-flex"
         >
           {config.business.name}
         </a>
 
         <div className="pointer-events-auto flex shrink-0 items-center gap-6 sm:gap-8">
-          <ul className="hidden items-center gap-6 md:flex lg:gap-8">
+          <ul className="hidden items-center gap-6 lg:flex lg:gap-8">
             {links.map((link) => (
               <li key={link.id}>
                 <a

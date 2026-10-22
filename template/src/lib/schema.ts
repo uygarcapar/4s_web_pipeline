@@ -98,7 +98,9 @@ export const teamSectionSchema = z
     ...sectionBase,
     type: z.literal("team"),
     /** Layout archetype, chosen per site by the design stage (D6). */
-    variant: z.enum(["default", "sticky-swap", "grid"]).optional(),
+    variant: z
+      .enum(["sticky-swap", "grid", "roster", "lead", "portrait-rows"])
+      .optional(),
     title: z.string().min(1),
     intro: z.string().min(1).optional(),
     members: z

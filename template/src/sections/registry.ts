@@ -22,6 +22,10 @@ import { ServicesAlternating } from "@/sections/services/alternating";
 import { ServicesImageGrid } from "@/sections/services/image-grid";
 import { ServicesIndex } from "@/sections/services/index-columns";
 import { ServicesRailPinned } from "@/sections/services/rail-pinned";
+import { TeamGrid } from "@/sections/team/grid";
+import { TeamLead } from "@/sections/team/lead";
+import { TeamPortraitRows } from "@/sections/team/portrait-rows";
+import { TeamRoster } from "@/sections/team/roster";
 import { TeamStickySwap } from "@/sections/team/sticky-swap";
 import { Testimonials } from "@/sections/testimonials";
 
@@ -88,7 +92,13 @@ const archetypeRegistry: {
     "image-grid": ServicesImageGrid,
     "index": ServicesIndex,
   },
-  team: { "sticky-swap": TeamStickySwap },
+  team: {
+    "sticky-swap": TeamStickySwap,
+    "grid": TeamGrid,
+    "roster": TeamRoster,
+    "lead": TeamLead,
+    "portrait-rows": TeamPortraitRows,
+  },
 };
 
 /**

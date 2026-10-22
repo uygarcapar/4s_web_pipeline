@@ -181,6 +181,7 @@ body {
   line-height: 1.2;
   letter-spacing: 0.08em;
   text-transform: uppercase;
+  white-space: nowrap;
 }
 
 .btn-label {
@@ -190,6 +191,7 @@ body {
   line-height: 1;
   letter-spacing: 0.02em;
   text-transform: uppercase;
+  white-space: nowrap;
 }
 
 /* The measure every running-text block is capped to. */
@@ -381,6 +383,7 @@ body {
   line-height: 1.2;
   letter-spacing: 0.08em;
   text-transform: uppercase;
+  white-space: nowrap;
 }
 
 .btn-label {
@@ -390,6 +393,7 @@ body {
   line-height: 1;
   letter-spacing: 0.02em;
   text-transform: uppercase;
+  white-space: nowrap;
 }
 
 /* The measure every running-text block is capped to. */
@@ -580,6 +584,7 @@ body {
   line-height: 1.2;
   letter-spacing: 0.08em;
   text-transform: uppercase;
+  white-space: nowrap;
 }
 
 .btn-label {
@@ -589,6 +594,7 @@ body {
   line-height: 1;
   letter-spacing: 0.02em;
   text-transform: uppercase;
+  white-space: nowrap;
 }
 
 /* The measure every running-text block is capped to. */
@@ -783,6 +789,7 @@ body {
   line-height: 1.2;
   letter-spacing: 0.08em;
   text-transform: uppercase;
+  white-space: nowrap;
 }
 
 .btn-label {
@@ -792,6 +799,7 @@ body {
   line-height: 1;
   letter-spacing: 0.02em;
   text-transform: uppercase;
+  white-space: nowrap;
 }
 
 /* The measure every running-text block is capped to. */
