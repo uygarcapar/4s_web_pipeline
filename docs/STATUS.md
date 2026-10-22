@@ -1055,10 +1055,46 @@ does not.
 
 `verify` exits 0 on both fixtures.
 
+## B4 · `services/image-grid`
+
+Each service a cell, its photograph filling it, its name on the picture.
+Composition from `noho-ink` and `lxlcreative`.
+
+**Not the card grid the template shipped with.** That one put a thumbnail, a
+title and a paragraph in a bordered card, which makes the photograph an
+illustration of the text. Here the photograph *is* the cell and the
+description is a line underneath. For a trade whose work is visual — a
+salon, a tiler, a clinic with before/after rooms — the pictures are what a
+visitor is scanning for.
+
+A scrim rather than a flat tint: an overlay strong enough to carry text
+washes the picture out, and a page of washed-out pictures is the
+stock-photo-luxury cluster §2 fails. The gradient is strongest exactly where
+the name sits.
+
+**A defect only the dark direction showed.** Unphotographed cells used
+`--paper-200`, which is one step *darker* than the `--paper-100` page — fine
+on the three light directions, invisible on `quiet-luxury`, where the cell
+vanished into the background and left a hole in the grid, the one thing this
+archetype must not have. They use `--paper-50` now, which is a step away
+from the page in both modes: L 0.22 against 0.19 dark, 0.99 against 0.975
+light.
+
+That is the second time an inverted ramp has caught me (after the dark-mode
+paper ordering in A4) and the fourth defect in this phase that measurements
+passed and a screenshot caught.
+
+`verify` exits 0 on both fixtures.
+
 ## Next
 
-**Services, 4 of 6** — `rail-pinned`, `alternating`, `accordion`, plus the
-legacy `default`. §7.1 still wants index list and image grid.
+**Services, 5 of 6** — `rail-pinned`, `alternating`, `accordion`,
+`image-grid`, plus the legacy `default`. §7.1 wants one more: index list.
+
+Then team (1 of 5), gallery (1 of 5), visit (1 of 4), and the smaller
+targets. The legacy `hero/default` and `services/default` are still in the
+registry reading no tokens; they should be deleted rather than left as
+traps.
 
 Two cleanups worth doing at some point, neither urgent: delete the legacy
 `hero/default` and `services/default`, which read no tokens and look
