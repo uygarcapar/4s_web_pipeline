@@ -1,6 +1,6 @@
 import { existsSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
-import type { StageModule } from "./types.js";
+import type { StageContext, StageModule } from "./types.js";
 import { derivePalette } from "../design/palette.js";
 import { readManifest, samplePhotographs } from "../design/sample.js";
 import {
@@ -11,6 +11,16 @@ import {
   sectionsFromFacts,
 } from "../design/ledger.js";
 import { distanceRejection, THRESHOLDS } from "../design/distance.js";
+import { prerenderConfig, type CrawlContent, type CrawlImage } from "../design/prerender.js";
+import { shootCandidate, type CandidateShots } from "../design/shots.js";
+import { embedShots } from "../design/embed.js";
+import {
+  clearVectors,
+  recentVectors,
+  recordVector,
+  visualRejection,
+  type VisualRejection,
+} from "../design/visual.js";
 import {
   composeArchetypes,
   fingerprintSpec,
@@ -18,7 +28,12 @@ import {
 } from "../design/compose.js";
 import { takeInventory } from "../design/inventory.js";
 import { foldForMatch } from "../design/fold.js";
-import { designSpecSchema, type DesignSpec, type Direction } from "@pipeline/core";
+import {
+  designSpecSchema,
+  type DesignSpec,
+  type Direction,
+  type Facts,
+} from "@pipeline/core";
 import { DIRECTIONS, DIRECTION_IDS } from "../design/directions/index.js";
 import { photoQualityFrom, rankDirections, type DirectionScore } from "../design/score.js";
 import { sampleSpec } from "../design/sample-spec.js";
@@ -216,25 +231,62 @@ export const designStage: StageModule = {
       ...ranked.flatMap((s) => extraDraws.map((d) => drawCandidate(s, d))),
     ];
 
-    // 5. Distance (§8.1). Candidates are already in preference order, so the
-    //    first survivor is the "top-scored surviving candidate" the budget
-    //    table falls back to when no judge is available. The judge itself is
-    //    §6.3's other half and needs the visual distance (§8.2, C5) to have
-    //    anything to rank.
+    // 5. Distance. §8.1 first because it is arithmetic; §8.2 only on the
+    //    candidates that survive it, because each one costs a Next build
+    //    and two screenshots. Both run before `generate`, so a rejection
+    //    costs no model spend — the ordering §6.3's budget table depends on.
+    //
+    //    "Both must pass" (§8). A spec can differ on several declared axes
+    //    and still produce a page that reads as the same site, because the
+    //    axes are what we chose to name and a visitor sees what is on the
+    //    screen.
     const rejected: { direction: string; reason: string; distance: number }[] = [];
+    const visual = await openVisualGate(ctx);
     let chosen: Candidate | undefined;
+    let chosenShots: CandidateShots | undefined;
+    let chosenVectors: { desktop: Float32Array; mobile: Float32Array } | undefined;
 
-    for (const candidate of candidates) {
+    for (const [index, candidate] of candidates.entries()) {
       const tooClose = distanceRejection(candidate.spec, ctx.domain, neighbours);
-      if (tooClose === null) {
+      if (tooClose !== null) {
+        rejected.push({
+          direction: candidate.spec.direction,
+          reason: `${tooClose.rule}: ${tooClose.reason}`,
+          distance: tooClose.distance,
+        });
+        continue;
+      }
+
+      if (visual === null) {
         chosen = candidate;
+        break;
+      }
+
+      const measured = await visual.measure(candidate, index);
+      if (measured === null) {
+        // The pre-render could not be built or photographed. A gate must
+        // never fail a run on its own failure, so this candidate is taken
+        // on §8.1's verdict alone — which it already passed. The log says
+        // the visual half did not run for it.
+        chosen = candidate;
+        break;
+      }
+      if (measured.rejection === null) {
+        chosen = candidate;
+        chosenShots = measured.shots;
+        chosenVectors = measured.vectors;
         break;
       }
       rejected.push({
         direction: candidate.spec.direction,
-        reason: `${tooClose.rule}: ${tooClose.reason}`,
-        distance: tooClose.distance,
+        reason: `visual: ${measured.rejection.reason}`,
+        // The cosine similarity, not a structural distance. Both land in
+        // the same field because `rejected[].distance` is "how close was
+        // this to something that already exists" in whichever space the
+        // rule that fired measures — the reason string says which.
+        distance: measured.rejection.similarity,
       });
+      ctx.log(`candidate ${candidate.spec.seed} rejected — ${measured.rejection.reason}`);
     }
 
     if (chosen === undefined) {
@@ -314,6 +366,24 @@ export const designStage: StageModule = {
     // design.json last: it is this stage's idempotency artifact, so it must
     // not exist until everything beside it does.
     writeFileSync(join(outDir, "design.json"), JSON.stringify(spec, null, 2) + "\n");
+
+    if (chosenVectors !== undefined && chosenShots !== undefined) {
+      // The candidate vectors, kept for provenance. They do NOT gate later
+      // runs — §8.2 is explicit that the post-verify vector is what those
+      // compare against, because a candidate belongs to a page that may
+      // never ship. `recentVectors` filters on `stage = "final"`.
+      clearVectors(ctx.store, { domain: ctx.domain, stage: "candidate" });
+      for (const fold of ["desktop", "mobile"] as const) {
+        recordVector(ctx.store, {
+          domain: ctx.domain,
+          stage: "candidate",
+          seed: spec.seed,
+          fold,
+          embedding: chosenVectors[fold],
+        });
+      }
+      ctx.log(`pre-render screenshots kept at ${chosenShots.dir}`);
+    }
 
     ctx.log(
       `spec: ${spec.type.display}/${spec.type.body} at ${spec.type.displayWeight}, ` +
@@ -509,3 +579,101 @@ const DRAWS_PER_DIRECTION = 2;
  * all six before it, and no number here changes that.
  */
 const ESCALATION_DRAWS = 4;
+
+/**
+ * The visual gate, or `null` when this run cannot use one.
+ *
+ * Two reasons it returns `null`, and both are "measure nothing" rather than
+ * "reject nothing", because a gate must never fail a run on its own
+ * failure:
+ *
+ *  - **No shipped sites to compare against.** The first handful of clients
+ *    have no neighbours; building a page to compare against nothing costs a
+ *    minute and answers a question nobody asked.
+ *  - **`PIPELINE_SKIP_PRERENDER`.** The pre-render is a Next build per
+ *    candidate, which is far too slow for the stage's own tests and for a
+ *    developer re-running a client locally. Set it and §8.1 still gates;
+ *    only the screenshot half is skipped, and the log says so.
+ */
+async function openVisualGate(ctx: StageContext): Promise<{
+  measure: (
+    candidate: Candidate,
+    index: number,
+  ) => Promise<{
+    rejection: VisualRejection | null;
+    shots: CandidateShots;
+    vectors: { desktop: Float32Array; mobile: Float32Array };
+  } | null>;
+} | null> {
+  if (process.env.PIPELINE_SKIP_PRERENDER === "1") {
+    ctx.log("PIPELINE_SKIP_PRERENDER=1 — §8.1 still gates, §8.2 does not run");
+    return null;
+  }
+
+  const seen = {
+    desktop: recentVectors(ctx.store, { fold: "desktop", excludeDomain: ctx.domain }),
+    mobile: recentVectors(ctx.store, { fold: "mobile", excludeDomain: ctx.domain }),
+  };
+  if (seen.desktop.length === 0 && seen.mobile.length === 0) {
+    ctx.log("no shipped sites to compare against yet — §8.2 has nothing to measure");
+    return null;
+  }
+
+  const facts = readJson<Facts>(join(ctx.runDir, "audit", "facts.json"));
+  if (facts === null) return null;
+  const content = readJson<CrawlContent>(join(ctx.runDir, "crawl", "content.json"));
+  const images = crawlImages(ctx.runDir);
+  const candidatesDir = join(ctx.runDir, "design", "candidates");
+
+  return {
+    async measure(candidate, index) {
+      try {
+        const config = prerenderConfig({
+          facts,
+          content,
+          spec: candidate.spec,
+          images,
+        });
+        const shots = await shootCandidate({
+          repoRoot: ctx.repoRoot,
+          outDir: join(candidatesDir, candidate.spec.seed),
+          spec: candidate.spec,
+          config,
+          assetsDir: join(ctx.runDir, "crawl", "assets"),
+          // A fixed base plus the candidate index: two stages never run
+          // concurrently for one domain, and a port left open by a killed
+          // run would otherwise make the next one hang on `waitForServer`.
+          port: PRERENDER_PORT + (index % 20),
+          log: (message) => ctx.log(message),
+        });
+        const vectors = await embedShots(shots);
+        return { rejection: visualRejection(vectors, seen), shots, vectors };
+      } catch (err) {
+        // A client whose facts cannot satisfy `siteConfigSchema` — no hours
+        // and no `hoursNote`, say — produces a scaffold that will not build.
+        // That is a fact about the crawl, not about the candidate, and it
+        // must not stop the run: §8.1 has already had its say.
+        ctx.log(
+          `pre-render failed for ${candidate.spec.seed}: ` +
+            `${err instanceof Error ? err.message.split("\n")[0] : String(err)} ` +
+            "— §8.2 skipped for this candidate",
+        );
+        return null;
+      }
+    },
+  };
+}
+
+/** Where the pre-render serves candidates from. */
+const PRERENDER_PORT = 3140;
+
+/** The crawl's downloaded photographs, as the site will reference them. */
+function crawlImages(runDir: string): CrawlImage[] {
+  const manifest = readJson<{ file?: unknown }[]>(
+    join(runDir, "crawl", "assets", "manifest.json"),
+  );
+  if (!Array.isArray(manifest)) return [];
+  return manifest
+    .filter((entry): entry is { file: string } => typeof entry.file === "string")
+    .map((entry) => ({ src: `/images/crawl/${entry.file}` }));
+}
