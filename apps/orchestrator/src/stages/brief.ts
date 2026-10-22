@@ -272,8 +272,42 @@ const BRIEF_SCHEMA = {
     "thinnest",
     "missing",
     "statementUsable",
+    "tone",
+    "tier",
+    "audience",
+    "contentVolume",
   ],
   properties: {
+    /*
+     * D10 §6.1. Enum-heavy on purpose: these four are what the direction
+     * scorer reads (§6.2), and a free-text "premium-ish, quite warm" cannot
+     * be scored. They sit in the same call as the prose fields because the
+     * judgement is the same judgement — asking twice would cost a second
+     * session to reach a less consistent answer.
+     */
+    tone: {
+      type: "string",
+      enum: ["warm", "clinical", "premium", "playful", "traditional", "technical"],
+      description:
+        "How this business presents itself in its OWN words, not how its sector usually does.",
+    },
+    tier: {
+      type: "string",
+      enum: ["budget", "mid", "premium"],
+      description:
+        "Price positioning as the current site implies it. Absent prices and plain language read mid, not premium.",
+    },
+    audience: {
+      type: "string",
+      enum: ["local-everyday", "local-premium", "b2b", "tourist"],
+      description: "Who the site is for, from who the current site addresses.",
+    },
+    contentVolume: {
+      type: "string",
+      enum: ["poster", "standard", "editorial"],
+      description:
+        "How much of their own usable text exists: poster is a handful of lines, editorial is pages someone wrote.",
+    },
     businessKind: {
       type: "string",
       description:
