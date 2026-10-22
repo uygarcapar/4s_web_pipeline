@@ -5,6 +5,10 @@ import { Closing } from "@/sections/closing";
 import { Contact } from "@/sections/contact";
 import { Faq } from "@/sections/faq";
 import { Gallery } from "@/sections/gallery";
+import { GalleryContactSheet } from "@/sections/gallery/contact-sheet";
+import { GalleryFullBleed } from "@/sections/gallery/full-bleed";
+import { GalleryMosaic } from "@/sections/gallery/mosaic";
+import { GalleryPairs } from "@/sections/gallery/pairs";
 import { HeroPhotoFull } from "@/sections/hero/photo-full";
 import { HeroCollage } from "@/sections/hero/collage";
 import { HeroIndex } from "@/sections/hero/index-list";
@@ -104,6 +108,10 @@ export const LIBRARY_ARCHETYPES: LibraryArchetype[] = [
   entry("team/lead", "team", "lead", TeamLead, bySectionType("team")),
   entry("team/portrait-rows", "team", "portrait-rows", TeamPortraitRows, bySectionType("team")),
   entry("gallery/default", "gallery", "default", Gallery, bySectionType("gallery")),
+  entry("gallery/mosaic", "gallery", "mosaic", GalleryMosaic, bySectionType("gallery")),
+  entry("gallery/full-bleed", "gallery", "full-bleed", GalleryFullBleed, bySectionType("gallery")),
+  entry("gallery/pairs", "gallery", "pairs", GalleryPairs, bySectionType("gallery")),
+  entry("gallery/contact-sheet", "gallery", "contact-sheet", GalleryContactSheet, bySectionType("gallery")),
   entry("testimonials/default", "testimonials", "default", Testimonials, bySectionType("testimonials")),
   entry("faq/default", "faq", "default", Faq, bySectionType("faq")),
   entry("hours/default", "hours", "default", Hours, bySectionType("hours")),

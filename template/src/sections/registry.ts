@@ -5,6 +5,10 @@ import { Closing } from "@/sections/closing";
 import { Contact } from "@/sections/contact";
 import { Faq } from "@/sections/faq";
 import { Gallery } from "@/sections/gallery";
+import { GalleryContactSheet } from "@/sections/gallery/contact-sheet";
+import { GalleryFullBleed } from "@/sections/gallery/full-bleed";
+import { GalleryMosaic } from "@/sections/gallery/mosaic";
+import { GalleryPairs } from "@/sections/gallery/pairs";
 import { HeroPhotoFull } from "@/sections/hero/photo-full";
 import { HeroCollage } from "@/sections/hero/collage";
 import { HeroIndex } from "@/sections/hero/index-list";
@@ -83,6 +87,12 @@ const archetypeRegistry: {
   },
   statement: { "word-reveal": Statement },
   visit: { "rows": Visit },
+  gallery: {
+    "mosaic": GalleryMosaic,
+    "full-bleed": GalleryFullBleed,
+    "pairs": GalleryPairs,
+    "contact-sheet": GalleryContactSheet,
+  },
   closing: { "statement-cta": Closing },
   marquee: { "ticker": Marquee },
   services: {
