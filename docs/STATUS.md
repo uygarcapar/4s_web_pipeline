@@ -1585,6 +1585,53 @@ having and the method still holds, but the numbers have to be re-taken once
 the catalog settles — and §8.3's operator labelling should wait for the same
 reason.
 
+## Phase D — the signature section and the judge's other half
+
+**D1.** §9's one bold element, as a stage between `generate` and `verify`.
+It edits exactly one file — `src/sections/signature/custom.tsx`, a slot the
+registry already imports — which is how §9's freedom coexists with
+build-rules §4. Write → build → screenshot → critique → revise, at most
+three rounds, and the critique is a separate hostile vision session looking
+at the page beside the direction's references. Separate because a model
+asked whether its own work is good says yes; and the bar is not "is it
+good" but "is it better than the competent default it replaced".
+
+It never fails a run. The fallback restores the pristine slot **and** drops
+the section's `variant` — restoring alone would leave the config claiming a
+bespoke signature that no longer exists.
+
+The signature REPLACES `statement` rather than joining it: both want the
+client's own sentence at scale, and a page carrying both says it twice.
+
+**D2.** Two rubric questions compare the page against something that is not
+on the page, and neither had its other half. DJ18 asks whether the
+signature "resembles its direction's reference set" — the judge had never
+been shown the reference set. DJ11 asks whether the bold element is
+present — a judge that does not know the §9 loop fell back reads a correct
+default as a missing element. Both are now in the prompt, with the
+direction's `intent` and `avoid` list.
+
+`docs/D10-judge-examples.md` is the few-shot half: worked pass/fail answers
+for the questions easiest to get wrong. Every example is a real page this
+pipeline produced, because the failures that actually got through are the
+ones a judge most needs to recognise — several of them found by looking at
+a render after every automated gate had passed.
+
+### Two bugs D1 turned up
+
+- **`dropSignatureVariant` was a regex, and it was wrong.** Anchored on
+  `type: "signature"` with a 400-character window — contained-looking, but
+  in the multi-line shape `generate` actually writes, a signature section
+  with no variant let the match run past the closing brace and strip **the
+  next section's** variant. A fallback whose job is to make one section
+  boring must not be able to take a layout choice from another. It is
+  brace-matched now and both cases are tested.
+- **`plan.ts` had a stale hardcoded section list** — eight types against the
+  schema's twelve. It could not produce `statement`, `visit`, `closing`,
+  `marquee`, `process` or `team`, let alone `signature`, and nothing said
+  so. It takes the list from `design.json` now, which is where the decision
+  was already made.
+
 ## Next
 
 **§8.3 calibration — operator.** ~30 labelled pairs. Both thresholds move to
