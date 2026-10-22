@@ -1,0 +1,108 @@
+import { designSpecSchema } from "@pipeline/core";
+import { describe, expect, it } from "vitest";
+
+import { DIRECTIONS, DIRECTION_IDS } from "./directions/index.js";
+import { hashSeed, mulberry32, sampleSpec } from "./sample-spec.js";
+
+describe("mulberry32", () => {
+  it("is deterministic", () => {
+    const a = mulberry32(12345);
+    const b = mulberry32(12345);
+    expect([a(), a(), a()]).toEqual([b(), b(), b()]);
+  });
+
+  it("stays inside [0, 1)", () => {
+    const rng = mulberry32(7);
+    for (let i = 0; i < 500; i += 1) {
+      const v = rng();
+      expect(v).toBeGreaterThanOrEqual(0);
+      expect(v).toBeLessThan(1);
+    }
+  });
+
+  /**
+   * Adjacent seeds must not produce correlated streams: candidates are
+   * seeded "<domain>-0", "<domain>-1", and a hash that merely sums
+   * characters would hand them near-identical first draws — which would
+   * make two candidates for one client the same spec.
+   */
+  it("decorrelates adjacent seeds", () => {
+    const a = mulberry32(hashSeed("acme-0"))();
+    const b = mulberry32(hashSeed("acme-1"))();
+    expect(Math.abs(a - b)).toBeGreaterThan(0.05);
+  });
+});
+
+describe.each(DIRECTION_IDS)("sampleSpec — %s", (id) => {
+  const direction = DIRECTIONS[id]!;
+
+  it("produces a spec that parses", () => {
+    for (let i = 0; i < 8; i += 1) {
+      const r = designSpecSchema.safeParse(sampleSpec(direction, "fixture", i));
+      expect(r.success, JSON.stringify(r.error?.issues)).toBe(true);
+    }
+  });
+
+  it("only ever draws values the direction permits", () => {
+    for (let i = 0; i < 24; i += 1) {
+      const s = sampleSpec(direction, "fixture", i);
+      expect(direction.type.displayWeights).toContain(s.type.displayWeight);
+      expect(direction.type.displayCase).toContain(s.type.displayCase);
+      expect(direction.color.modes).toContain(s.color.mode);
+      expect(direction.color.strategies).toContain(s.color.strategy);
+      expect(direction.shape.radius).toContain(s.shape.radius);
+      expect(direction.shape.rules).toContain(s.shape.rules);
+      expect(direction.shape.imageFrame).toContain(s.shape.imageFrame);
+      expect(direction.grid.alignment).toContain(s.grid.alignment);
+      expect(direction.grid.density).toContain(s.grid.density);
+      expect(direction.motion.profiles).toContain(s.motion.profile);
+
+      const [tMin, tMax] = direction.type.displayTracking;
+      expect(s.type.displayTracking).toBeGreaterThanOrEqual(tMin);
+      expect(s.type.displayTracking).toBeLessThanOrEqual(tMax);
+      const [rMin, rMax] = direction.type.scaleRatio;
+      expect(s.type.scaleRatio).toBeGreaterThanOrEqual(rMin);
+      expect(s.type.scaleRatio).toBeLessThanOrEqual(rMax);
+      expect(s.color.brandC).toBeLessThanOrEqual(direction.color.maxChroma);
+    }
+  });
+
+  it("is reproducible — same inputs, same spec", () => {
+    expect(sampleSpec(direction, "acme", 3)).toEqual(sampleSpec(direction, "acme", 3));
+  });
+
+  it("gives different clients different specs", () => {
+    const a = JSON.stringify(sampleSpec(direction, "acme", 0));
+    const b = JSON.stringify(sampleSpec(direction, "baker", 0));
+    expect(a).not.toBe(b);
+  });
+
+  /**
+   * The point of sampling at all. A direction whose candidates never differ
+   * is a direction with one spec, and the library would be showing a corner
+   * of it — which is exactly what option `[0]` did.
+   */
+  it("explores more than one point of its own range", () => {
+    const seen = new Set<string>();
+    for (let i = 0; i < 12; i += 1) {
+      const s = sampleSpec(direction, "fixture", i);
+      seen.add(
+        [
+          s.type.displayWeight,
+          s.type.scaleRatio,
+          s.shape.radius,
+          s.shape.imageFrame,
+          s.color.mode,
+        ].join("|"),
+      );
+    }
+    expect(seen.size).toBeGreaterThan(1);
+  });
+
+  it("carries the direction's required motion signatures", () => {
+    const s = sampleSpec(direction, "fixture", 0);
+    for (const sig of direction.motion.required) {
+      expect(s.motion.signatures).toContain(sig);
+    }
+  });
+});

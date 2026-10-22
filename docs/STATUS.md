@@ -790,6 +790,45 @@ frames photographs instead of branching on the frame's name.
 
 `verify` exits 0 on both fixtures. 299 tests.
 
+## The library shows a direction's range, not one corner of it
+
+`/library` rendered option `[0]` of every axis, so radius, image frame,
+colour mode and type pairing never varied inside a direction — an archetype
+was approved against roughly a quarter of what its direction can produce.
+
+`design/sample-spec.ts` implements §6.3's sampler for real:
+`mulberry32(hash(seed))`, reproducible, drawing only values the direction
+permits. The library draws **three candidates per direction** and the grid
+gained a candidate selector, with a line per direction naming what each
+candidate drew (face, weight, ratio, mode, frame, radius, alignment,
+density).
+
+The same archetype under `kinetic-bold`, across candidates:
+
+| candidate | face | weight | size | image |
+|---|---|---|---|---|
+| 0 | Anton | 800 | 80px | 3/4 masked |
+| 1 | Archivo | 800 | 86px | 4/3 bleed |
+| 2 | Anton | 700 | 88px | 4/3 bleed |
+
+27 tests, including that the sampler never draws a value outside the
+direction, that the same inputs give the same spec, and that adjacent seeds
+decorrelate — `"acme-0"` and `"acme-1"` must not share a first draw, or two
+candidates for one client would be the same spec.
+
+Distribution checked over 300 draws rather than assumed: ~50/50 on
+two-option axes, and `editorial-serif` constant because it declares single
+options. The hue is pinned across candidates on purpose — it is the
+client's, not the direction's (§13 Q3), so letting it wander would blame the
+direction for something it does not decide.
+
+**A mistake worth recording.** `src/design/sample.ts` already existed —
+photograph sampling for the palette — and I overwrote it. `typecheck` caught
+it immediately (`readManifest` and `samplePhotographs` missing from
+`brief.ts` and `design.ts`), and the original is restored byte-for-byte from
+git with the new sampler in `sample-spec.ts`. The lesson is the cheap one:
+check whether a filename is taken before writing it.
+
 ## Next
 
 The rest of B4 — §7.1 wants 8 heroes, the template now has 4 selectable

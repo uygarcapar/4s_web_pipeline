@@ -1,4 +1,4 @@
-import { LIBRARY_DIRECTIONS } from "./directions.generated";
+import { DIRECTION_CSS, LIBRARY_DIRECTIONS, LIBRARY_VARIANTS } from "./directions.generated";
 import { LIBRARY_ARCHETYPES } from "./archetypes";
 
 /** Desktop and mobile — the two widths B4 reviews at (D10 §12). */
@@ -18,7 +18,17 @@ const WIDTHS = [
  * This is the surface B4 reviews. Its value is that a rejection can point at
  * a composition instead of at a diff.
  */
-export default function Library() {
+/** Driven by `searchParams` (the candidate selector), so nothing to prerender. */
+export const instant = false;
+
+export default async function Library({
+  searchParams,
+}: {
+  searchParams: Promise<{ variant?: string }>;
+}) {
+  const { variant = "0" } = await searchParams;
+  const v = Math.min(Math.max(Number(variant) || 0, 0), LIBRARY_VARIANTS - 1);
+
   return (
     <main className="library-shell min-h-dvh p-6">
       <header className="mb-8">
@@ -31,6 +41,39 @@ export default function Library() {
           something other than tokens — the B2 failure this view exists to
           expose.
         </p>
+
+        {/*
+          A direction is a range, not a value. Showing only candidate 0 —
+          which this page did until now — meant radius, image frame, colour
+          mode and type pairing never varied inside a direction, and an
+          archetype was approved against roughly a quarter of what its
+          direction can produce.
+        */}
+        <nav className="mt-4 flex items-center gap-2 text-sm">
+          <span className="text-neutral-500">candidate:</span>
+          {Array.from({ length: LIBRARY_VARIANTS }, (_, i) => (
+            <a
+              key={i}
+              href={`/?variant=${i}`}
+              className={
+                i === v
+                  ? "rounded bg-neutral-900 px-3 py-1 font-mono text-white"
+                  : "rounded border border-neutral-300 px-3 py-1 font-mono hover:bg-neutral-100"
+              }
+            >
+              {i}
+            </a>
+          ))}
+        </nav>
+
+        <dl className="mt-3 grid gap-x-6 gap-y-1 font-mono text-xs text-neutral-600 sm:grid-cols-2">
+          {LIBRARY_DIRECTIONS.map((d) => (
+            <div key={d} className="flex gap-2">
+              <dt className="shrink-0 font-semibold">{d}</dt>
+              <dd>{DIRECTION_CSS[d]?.[v]?.summary}</dd>
+            </div>
+          ))}
+        </dl>
       </header>
 
       {LIBRARY_ARCHETYPES.map((a) => (
@@ -52,8 +95,8 @@ export default function Library() {
                       style={{ width: w * scale, height: h * scale }}
                     >
                       <iframe
-                        title={`${a.id} — ${direction} — ${label}`}
-                        src={`/preview?direction=${direction}&archetype=${encodeURIComponent(a.id)}`}
+                        title={`${a.id} — ${direction} — ${label} — candidate ${v}`}
+                        src={`/preview?direction=${direction}&archetype=${encodeURIComponent(a.id)}&variant=${v}`}
                         width={w}
                         height={h}
                         loading="lazy"
