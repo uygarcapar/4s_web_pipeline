@@ -648,18 +648,168 @@ const SERVICES_HEADING_RE = /(hizmet|tedavi|uygulama|işlem|bakım)/i;
 
 const MAX_SERVICE_ITEMS = 60;
 const MIN_SERVICE_DESCRIPTION = 20;
+const MAX_SERVICE_TITLE = 60;
 
 /**
- * Services read off a page that announces them in its H1 ("Hizmetlerimiz"):
- * each heading below the H1 is a service title and the first paragraph under
- * it is that service's description, both copied verbatim. Sites routinely
- * repeat the same name as an h2 and then an h3, so titles are deduped.
+ * Page kinds every SMB site has, none of which is a service. Matched against
+ * every path segment and against the page's own name, so `/blog/yazi-1` is
+ * excluded by its parent as well as `/blog` by itself.
+ *
+ * Deliberately a list of *page kinds* rather than of non-services: it stays
+ * the same size as clients change, whereas guessing which words are services
+ * would need editing for every new sector.
  */
-export function servicesFromContentBlocks(
-  pages: ContentSourcePage[],
-): ServiceItem[] {
+const BOILERPLATE_SLUG_RE =
+  /^(|home|anasayfa|index|hakk[ıi]m[ıi]zda|about(-us)?|biz-kimiz|ekibimiz|team|galeri|gallery|foto(graf)?(-galeri)?|ileti[şs]im(-\d+)?|contact(-us)?|randevu(-formu)?|appointment|te[şs]ekk[üu]rler|thank(s|-you)|blog|haberler|news|yaz[ıi]lar|makaleler|sss|faq|s[ıi]k-sorulan-sorular|hizmetler(imiz)?|services|sepet|cart|[öo]deme|checkout|gizlilik(-politikas[ıi])?|privacy|kvkk|[çc]erez|cookie|[şs]artlar|terms|site-haritas[ıi]|sitemap|404|arama|search|yorumlar|referanslar|kampanyalar|fiyat(lar)?|price(s|-list)?)$/i;
+
+const BOILERPLATE_NAME_RE =
+  /^(ana\s*sayfa|anasayfa|home|hakk[ıi]m[ıi]zda|about\s*us?|ekibimiz|galeri|gallery|ileti[şs]im|contact|randevu\s*formu|randevu|te[şs]ekk[üu]rler|blog|haberler|sss|s[ıi]k\s*sorulan\s*sorular|hizmetler(imiz)?|services|gizlilik\s*politikas[ıi]|kvkk|[çc]erez\s*politikas[ıi]|kullan[ıi]m\s*[şs]artlar[ıi]|yorumlar|referanslar|kampanyalar|fiyat\s*listesi)$/i;
+
+/**
+ * Contact furniture that lives in the same markup as a services list.
+ *
+ * The heading scan below accepted "WHATSAPP HATTIMIZ:" as a service title and
+ * the street address as its description, and that one item was the entire
+ * services list handed to the design stage for a salon with 21 service pages.
+ */
+const NOT_A_SERVICE_RE =
+  /(whatsapp|telefon|tel\.|gsm|cep\s*no|adres|e-?posta|e-?mail|ileti[şs]im|randevu|çalışma\s*saat|açılış|takip\s*edin|sosyal\s*medya|harita|bizi\s*ara|instagram|facebook|copyright|t[üu]m\s*haklar)/i;
+
+/** Latin/Turkish script only: a Turkish site's service names are Turkish. */
+const LATIN_NAME_RE = /^[\p{Script=Latin}\p{Nd}\s\-–—&/'’.,()+%]+$/u;
+
+/** Whether a string can be a service name rather than page furniture. */
+export function isServiceTitle(title: string): boolean {
+  const text = title.trim();
+  if (text.length === 0 || text.length > MAX_SERVICE_TITLE) return false;
+  // "WHATSAPP HATTIMIZ:" — a label introducing something, not a service.
+  if (text.endsWith(":")) return false;
+  if (NOT_A_SERVICE_RE.test(text)) return false;
+  if (BOILERPLATE_NAME_RE.test(text)) return false;
+  if (/\d{3}[\s.-]?\d{2,}|https?:\/\//i.test(text)) return false;
+  return LATIN_NAME_RE.test(text);
+}
+
+/** Whether a paragraph describes a service rather than repeating contact details. */
+export function isServiceDescription(text: string): boolean {
+  const body = text.trim();
+  if (body.length < MIN_SERVICE_DESCRIPTION) return false;
+  // The address is not a description of anything.
+  if (ADDRESS_TOKEN_RE.test(body)) return false;
+  if (/^\s*(https?:\/\/|\+?\d[\d\s().-]{8,})/.test(body)) return false;
+  return true;
+}
+
+/** The page's own name from its BreadcrumbList trail, if it publishes one. */
+function breadcrumbNameOf(jsonLd: unknown[]): string | null {
+  let last: string | null = null;
+  const visit = (node: unknown): void => {
+    if (Array.isArray(node)) {
+      for (const n of node) visit(n);
+      return;
+    }
+    if (typeof node !== "object" || node === null) return;
+    const record = node as Record<string, unknown>;
+    if (record["@graph"] !== undefined) visit(record["@graph"]);
+    if (record["@type"] !== "BreadcrumbList") return;
+    const items = Array.isArray(record.itemListElement) ? record.itemListElement : [];
+    for (const item of items) {
+      if (typeof item !== "object" || item === null) continue;
+      const entry = item as Record<string, unknown>;
+      const nested = entry.item;
+      const name =
+        typeof nested === "object" && nested !== null
+          ? (nested as Record<string, unknown>).name
+          : entry.name;
+      if (typeof name === "string" && name.trim() !== "") last = name.trim();
+    }
+  };
+  visit(jsonLd);
+  return last;
+}
+
+/** The page's own name: breadcrumb tail, then H1, then the title's own part. */
+function pageOwnName(page: ContentSourcePage): string | null {
+  const crumb = breadcrumbNameOf(page.jsonLd);
+  if (crumb !== null) return crumb;
+  const h1 = page.h1.find((h) => h.trim() !== "");
+  if (h1 !== undefined) return h1.trim();
+  const title = page.title.trim();
+  if (title === "") return null;
+  return (title.split(/\s*[|–—·•]\s*|\s+-\s+/)[0] ?? title).trim() || null;
+}
+
+/** Path segments of a page URL, lowercased and percent-decoded. */
+function pathSegments(url: string): string[] {
+  let pathname: string;
+  try {
+    pathname = new URL(url).pathname;
+  } catch {
+    return [];
+  }
+  return pathname
+    .split("/")
+    .filter((s) => s !== "")
+    .map((s) => {
+      try {
+        return decodeURIComponent(s);
+      } catch {
+        return s;
+      }
+    });
+}
+
+/**
+ * Whether this page exists to describe one service.
+ *
+ * True for an internal page that is not the root, carries no boilerplate
+ * segment in its path, and whose own name is a plausible service name.
+ */
+export function isServicePage(page: ContentSourcePage): boolean {
+  const segments = pathSegments(page.url);
+  if (segments.length === 0) return false;
+  if (segments.some((s) => BOILERPLATE_SLUG_RE.test(s))) return false;
+  const name = pageOwnName(page);
+  return name !== null && isServiceTitle(name);
+}
+
+/**
+ * Every service the business describes on its own site, verbatim.
+ *
+ * Two layouts, because SMB sites use both and the previous implementation
+ * only handled the second:
+ *
+ *  1. **A page per service.** The name is the page's own breadcrumb or H1 and
+ *     the description is its first real paragraph. minaguzellik.com publishes
+ *     21 of these; the heading scan found none of them, because none of those
+ *     pages announces "Hizmetlerimiz" in its H1.
+ *  2. **One page listing all of them**, each as a heading with a paragraph
+ *     under it. Preserved so a business that lists everything on one page
+ *     still gets a services section — with the contact furniture that shares
+ *     that markup now filtered out.
+ */
+export function servicesFromPages(pages: ContentSourcePage[]): ServiceItem[] {
   const out: ServiceItem[] = [];
   const seen = new Set<string>();
+  const add = (title: string, description: string, sourceUrl: string): boolean => {
+    const key = title.toLocaleLowerCase("tr-TR");
+    if (seen.has(key)) return true;
+    seen.add(key);
+    out.push({ title, description, sourceUrl });
+    return out.length < MAX_SERVICE_ITEMS;
+  };
+
+  for (const page of pages) {
+    if (!isServicePage(page)) continue;
+    const title = pageOwnName(page);
+    if (title === null) continue;
+    const paragraph = page.contentBlocks.find(
+      (b) => b.tag === "p" && isServiceDescription(b.text),
+    );
+    // A service page with no usable prose is still a service the business
+    // offers; the name alone is true, and inventing copy for it is not.
+    if (!add(title, paragraph?.text.trim() ?? "", page.url)) return out;
+  }
 
   for (const page of pages) {
     if (!page.h1.some((heading) => SERVICES_HEADING_RE.test(heading))) continue;
@@ -669,7 +819,7 @@ export function servicesFromContentBlocks(
       const headingMatch = HEADING_TAG_RE.exec(block.tag);
       if (headingMatch?.[1] !== undefined) {
         // h1 is the page title, not a service.
-        if (Number(headingMatch[1]) >= 2) pendingTitle = block.text.trim();
+        pendingTitle = Number(headingMatch[1]) >= 2 ? block.text.trim() : null;
         continue;
       }
       if (block.tag !== "p" || pendingTitle === null) continue;
@@ -677,14 +827,8 @@ export function servicesFromContentBlocks(
       const description = block.text.trim();
       const title = pendingTitle;
       pendingTitle = null;
-      if (title === "" || description.length < MIN_SERVICE_DESCRIPTION) continue;
-
-      const key = title.toLocaleLowerCase("tr-TR");
-      if (seen.has(key)) continue;
-      seen.add(key);
-
-      out.push({ title, description, sourceUrl: page.url });
-      if (out.length >= MAX_SERVICE_ITEMS) return out;
+      if (!isServiceTitle(title) || !isServiceDescription(description)) continue;
+      if (!add(title, description, page.url)) return out;
     }
   }
   return out;

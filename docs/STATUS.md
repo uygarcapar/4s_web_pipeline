@@ -1942,3 +1942,52 @@ because the shapes are the finding, not the values.
 - `mapsEmbedQuery` now reads the `!2s` field of a `pb=` embed, which points
   at the Esenyurt branch while `address` is the Beylikdüzü one. Both are
   real; they are simply not the same place.
+
+## One service list, not two
+
+The facts fix above corrected `facts.json` and changed nothing the operator
+would see, because **`brief` and `design` never read `facts.services`**.
+They read `content.json`, which the crawl builds separately — and that list
+contained exactly one entry:
+
+```json
+{ "title": "WHATSAPP HATTIMIZ:",
+  "description": "Cumhuriyet Mah. Nazım Hikmet Bulvarı No: 25 Kat:2 Beylikdüzü / İstanbul" }
+```
+
+The contact block, read as a service. `generate` would have rendered a
+services section whose single item was "WHATSAPP HATTIMIZ:" with the street
+address as its body, for a salon with 21 service pages. Rendering that as a
+service is inventing one, which the hard rule forbids, so the run was
+stopped a second time — at `plan`, $0.11 spent.
+
+`servicesFromContentBlocks` only ever looked at pages whose H1 announces a
+services listing, then paired each heading below it with the next
+paragraph. On this site that matched the contact page's markup and nothing
+else. **None of the 21 service pages announces "Hizmetlerimiz" in its H1** —
+they announce the service.
+
+`servicesFromPages` replaces it and handles both layouts:
+
+1. **A page per service** — name from the page's own breadcrumb or H1,
+   description from its first real paragraph. All 21 found, all 21 with the
+   client's own Turkish prose.
+2. **One page listing all of them** — the old heading scan, preserved
+   because businesses do publish that way, with contact furniture filtered
+   (a title ending in `:`, contact vocabulary, or a description that is an
+   address).
+
+**The two lists are now one.** `buildFacts` takes `services` as an input
+from `content.json` instead of deriving its own, so there is a single
+extractor with two consumers. Writing a second correct extractor would have
+kept the original defect alive in a quieter form: two lists that agree
+today and drift later.
+
+### What this one is an instance of
+
+The first fix was correct and inert. It repaired the artifact that is named
+"ground truth" while the stages that make decisions read a different file
+that no one had checked. **Fixing the authoritative copy does nothing if
+the consumers read the convenient one** — and the only reason this surfaced
+is that the stage logs print their own evidence counts, so `1 services`
+appeared twice in a row and the second time it was no longer explicable.

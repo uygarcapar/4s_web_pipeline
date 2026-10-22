@@ -463,6 +463,14 @@ function normalizeJsonldTime(v: unknown): string | null {
 
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/;
 
+/**
+ * Title segments that name a page rather than the business. Only used to
+ * strip them from the home page's `<title>` before the longest remaining
+ * segment is taken as the brand: "Anasayfa - Mina Güzellik Merkezi".
+ */
+const PAGE_NAME_SEGMENT_RE =
+  /^(ana\s*sayfa|anasayfa|home|homepage|index|ba[şs]lang[ıi][çc])$/i;
+
 function firstEmail(mailtos: string[]): string | null {
   for (const raw of mailtos) {
     const cleaned = (raw.replace(/^mailto:/i, "").split("?")[0] ?? "").trim();
@@ -623,174 +631,19 @@ function socialLinksFromPages(pages: CrawlPage[]): { platform: string; url: stri
   return [...found.entries()].map(([platform, url]) => ({ platform, url }));
 }
 
-/* ------------------------------------------------------------------ */
-/* Services                                                            */
-/* ------------------------------------------------------------------ */
-
-/**
- * Page kinds every SMB site has that are never a service. Matched against the
- * slug and against the page's own name, so a site may spell them either way.
- *
- * This is deliberately a list of *page kinds* rather than a list of
- * non-services: it stays the same size as clients change, whereas guessing
- * which words are services would need editing per sector.
- */
-const BOILERPLATE_SLUG_RE =
-  /^\/?(|home|anasayfa|index|hakk[ıi]m[ıi]zda|about(-us)?|biz-kimiz|ekibimiz|team|galeri|gallery|foto(graf)?(-galeri)?|ileti[şs]im|contact(-us)?|randevu(-formu)?|appointment|te[şs]ekk[üu]rler|thank(s|-you)|blog|haberler|news|yaz[ıi]lar|makaleler|sss|faq|s[ıi]k-sorulan-sorular|hizmetler(imiz)?|services|sepet|cart|[öo]deme|checkout|gizlilik(-politikas[ıi])?|privacy|kvkk|[çc]erez|cookie|[şs]artlar|terms|site-haritas[ıi]|sitemap|404|arama|search|yorumlar|referanslar|fiyat(lar)?|price(s|-list)?)$/i;
-
-const BOILERPLATE_NAME_RE =
-  /^(ana\s*sayfa|anasayfa|home|hakk[ıi]m[ıi]zda|about\s*us?|ekibimiz|galeri|gallery|ileti[şs]im|contact|randevu\s*formu|randevu|te[şs]ekk[üu]rler|blog|haberler|sss|s[ıi]k\s*sorulan\s*sorular|hizmetler(imiz)?|services|gizlilik\s*politikas[ıi]|kvkk|[çc]erez\s*politikas[ıi]|kullan[ıi]m\s*[şs]artlar[ıi]|yorumlar|referanslar|fiyat\s*listesi)$/i;
-
-/** Pages whose own name a services index would be titled with. */
-const SERVICES_INDEX_NAME_RE =
-  /^(hizmetler(imiz)?|services|tedaviler|uygulamalar|[üu]r[üu]nler(imiz)?|b[öo]l[üu]mler(imiz)?)$/i;
-
-/** Latin/Turkish script only: a Turkish site's service names are Turkish. */
-const LATIN_NAME_RE = /^[\p{Script=Latin}\p{Nd}\s\-–—&/'’.,()+%]+$/u;
-
-/** The page's own name: breadcrumb tail, then H1, then the title's own part. */
-function pageName(page: CrawlPage, brand: string | null): string | null {
-  if (page.breadcrumbName) return page.breadcrumbName;
-  if (page.h1) return page.h1;
-  const title = page.title;
-  if (!title) return null;
-  // "Microblading - Mina Güzellik Merkezi" → "Microblading". Strip the brand
-  // wherever it sits rather than assuming it comes second: Turkish SEO titles
-  // use both orders, and splitting on the first separator is how "Galeri -
-  // Mina Güzellik Merkezi" became the business name.
-  if (brand) {
-    const stripped = title
-      .split(/\s*[|–—·•]\s*|\s+-\s+/)
-      .map((part) => part.trim())
-      .filter(
-        (part) =>
-          part.length > 0 &&
-          part.toLocaleLowerCase("tr-TR") !== brand.toLocaleLowerCase("tr-TR"),
-      );
-    if (stripped.length > 0) return stripped.join(" ");
-  }
-  return (title.split(/\s*[|–—·•]\s*|\s+-\s+/)[0] ?? title).trim() || null;
-}
-
-/**
- * Link targets that appear on nearly every crawled page: site chrome.
- *
- * The services index links its children *and* the main nav, so without this
- * the "pages linked from the services index" rule returns `/`, `/about-us`,
- * `/gallery` and `/contact` alongside the real services. A link's presence on
- * almost every page is what makes it navigation rather than content.
- */
-function chromePaths(pages: CrawlPage[], domain: string): Set<string> {
-  const counts = new Map<string, number>();
-  for (const page of pages) {
-    const seen = new Set<string>();
-    for (const link of page.links) {
-      const target = internalPath(link, domain, page.url);
-      if (target === null || seen.has(target)) continue;
-      seen.add(target);
-      counts.set(target, (counts.get(target) ?? 0) + 1);
-    }
-  }
-  const threshold = Math.max(2, Math.ceil(pages.length * 0.8));
-  const chrome = new Set<string>();
-  for (const [path, count] of counts) {
-    if (count >= threshold) chrome.add(path);
-  }
-  return chrome;
-}
-
-/** Path of `link` when it points at `domain`, else null. Resolves relatives. */
-function internalPath(link: string, domain: string, base: string | null): string | null {
-  let parsed: URL;
-  try {
-    parsed = new URL(link, base ?? `https://${domain}`);
-  } catch {
-    return null;
-  }
-  if (parsed.protocol !== "http:" && parsed.protocol !== "https:") return null;
-  if (parsed.hostname.replace(/^www\./i, "") !== domain.replace(/^www\./i, "")) return null;
-  return parsed.pathname.replace(/\/+$/, "") || "/";
-}
-
-/**
- * Service names, from the pages the business published for them.
- *
- * `buildFacts` returned a hardcoded `[]` here, so no client has ever had a
- * service in its facts — minaguzellik.com publishes 21 service pages and the
- * design stage was told it had two, then reasonably chose a gallery-led
- * layout for a business whose entire offering is its service list.
- *
- * A page is a service when it is an internal page, is not site chrome, and is
- * not one of the boilerplate page kinds above. Pages the site's own services
- * index links come first and in its order — that is the business stating both
- * the set and the priority — with the remaining service pages after it.
- * Nothing is invented: every name is the page's own breadcrumb or heading.
- */
-export function extractServices(
-  pages: CrawlPage[],
-  domain: string,
-  brand: string | null,
-): string[] {
-  const chrome = chromePaths(pages, domain);
-  const byPath = new Map<string, CrawlPage>();
-  for (const page of pages) {
-    if (page.path !== null && !byPath.has(page.path)) byPath.set(page.path, page);
-  }
-
-  const isService = (page: CrawlPage): boolean => {
-    if (page.path === null || page.path === "/") return false;
-    if (chrome.has(page.path)) return false;
-    const slug = page.path.split("/").filter(Boolean).pop() ?? "";
-    if (BOILERPLATE_SLUG_RE.test(decodeURIComponent(slug))) return false;
-    const name = pageName(page, brand);
-    if (name === null || BOILERPLATE_NAME_RE.test(name)) return false;
-    return LATIN_NAME_RE.test(name);
-  };
-
-  const ordered: CrawlPage[] = [];
-  const taken = new Set<string>();
-  const take = (page: CrawlPage): void => {
-    if (page.path === null || taken.has(page.path)) return;
-    taken.add(page.path);
-    ordered.push(page);
-  };
-
-  // The services index first, in its own link order.
-  for (const index of pages) {
-    const name = pageName(index, brand);
-    const slug = index.path?.split("/").filter(Boolean).pop() ?? "";
-    const isIndex =
-      (name !== null && SERVICES_INDEX_NAME_RE.test(name)) ||
-      SERVICES_INDEX_NAME_RE.test(decodeURIComponent(slug));
-    if (!isIndex) continue;
-    for (const link of index.links) {
-      const target = internalPath(link, domain, index.url);
-      const page = target === null ? undefined : byPath.get(target);
-      if (page && isService(page)) take(page);
-    }
-  }
-  // Then every other service page, in crawl order.
-  for (const page of pages) {
-    if (isService(page)) take(page);
-  }
-
-  const names: string[] = [];
-  const seen = new Set<string>();
-  for (const page of ordered) {
-    const name = pageName(page, brand);
-    if (name === null) continue;
-    const key = name.toLocaleLowerCase("tr-TR");
-    if (seen.has(key)) continue;
-    seen.add(key);
-    names.push(name);
-  }
-  return names;
-}
-
 export interface BuildFactsInput {
   domain: string;
   extracted: ExtractedSignals | null;
   pages: CrawlPage[];
+  /**
+   * Service names from `crawl/content.json`, which `servicesFromPages` built.
+   *
+   * Passed in rather than derived here so there is one service list and not
+   * two: this file used to return a hardcoded `[]` while the crawl wrote its
+   * own list, and the stage that chooses the layout read the crawl's. Two
+   * extractors would have kept that split alive in a quieter form.
+   */
+  services?: string[];
 }
 
 /**
@@ -834,7 +687,7 @@ export function buildFacts(input: BuildFactsInput): Facts {
     const segments = homeTitle
       .split(/\s*[|–—·•]\s*|\s+-\s+/)
       .map((s) => s.trim())
-      .filter((s) => s.length > 0 && !BOILERPLATE_NAME_RE.test(s));
+      .filter((s) => s.length > 0 && !PAGE_NAME_SEGMENT_RE.test(s));
     businessName =
       segments.sort((a, b) => b.length - a.length)[0] ??
       (homeTitle.split(/[|–—·•]|\s-\s/)[0] ?? homeTitle).trim() ??
@@ -970,8 +823,8 @@ export function buildFacts(input: BuildFactsInput): Facts {
   const socialLinks = socialLinksFromPages(pages);
   if (socialLinks.length > 0) sources.socialLinks = "pages:links";
 
-  const services = extractServices(pages, input.domain, businessName);
-  if (services.length > 0) sources.services = "pages:servicePages";
+  const services = input.services ?? [];
+  if (services.length > 0) sources.services = "content:services";
 
   return {
     businessName,

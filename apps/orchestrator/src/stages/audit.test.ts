@@ -3,7 +3,6 @@ import { factsSchema, issuesFileSchema } from "@pipeline/core";
 import {
   addressScore,
   buildFacts,
-  extractServices,
   findWebSiteNode,
   normalizeTrPhone,
   parseJsonldHours,
@@ -390,83 +389,6 @@ describe("readExtracted — phone shapes", () => {
 
   it("still reads a flat array", () => {
     expect(readExtracted({ phones: ["0532 123 45 67"] })?.phones).toEqual(["0532 123 45 67"]);
-  });
-});
-
-describe("extractServices", () => {
-  const domain = "minaguzellik.com";
-  const nav = ["/", "/about-us", "/gallery", "/services", "/contact"];
-  const page = (
-    path: string,
-    name: string,
-    links: string[] = nav,
-  ): Record<string, unknown> => ({
-    url: `https://${domain}${path}`,
-    title: `${name} - Mina Güzellik Merkezi`,
-    jsonLd: [
-      {
-        "@type": "BreadcrumbList",
-        itemListElement: [
-          { item: { name: "Ana sayfa" } },
-          { item: { name } },
-        ],
-      },
-    ],
-    links,
-  });
-
-  const pages = readPages([
-    page("/", "Anasayfa"),
-    page("/about-us", "Hakkımızda"),
-    page("/gallery", "Galeri"),
-    page("/contact", "İletişim"),
-    page("/tesekkurler", "Teşekkürler"),
-    page("/services", "Hizmetlerimiz", [...nav, "/lazer-epilasyon", "/cilt-bakimi"]),
-    page("/cilt-bakimi", "Cilt Bakımı"),
-    page("/lazer-epilasyon", "Lazer Epilasyon"),
-    page("/microblading", "Microblading"),
-    page("/%d9%84%db%8c%d8%b2%d8%b1", "لیزر مو برای مرد ها"),
-  ]);
-
-  it("lists the service pages and nothing else", () => {
-    // `buildFacts` returned a hardcoded [] here, so the design stage was
-    // told this salon had two services when it publishes 21.
-    expect(extractServices(pages, domain, "Mina Güzellik Merkezi")).toEqual([
-      "Lazer Epilasyon",
-      "Cilt Bakımı",
-      "Microblading",
-    ]);
-  });
-
-  it("puts the services index's own order first", () => {
-    const services = extractServices(pages, domain, "Mina Güzellik Merkezi");
-    // The index links lazer-epilasyon before cilt-bakimi; microblading is
-    // orphaned from it and comes after both.
-    expect(services.indexOf("Lazer Epilasyon")).toBeLessThan(services.indexOf("Cilt Bakımı"));
-    expect(services.at(-1)).toBe("Microblading");
-  });
-
-  it("excludes site chrome even though the services index links it", () => {
-    const services = extractServices(pages, domain, "Mina Güzellik Merkezi");
-    for (const name of ["Anasayfa", "Hakkımızda", "Galeri", "İletişim", "Hizmetlerimiz"]) {
-      expect(services).not.toContain(name);
-    }
-  });
-
-  it("drops a page whose name is not in Latin script", () => {
-    expect(extractServices(pages, domain, "Mina Güzellik Merkezi")).not.toContain(
-      "لیزر مو برای مرد ها",
-    );
-  });
-
-  it("prefers the breadcrumb name over the title's brand-stripped form", () => {
-    // /kas-kontur is titled "Kıl Tekniği - ..." — the slug is no guide.
-    const [only] = extractServices(
-      readPages([page("/kas-kontur", "Kıl Tekniği", []), page("/", "Anasayfa", [])]),
-      domain,
-      "Mina Güzellik Merkezi",
-    );
-    expect(only).toBe("Kıl Tekniği");
   });
 });
 
