@@ -53,7 +53,7 @@ export const heroSectionSchema = z
     type: z.literal("hero"),
     /** Layout archetype, chosen per site by the design stage (D6). */
     variant: z
-      .enum(["default", "centered", "photo-full", "seam-bottom", "type-only", "split", "index", "collage", "offset-grid", "marquee"])
+      .enum(["photo-full", "type-only", "split", "index", "collage", "offset-grid", "marquee"])
       .optional(),
     headline: z.string().min(1),
     subheadline: z.string().min(1).optional(),
@@ -69,7 +69,7 @@ export const servicesSectionSchema = z
     type: z.literal("services"),
     /** Layout archetype, chosen per site by the design stage (D6). */
     variant: z
-      .enum(["default", "list", "rail-pinned", "stack", "alternating", "accordion", "image-grid", "index"])
+      .enum(["rail-pinned", "alternating", "accordion", "image-grid", "index"])
       .optional(),
     title: z.string().min(1).optional(),
     items: z

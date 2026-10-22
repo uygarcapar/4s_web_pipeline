@@ -89,7 +89,7 @@ const config: SiteConfigInput = {
     {
       type: "services",
       id: "services",
-      variant: "default",
+      variant: "index",
       title: "Hizmetlerimiz",
       items: [
         {

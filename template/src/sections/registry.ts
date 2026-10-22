@@ -5,7 +5,6 @@ import { Closing } from "@/sections/closing";
 import { Contact } from "@/sections/contact";
 import { Faq } from "@/sections/faq";
 import { Gallery } from "@/sections/gallery";
-import { Hero } from "@/sections/hero";
 import { HeroPhotoFull } from "@/sections/hero/photo-full";
 import { HeroCollage } from "@/sections/hero/collage";
 import { HeroIndex } from "@/sections/hero/index-list";
@@ -16,7 +15,6 @@ import { HeroTypeOnly } from "@/sections/hero/type-only";
 import { Hours } from "@/sections/hours";
 import { Marquee } from "@/sections/marquee";
 import { MapEmbed } from "@/sections/map";
-import { Services } from "@/sections/services";
 import { Statement } from "@/sections/statement";
 import { Visit } from "@/sections/visit";
 import { ServicesAccordion } from "@/sections/services/accordion";
@@ -41,12 +39,12 @@ type SectionComponent<T extends SectionType> = ComponentType<{
  * registering a component is a type error.
  */
 export const sectionRegistry: { [T in SectionType]: SectionComponent<T> } = {
-  hero: Hero,
+  hero: HeroSplit,
   statement: Statement,
   visit: Visit,
   closing: Closing,
   marquee: Marquee,
-  services: Services,
+  services: ServicesIndex,
   team: TeamStickySwap,
   gallery: Gallery,
   testimonials: Testimonials,

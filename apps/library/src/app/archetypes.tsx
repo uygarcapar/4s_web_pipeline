@@ -5,7 +5,6 @@ import { Closing } from "@/sections/closing";
 import { Contact } from "@/sections/contact";
 import { Faq } from "@/sections/faq";
 import { Gallery } from "@/sections/gallery";
-import { Hero } from "@/sections/hero";
 import { HeroPhotoFull } from "@/sections/hero/photo-full";
 import { HeroCollage } from "@/sections/hero/collage";
 import { HeroIndex } from "@/sections/hero/index-list";
@@ -15,7 +14,6 @@ import { HeroSplit } from "@/sections/hero/split";
 import { HeroTypeOnly } from "@/sections/hero/type-only";
 import { Hours } from "@/sections/hours";
 import { Marquee } from "@/sections/marquee";
-import { Services } from "@/sections/services";
 import { ServicesAccordion } from "@/sections/services/accordion";
 import { ServicesAlternating } from "@/sections/services/alternating";
 import { ServicesImageGrid } from "@/sections/services/image-grid";
@@ -79,7 +77,6 @@ function entry(
 }
 
 export const LIBRARY_ARCHETYPES: LibraryArchetype[] = [
-  entry("hero/default", "hero", "default", Hero, bySectionType("hero")),
   entry("hero/photo-full", "hero", "photo-full", HeroPhotoFull, bySectionType("hero")),
   entry("hero/type-only", "hero", "type-only", HeroTypeOnly, bySectionType("hero")),
   entry("hero/split", "hero", "split", HeroSplit, bySectionType("hero")),
@@ -88,7 +85,6 @@ export const LIBRARY_ARCHETYPES: LibraryArchetype[] = [
   entry("hero/offset-grid", "hero", "offset-grid", HeroOffsetGrid, bySectionType("hero")),
   entry("hero/marquee", "hero", "marquee", HeroMarquee, bySectionType("hero")),
   entry("statement/word-reveal", "statement", "word-reveal", Statement, STATEMENT),
-  entry("services/default", "services", "default", Services, bySectionType("services")),
   entry("services/rail-pinned", "services", "rail-pinned", ServicesRailPinned, bySectionType("services")),
   entry("services/alternating", "services", "alternating", ServicesAlternating, bySectionType("services")),
   entry("services/accordion", "services", "accordion", ServicesAccordion, bySectionType("services")),

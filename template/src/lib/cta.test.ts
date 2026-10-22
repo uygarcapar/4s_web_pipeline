@@ -62,7 +62,7 @@ describe("siteConfigSchema — no WhatsApp CTA without a number", () => {
       {
         type: "hero",
         id: "hero",
-        variant: "default",
+        variant: "split",
         headline: "Başlık",
         ctaPrimary: cta,
       },
