@@ -829,10 +829,63 @@ it immediately (`readManifest` and `samplePhotographs` missing from
 git with the new sampler in `sample-spec.ts`. The lesson is the cheap one:
 check whether a filename is taken before writing it.
 
+## B4 · `hero/index` — **awaiting operator review**
+
+Third B4 archetype. PR open, **not merged**.
+
+The headline over an enumerated index of what the business does. For a
+business whose services *are* the proposition — a repair shop, a clinic with
+six named treatments — that list is the most useful thing in the first
+viewport, and scrolling to find it is a cost. Composition from `aspensearch`
+and `cerebrium`.
+
+Items come from the services section's own titles via `config.sections`, not
+duplicated into the hero's props: the same list in two places is the shape
+that drifts, and §9 forbids this section stating anything the client did not.
+No services section means no index, and the hero degrades to headline and
+facts.
+
+Measured across four directions × two widths: no overflow, zero tap targets
+under 44px, four rows everywhere. The index numeral picks up the mono accent
+**only where the direction has one** — Space Mono under `kinetic-bold`,
+JetBrains Mono under `swiss-grid`, the body face under the two that declare
+no mono. Rules are 1px or 0px per direction.
+
+**§7.1 amended: the hero target is 7, not 8.** "Centered statement" is not a
+distinct archetype — `type-only` reads `--text-align` from the direction's
+`grid.alignment`, so under a `centered` direction it *is* the centered
+statement. §7.2 already calls that one archetype with a prop. Counting it
+separately would have inflated the target with work producing no variation.
+
+## Open: the LCP budget sits inside this machine's noise
+
+Measured properly this time rather than from one sample. After the font fix,
+median LCP over seven `verify` runs is **3.1–3.5 s** against the 3500 ms
+budget — so the gate fails roughly one run in four, on unchanged code.
+
+The Lighthouse config already runs **three iterations and asserts the
+median**, and its own comment says 3500 was picked to "catch real regressions
+without tripping on run-to-run noise". So this is neither a code defect nor a
+config defect: it is measuring on a development machine that is
+simultaneously running builds.
+
+What distinguishes the two cases, for whoever reads a red LCP next:
+**consistently over** (3.58 s on every run, which is what B2's hero change
+caused) is a regression; **at the line, sometimes** is this. Re-run on an
+idle machine before believing it.
+
+**A fix I tried and reverted, because it measured worse.** Preloading the
+body face and setting a metrics-adjusted fallback on both faces — on the
+reasoning that the LCP element is the hero's lead paragraph, set in the body
+face — gave 3.9 / 4.3 / 3.0 s. Two preloaded faces compete for bandwidth
+under throttling. The reverted configuration gives 3.1 / 3.2 / 3.1 / 3.5.
+Recorded so the idea is not retried from scratch.
+
 ## Next
 
-The rest of B4 — §7.1 wants 8 heroes, the template now has 4 selectable
-(`photo-full`, `type-only`, `split`, plus the legacy `default` which the
-design stage will not pick). Both blocking decisions are settled: `verify` is green on both fixtures and
+The rest of B4 — §7.1 now wants 7 heroes and the template has 5 selectable
+(`photo-full`, `type-only`, `split`, `index`, plus the legacy `default`
+which the design stage will not pick). Remaining: collage, offset grid,
+marquee hero. Both blocking decisions are settled: `verify` is green on both fixtures and
 `/library` renders each direction's own faces, so an archetype review can
 now judge type as well as composition.

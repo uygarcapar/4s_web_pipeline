@@ -429,7 +429,7 @@ generated per run.
 
 | Section type | Archetypes (target) |
 |---|---|
-| hero | 8 — split, full-bleed photo, type-only, collage, offset grid, marquee hero, centered statement, index hero |
+| hero | **7** — split, full-bleed photo, type-only, collage, offset grid, marquee hero, index hero |
 | services | 6 — pinned rail, index list, numbered rows, image grid, accordion, alternating media |
 | team | 5 |
 | statement | 3 — word reveal, static display, split quote |
@@ -443,6 +443,13 @@ generated per run.
 
 Archetypes must differ in **composition**, not props. Two archetypes that
 differ only in image side or column count are one archetype with a prop.
+
+> **Amended in B4.** "Centered statement" was dropped from the hero list, 8 →
+> 7. `type-only` reads `--text-align` from the direction's `grid.alignment`,
+> so under a `centered` direction it *is* the centered statement — the two
+> differ only in an anchor, which this rule already calls one archetype with
+> a prop. Counting it separately would have inflated the target with work
+> that produces no variation.
 
 ### 7.2 Rules for every archetype
 
