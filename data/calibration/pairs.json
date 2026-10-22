@@ -1,0 +1,598 @@
+{
+  "generatedFrom": {
+    "directions": [
+      "kinetic-bold",
+      "stark-display",
+      "swiss-grid",
+      "cinematic-calm",
+      "technical-accent",
+      "gallery-wall",
+      "night-ruled"
+    ],
+    "draws": 2,
+    "candidates": 14,
+    "pairsConsidered": 91
+  },
+  "pairs": [
+    {
+      "a": "kinetic-bold-0",
+      "b": "kinetic-bold-1",
+      "structural": 0.25,
+      "visualDesktop": 0.948989,
+      "visualMobile": 0.956092,
+      "sameDirection": true,
+      "shared": [
+        "direction",
+        "heroArchetype",
+        "colorMode",
+        "motionProfile",
+        "imageFrame",
+        "radius",
+        "displayWeight"
+      ],
+      "shots": {
+        "aDesktop": "shots/kinetic-bold-0/desktop.png",
+        "bDesktop": "shots/kinetic-bold-1/desktop.png",
+        "aMobile": "shots/kinetic-bold-0/mobile.png",
+        "bMobile": "shots/kinetic-bold-1/mobile.png"
+      }
+    },
+    {
+      "a": "technical-accent-0",
+      "b": "technical-accent-1",
+      "structural": 0.25,
+      "visualDesktop": 0.890321,
+      "visualMobile": 0.958302,
+      "sameDirection": true,
+      "shared": [
+        "direction",
+        "heroArchetype",
+        "colorMode",
+        "motionProfile",
+        "imageFrame",
+        "radius",
+        "displayWeight"
+      ],
+      "shots": {
+        "aDesktop": "shots/technical-accent-0/desktop.png",
+        "bDesktop": "shots/technical-accent-1/desktop.png",
+        "aMobile": "shots/technical-accent-0/mobile.png",
+        "bMobile": "shots/technical-accent-1/mobile.png"
+      }
+    },
+    {
+      "a": "swiss-grid-0",
+      "b": "gallery-wall-1",
+      "structural": 0.5,
+      "visualDesktop": 0.754762,
+      "visualMobile": 0.697824,
+      "sameDirection": false,
+      "shared": [
+        "heroArchetype",
+        "motionProfile",
+        "gridAlignment",
+        "imageFrame",
+        "radius"
+      ],
+      "shots": {
+        "aDesktop": "shots/swiss-grid-0/desktop.png",
+        "bDesktop": "shots/gallery-wall-1/desktop.png",
+        "aMobile": "shots/swiss-grid-0/mobile.png",
+        "bMobile": "shots/gallery-wall-1/mobile.png"
+      }
+    },
+    {
+      "a": "stark-display-0",
+      "b": "technical-accent-0",
+      "structural": 0.5278,
+      "visualDesktop": 0.838351,
+      "visualMobile": 0.84707,
+      "sameDirection": false,
+      "shared": [
+        "colorMode",
+        "typePair",
+        "motionProfile",
+        "gridAlignment",
+        "radius"
+      ],
+      "shots": {
+        "aDesktop": "shots/stark-display-0/desktop.png",
+        "bDesktop": "shots/technical-accent-0/desktop.png",
+        "aMobile": "shots/stark-display-0/mobile.png",
+        "bMobile": "shots/technical-accent-0/mobile.png"
+      }
+    },
+    {
+      "a": "swiss-grid-0",
+      "b": "technical-accent-1",
+      "structural": 0.5556,
+      "visualDesktop": 0.845692,
+      "visualMobile": 0.76897,
+      "sameDirection": false,
+      "shared": [
+        "colorMode",
+        "motionProfile",
+        "gridAlignment",
+        "imageFrame",
+        "radius"
+      ],
+      "shots": {
+        "aDesktop": "shots/swiss-grid-0/desktop.png",
+        "bDesktop": "shots/technical-accent-1/desktop.png",
+        "aMobile": "shots/swiss-grid-0/mobile.png",
+        "bMobile": "shots/technical-accent-1/mobile.png"
+      }
+    },
+    {
+      "a": "swiss-grid-0",
+      "b": "technical-accent-0",
+      "structural": 0.5833,
+      "visualDesktop": 0.764962,
+      "visualMobile": 0.813415,
+      "sameDirection": false,
+      "shared": [
+        "colorMode",
+        "motionProfile",
+        "imageFrame",
+        "radius",
+        "density"
+      ],
+      "shots": {
+        "aDesktop": "shots/swiss-grid-0/desktop.png",
+        "bDesktop": "shots/technical-accent-0/desktop.png",
+        "aMobile": "shots/swiss-grid-0/mobile.png",
+        "bMobile": "shots/technical-accent-0/mobile.png"
+      }
+    },
+    {
+      "a": "kinetic-bold-0",
+      "b": "technical-accent-0",
+      "structural": 0.6389,
+      "visualDesktop": 0.907628,
+      "visualMobile": 0.979503,
+      "sameDirection": false,
+      "shared": [
+        "colorMode",
+        "gridAlignment",
+        "radius",
+        "density",
+        "displayWeight"
+      ],
+      "shots": {
+        "aDesktop": "shots/kinetic-bold-0/desktop.png",
+        "bDesktop": "shots/technical-accent-0/desktop.png",
+        "aMobile": "shots/kinetic-bold-0/mobile.png",
+        "bMobile": "shots/technical-accent-0/mobile.png"
+      }
+    },
+    {
+      "a": "stark-display-1",
+      "b": "technical-accent-1",
+      "structural": 0.6389,
+      "visualDesktop": 0.884281,
+      "visualMobile": 0.854685,
+      "sameDirection": false,
+      "shared": [
+        "colorMode",
+        "motionProfile",
+        "gridAlignment",
+        "radius"
+      ],
+      "shots": {
+        "aDesktop": "shots/stark-display-1/desktop.png",
+        "bDesktop": "shots/technical-accent-1/desktop.png",
+        "aMobile": "shots/stark-display-1/mobile.png",
+        "bMobile": "shots/technical-accent-1/mobile.png"
+      }
+    },
+    {
+      "a": "technical-accent-1",
+      "b": "night-ruled-1",
+      "structural": 0.6389,
+      "visualDesktop": 0.874728,
+      "visualMobile": 0.868136,
+      "sameDirection": false,
+      "shared": [
+        "colorMode",
+        "motionProfile",
+        "gridAlignment",
+        "radius"
+      ],
+      "shots": {
+        "aDesktop": "shots/technical-accent-1/desktop.png",
+        "bDesktop": "shots/night-ruled-1/desktop.png",
+        "aMobile": "shots/technical-accent-1/mobile.png",
+        "bMobile": "shots/night-ruled-1/mobile.png"
+      }
+    },
+    {
+      "a": "swiss-grid-1",
+      "b": "technical-accent-0",
+      "structural": 0.6667,
+      "visualDesktop": 0.723029,
+      "visualMobile": 0.817089,
+      "sameDirection": false,
+      "shared": [
+        "colorMode",
+        "gridAlignment",
+        "imageFrame",
+        "radius"
+      ],
+      "shots": {
+        "aDesktop": "shots/swiss-grid-1/desktop.png",
+        "bDesktop": "shots/technical-accent-0/desktop.png",
+        "aMobile": "shots/swiss-grid-1/mobile.png",
+        "bMobile": "shots/technical-accent-0/mobile.png"
+      }
+    },
+    {
+      "a": "kinetic-bold-1",
+      "b": "night-ruled-0",
+      "structural": 0.6944,
+      "visualDesktop": 0.899435,
+      "visualMobile": 0.887614,
+      "sameDirection": false,
+      "shared": [
+        "colorMode",
+        "imageFrame",
+        "radius",
+        "density"
+      ],
+      "shots": {
+        "aDesktop": "shots/kinetic-bold-1/desktop.png",
+        "bDesktop": "shots/night-ruled-0/desktop.png",
+        "aMobile": "shots/kinetic-bold-1/mobile.png",
+        "bMobile": "shots/night-ruled-0/mobile.png"
+      }
+    },
+    {
+      "a": "cinematic-calm-0",
+      "b": "technical-accent-1",
+      "structural": 0.6944,
+      "visualDesktop": 0.78951,
+      "visualMobile": 0.822694,
+      "sameDirection": false,
+      "shared": [
+        "heroArchetype",
+        "gridAlignment",
+        "density"
+      ],
+      "shots": {
+        "aDesktop": "shots/cinematic-calm-0/desktop.png",
+        "bDesktop": "shots/technical-accent-1/desktop.png",
+        "aMobile": "shots/cinematic-calm-0/mobile.png",
+        "bMobile": "shots/technical-accent-1/mobile.png"
+      }
+    },
+    {
+      "a": "stark-display-1",
+      "b": "technical-accent-0",
+      "structural": 0.7222,
+      "visualDesktop": 0.811092,
+      "visualMobile": 0.87599,
+      "sameDirection": false,
+      "shared": [
+        "colorMode",
+        "motionProfile",
+        "radius"
+      ],
+      "shots": {
+        "aDesktop": "shots/stark-display-1/desktop.png",
+        "bDesktop": "shots/technical-accent-0/desktop.png",
+        "aMobile": "shots/stark-display-1/mobile.png",
+        "bMobile": "shots/technical-accent-0/mobile.png"
+      }
+    },
+    {
+      "a": "kinetic-bold-0",
+      "b": "stark-display-0",
+      "structural": 0.75,
+      "visualDesktop": 0.900673,
+      "visualMobile": 0.846459,
+      "sameDirection": false,
+      "shared": [
+        "colorMode",
+        "gridAlignment",
+        "radius"
+      ],
+      "shots": {
+        "aDesktop": "shots/kinetic-bold-0/desktop.png",
+        "bDesktop": "shots/stark-display-0/desktop.png",
+        "aMobile": "shots/kinetic-bold-0/mobile.png",
+        "bMobile": "shots/stark-display-0/mobile.png"
+      }
+    },
+    {
+      "a": "kinetic-bold-0",
+      "b": "night-ruled-1",
+      "structural": 0.75,
+      "visualDesktop": 0.810333,
+      "visualMobile": 0.87304,
+      "sameDirection": false,
+      "shared": [
+        "colorMode",
+        "imageFrame",
+        "radius"
+      ],
+      "shots": {
+        "aDesktop": "shots/kinetic-bold-0/desktop.png",
+        "bDesktop": "shots/night-ruled-1/desktop.png",
+        "aMobile": "shots/kinetic-bold-0/mobile.png",
+        "bMobile": "shots/night-ruled-1/mobile.png"
+      }
+    },
+    {
+      "a": "stark-display-1",
+      "b": "gallery-wall-1",
+      "structural": 0.75,
+      "visualDesktop": 0.639339,
+      "visualMobile": 0.670988,
+      "sameDirection": false,
+      "shared": [
+        "motionProfile",
+        "gridAlignment",
+        "radius"
+      ],
+      "shots": {
+        "aDesktop": "shots/stark-display-1/desktop.png",
+        "bDesktop": "shots/gallery-wall-1/desktop.png",
+        "aMobile": "shots/stark-display-1/mobile.png",
+        "bMobile": "shots/gallery-wall-1/mobile.png"
+      }
+    },
+    {
+      "a": "gallery-wall-1",
+      "b": "night-ruled-1",
+      "structural": 0.75,
+      "visualDesktop": 0.886944,
+      "visualMobile": 0.889689,
+      "sameDirection": false,
+      "shared": [
+        "motionProfile",
+        "gridAlignment",
+        "radius"
+      ],
+      "shots": {
+        "aDesktop": "shots/gallery-wall-1/desktop.png",
+        "bDesktop": "shots/night-ruled-1/desktop.png",
+        "aMobile": "shots/gallery-wall-1/mobile.png",
+        "bMobile": "shots/night-ruled-1/mobile.png"
+      }
+    },
+    {
+      "a": "kinetic-bold-1",
+      "b": "stark-display-0",
+      "structural": 0.7778,
+      "visualDesktop": 0.931061,
+      "visualMobile": 0.783101,
+      "sameDirection": false,
+      "shared": [
+        "colorMode",
+        "radius",
+        "density"
+      ],
+      "shots": {
+        "aDesktop": "shots/kinetic-bold-1/desktop.png",
+        "bDesktop": "shots/stark-display-0/desktop.png",
+        "aMobile": "shots/kinetic-bold-1/mobile.png",
+        "bMobile": "shots/stark-display-0/mobile.png"
+      }
+    },
+    {
+      "a": "kinetic-bold-1",
+      "b": "technical-accent-0",
+      "structural": 0.7778,
+      "visualDesktop": 0.879675,
+      "visualMobile": 0.957141,
+      "sameDirection": false,
+      "shared": [
+        "colorMode",
+        "radius",
+        "displayWeight"
+      ],
+      "shots": {
+        "aDesktop": "shots/kinetic-bold-1/desktop.png",
+        "bDesktop": "shots/technical-accent-0/desktop.png",
+        "aMobile": "shots/kinetic-bold-1/mobile.png",
+        "bMobile": "shots/technical-accent-0/mobile.png"
+      }
+    },
+    {
+      "a": "swiss-grid-1",
+      "b": "cinematic-calm-0",
+      "structural": 0.7778,
+      "visualDesktop": 0.619278,
+      "visualMobile": 0.647208,
+      "sameDirection": false,
+      "shared": [
+        "motionProfile",
+        "density",
+        "displayWeight"
+      ],
+      "shots": {
+        "aDesktop": "shots/swiss-grid-1/desktop.png",
+        "bDesktop": "shots/cinematic-calm-0/desktop.png",
+        "aMobile": "shots/swiss-grid-1/mobile.png",
+        "bMobile": "shots/cinematic-calm-0/mobile.png"
+      }
+    },
+    {
+      "a": "kinetic-bold-0",
+      "b": "gallery-wall-0",
+      "structural": 0.8056,
+      "visualDesktop": 0.705565,
+      "visualMobile": 0.70609,
+      "sameDirection": false,
+      "shared": [
+        "gridAlignment",
+        "radius",
+        "density"
+      ],
+      "shots": {
+        "aDesktop": "shots/kinetic-bold-0/desktop.png",
+        "bDesktop": "shots/gallery-wall-0/desktop.png",
+        "aMobile": "shots/kinetic-bold-0/mobile.png",
+        "bMobile": "shots/gallery-wall-0/mobile.png"
+      }
+    },
+    {
+      "a": "stark-display-1",
+      "b": "swiss-grid-1",
+      "structural": 0.8333,
+      "visualDesktop": 0.865167,
+      "visualMobile": 0.751769,
+      "sameDirection": false,
+      "shared": [
+        "colorMode",
+        "radius"
+      ],
+      "shots": {
+        "aDesktop": "shots/stark-display-1/desktop.png",
+        "bDesktop": "shots/swiss-grid-1/desktop.png",
+        "aMobile": "shots/stark-display-1/mobile.png",
+        "bMobile": "shots/swiss-grid-1/mobile.png"
+      }
+    },
+    {
+      "a": "swiss-grid-1",
+      "b": "cinematic-calm-1",
+      "structural": 0.8333,
+      "visualDesktop": 0.625217,
+      "visualMobile": 0.534402,
+      "sameDirection": false,
+      "shared": [
+        "motionProfile",
+        "displayWeight"
+      ],
+      "shots": {
+        "aDesktop": "shots/swiss-grid-1/desktop.png",
+        "bDesktop": "shots/cinematic-calm-1/desktop.png",
+        "aMobile": "shots/swiss-grid-1/mobile.png",
+        "bMobile": "shots/cinematic-calm-1/mobile.png"
+      }
+    },
+    {
+      "a": "cinematic-calm-0",
+      "b": "night-ruled-1",
+      "structural": 0.8333,
+      "visualDesktop": 0.876684,
+      "visualMobile": 0.89918,
+      "sameDirection": false,
+      "shared": [
+        "gridAlignment",
+        "imageFrame"
+      ],
+      "shots": {
+        "aDesktop": "shots/cinematic-calm-0/desktop.png",
+        "bDesktop": "shots/night-ruled-1/desktop.png",
+        "aMobile": "shots/cinematic-calm-0/mobile.png",
+        "bMobile": "shots/night-ruled-1/mobile.png"
+      }
+    },
+    {
+      "a": "gallery-wall-0",
+      "b": "night-ruled-0",
+      "structural": 0.8333,
+      "visualDesktop": 0.700115,
+      "visualMobile": 0.662898,
+      "sameDirection": false,
+      "shared": [
+        "motionProfile",
+        "radius"
+      ],
+      "shots": {
+        "aDesktop": "shots/gallery-wall-0/desktop.png",
+        "bDesktop": "shots/night-ruled-0/desktop.png",
+        "aMobile": "shots/gallery-wall-0/mobile.png",
+        "bMobile": "shots/night-ruled-0/mobile.png"
+      }
+    },
+    {
+      "a": "cinematic-calm-1",
+      "b": "night-ruled-1",
+      "structural": 0.8611,
+      "visualDesktop": 0.84682,
+      "visualMobile": 0.767233,
+      "sameDirection": false,
+      "shared": [
+        "imageFrame",
+        "density"
+      ],
+      "shots": {
+        "aDesktop": "shots/cinematic-calm-1/desktop.png",
+        "bDesktop": "shots/night-ruled-1/desktop.png",
+        "aMobile": "shots/cinematic-calm-1/mobile.png",
+        "bMobile": "shots/night-ruled-1/mobile.png"
+      }
+    },
+    {
+      "a": "gallery-wall-1",
+      "b": "night-ruled-0",
+      "structural": 0.8889,
+      "visualDesktop": 0.707965,
+      "visualMobile": 0.738986,
+      "sameDirection": false,
+      "shared": [
+        "radius",
+        "density"
+      ],
+      "shots": {
+        "aDesktop": "shots/gallery-wall-1/desktop.png",
+        "bDesktop": "shots/night-ruled-0/desktop.png",
+        "aMobile": "shots/gallery-wall-1/mobile.png",
+        "bMobile": "shots/night-ruled-0/mobile.png"
+      }
+    },
+    {
+      "a": "kinetic-bold-1",
+      "b": "cinematic-calm-1",
+      "structural": 0.9167,
+      "visualDesktop": 0.740199,
+      "visualMobile": 0.682606,
+      "sameDirection": false,
+      "shared": [
+        "imageFrame"
+      ],
+      "shots": {
+        "aDesktop": "shots/kinetic-bold-1/desktop.png",
+        "bDesktop": "shots/cinematic-calm-1/desktop.png",
+        "aMobile": "shots/kinetic-bold-1/mobile.png",
+        "bMobile": "shots/cinematic-calm-1/mobile.png"
+      }
+    },
+    {
+      "a": "kinetic-bold-1",
+      "b": "gallery-wall-0",
+      "structural": 0.9444,
+      "visualDesktop": 0.698619,
+      "visualMobile": 0.661158,
+      "sameDirection": false,
+      "shared": [
+        "radius"
+      ],
+      "shots": {
+        "aDesktop": "shots/kinetic-bold-1/desktop.png",
+        "bDesktop": "shots/gallery-wall-0/desktop.png",
+        "aMobile": "shots/kinetic-bold-1/mobile.png",
+        "bMobile": "shots/gallery-wall-0/mobile.png"
+      }
+    },
+    {
+      "a": "stark-display-1",
+      "b": "gallery-wall-0",
+      "structural": 0.9444,
+      "visualDesktop": 0.640214,
+      "visualMobile": 0.597679,
+      "sameDirection": false,
+      "shared": [
+        "radius"
+      ],
+      "shots": {
+        "aDesktop": "shots/stark-display-1/desktop.png",
+        "bDesktop": "shots/gallery-wall-0/desktop.png",
+        "aMobile": "shots/stark-display-1/mobile.png",
+        "bMobile": "shots/gallery-wall-0/mobile.png"
+      }
+    }
+  ]
+}

@@ -1679,6 +1679,42 @@ by looking at the render: every number was in range and `rampViolations`
 passed, because tinted ink is perfectly legible. It is just not what the
 direction says it is.
 
+## C6 — the §8.3 harness is built; the labelling is the operator's
+
+Three pieces, and the matrix was re-measured against the seven-direction
+catalog because the one in `D10-visual-calibration.md` predates both
+catalog changes.
+
+```
+pnpm --filter @pipeline/orchestrator calibrate          # render, shoot, embed, pair
+# label at http://localhost:3106/calibrate, download labels.json
+pnpm --filter @pipeline/orchestrator calibrate:report   # what the labels say
+```
+
+**The pairs are stratified, not random.** 7 directions × 2 draws is 91
+pairs and most are obviously different; labelling those teaches a threshold
+nothing. The sample is spread evenly across the structural range — 30 pairs
+from 0.25 to 0.94 — so the hour is spent on the band that actually
+discriminates.
+
+**The labelling page shows no numbers.** Both distances are in
+`pairs.json` and neither reaches the page. A visible 0.41 would anchor the
+judgement it is meant to measure, and the exercise is worth nothing if the
+labels agree with the detector because the labeller could see what the
+detector said.
+
+**The report does not edit the thresholds.** It prints the cut that agrees
+with the labels best, how many pairs it still gets wrong, and the full
+range of each label — because the disagreements are the interesting part.
+If the alike and different ranges overlap, *no* threshold separates them
+and that is a detector problem, not a number problem (design-rules §12). A
+script that silently rewrote `distance.ts` would mean nobody ever looked.
+
+It also reports which axes the "alike" pairs share. An axis that every
+alike pair shares is carrying the judgement; one near zero is weighted in
+§8.1 and earning nothing. That is a change to the weights, not the
+threshold, and it is the more useful of the two findings.
+
 ## Next
 
 **§8.3 calibration — operator.** ~30 labelled pairs. Both thresholds move to
