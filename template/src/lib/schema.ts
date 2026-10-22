@@ -311,8 +311,39 @@ export const processSectionSchema = z
   })
   .strict();
 
+/**
+ * The one bold element (D10 §9) — the single section whose markup a model
+ * writes rather than choosing from the library.
+ *
+ * Everything on this schema is CONTENT, never form. The component decides
+ * how the section looks; the config decides what is in it, and every field
+ * here comes from the crawl verbatim. That split is what keeps §9's freedom
+ * from reaching the facts: a bespoke section can be any shape at all and
+ * still cannot invent an hour, a price or a sentence the client never wrote.
+ *
+ * `concept` is the direction's own argument for why this section exists,
+ * copied from `design.json`. It is rendered nowhere — it is there so the
+ * fallback has something true to show and so a human reading the config can
+ * tell what the section was for.
+ */
+export const signatureSectionSchema = z
+  .object({
+    ...sectionBase,
+    type: z.literal("signature"),
+    /** `custom` is the model-written slot; absent means the safe default. */
+    variant: z.enum(["custom"]).optional(),
+    concept: z.string().min(1),
+    /** The client's own sentence, verbatim. */
+    text: z.string().min(1),
+    /** Their best photographs, already staged into public/images. */
+    images: z.array(imageSchema).default([]),
+    cta: ctaSchema.optional(),
+  })
+  .strict();
+
 export const sectionSchema = z.discriminatedUnion("type", [
   heroSectionSchema,
+  signatureSectionSchema,
   statementSectionSchema,
   visitSectionSchema,
   closingSectionSchema,
@@ -504,6 +535,7 @@ export type SectionImage = z.infer<typeof imageSchema>;
 export type OpeningHoursEntry = z.infer<typeof openingHoursEntrySchema>;
 
 export type HeroSection = z.infer<typeof heroSectionSchema>;
+export type SignatureSection = z.infer<typeof signatureSectionSchema>;
 export type StatementSection = z.infer<typeof statementSectionSchema>;
 export type VisitSection = z.infer<typeof visitSectionSchema>;
 export type ClosingSection = z.infer<typeof closingSectionSchema>;

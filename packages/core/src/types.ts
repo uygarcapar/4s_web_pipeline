@@ -19,6 +19,11 @@ export const STAGES = [
   "design",
   "plan",
   "generate",
+  // `signature` writes the one bold element (D10 §9) — the single place a
+  // model produces bespoke JSX. After `generate` so the site and the
+  // section's copy exist; before `verify` so whatever it writes faces every
+  // gate the rest of the site does.
+  "signature",
   "verify",
   "notify",
   "deploy",
@@ -37,6 +42,11 @@ export const AUTO_STAGES = [
   "design",
   "plan",
   "generate",
+  // `signature` writes the one bold element (D10 §9) — the single place a
+  // model produces bespoke JSX. After `generate` so the site and the
+  // section's copy exist; before `verify` so whatever it writes faces every
+  // gate the rest of the site does.
+  "signature",
   "verify",
   "notify",
 ] as const satisfies readonly Stage[];
