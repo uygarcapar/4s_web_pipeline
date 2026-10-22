@@ -1,5 +1,12 @@
 import type { DesignSpec, Direction } from "@pipeline/core";
 
+import { composeArchetypes } from "./compose.js";
+import { hashSeed, mulberry32, pick } from "./rng.js";
+
+// Re-exported: the sampler is where callers expect to find the seeded
+// draw, and moving the PRNG out was a cycle fix, not an API change.
+export { hashSeed, mulberry32 } from "./rng.js";
+
 /**
  * Deterministic sampling of a `DesignSpec` from a `Direction` (D10 §6.3).
  *
@@ -16,41 +23,9 @@ import type { DesignSpec, Direction } from "@pipeline/core";
  * seeing roughly a quarter of what the direction can actually produce.
  */
 
-/** Small, fast, well-distributed 32-bit PRNG. */
-export function mulberry32(seed: number): () => number {
-  let a = seed >>> 0;
-  return () => {
-    a = (a + 0x6d2b79f5) >>> 0;
-    let t = Math.imul(a ^ (a >>> 15), 1 | a);
-    t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t;
-    return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
-  };
-}
-
-/**
- * FNV-1a over the seed string. Not a cryptographic hash and does not need to
- * be — it only has to spread adjacent seeds ("acme-0", "acme-1") into
- * unrelated streams, which a plain character sum would not.
- */
-export function hashSeed(input: string): number {
-  let h = 0x811c9dc5;
-  for (let i = 0; i < input.length; i += 1) {
-    h ^= input.charCodeAt(i);
-    h = Math.imul(h, 0x01000193);
-  }
-  return h >>> 0;
-}
-
 /** Midpoint-biased pick from an inclusive numeric range. */
 function inRange(rng: () => number, [min, max]: [number, number]): number {
   return Math.round((min + rng() * (max - min)) * 1000) / 1000;
-}
-
-function pick<T>(rng: () => number, options: readonly T[]): T {
-  if (options.length === 0) {
-    throw new Error("cannot sample from an empty option list");
-  }
-  return options[Math.floor(rng() * options.length)]!;
 }
 
 /**
@@ -79,34 +54,6 @@ function resolveMode(
   if (mode !== "split") return mode;
   const [min, max] = direction.color.paperLightness;
   return (min + max) / 2 < 0.5 ? "dark" : "light";
-}
-
-/**
- * Choose one archetype per section from the direction's own list.
- *
- * Seeded from `seed` plus the section type, so the same client always gets
- * the same layout for a section and two clients on the same direction do
- * not: picking `[0]` everywhere would make a direction mean one page rather
- * than a range of them.
- *
- * A type the direction lists nothing for falls back to `"default"`, which is
- * the template registry's own per-type fallback. That is the honest answer
- * for `contact`, which has one layout — and a silent sameness anywhere else,
- * which is why `archetypes.test.ts` fails on an unlisted section type.
- */
-export function pickArchetypes(
-  direction: Direction,
-  sections: readonly string[],
-  seed: string,
-): { type: string; archetype: string }[] {
-  return sections.map((type) => {
-    const options = direction.archetypes[type];
-    if (options === undefined || options.length === 0) {
-      return { type, archetype: "default" };
-    }
-    const rng = mulberry32(hashSeed(`${seed}-${type}`));
-    return { type, archetype: pick(rng, options) };
-  });
 }
 
 /**
@@ -163,7 +110,17 @@ export function sampleSpec(
       heroEntrance: direction.motion.heroEntrance,
       smoothScroll: direction.motion.smoothScroll,
     },
-    sections: pickArchetypes(direction, ["hero", "services", "contact"], seed),
+    // A placeholder the compose step replaces (§6.4): a sampled spec has
+    // to satisfy the schema's three-section minimum, but which sections a
+    // client gets is a function of which facts exist, not of the
+    // direction. `recentUsage` is empty for the same reason — rotation is
+    // a property of a run, and this draw is not one.
+    sections: composeArchetypes({
+      direction,
+      sections: ["hero", "services", "contact"],
+      seed,
+      recentUsage: {},
+    }).map(({ type, archetype }) => ({ type, archetype })),
     signature: { sectionIndex: 0, concept: "sampled" },
     rejected: [],
   };
