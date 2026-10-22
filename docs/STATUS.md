@@ -1180,16 +1180,12 @@ pipeline that chooses among it (`brief`, scorer, `compose`, structural and
 visual distance, calibration) — and then Phase D's signature section and
 judge work.
 
-Two things are worth doing before C, because C depends on both:
-
-1. **Wire the spec path.** `spec-tokens.ts` and `local-fonts.ts` are written
-   and tested but unwired; the design stage still emits a `DesignDna`. Until
-   C3 does this, none of the catalog reaches a real run.
-2. **The archetype count is now large enough that the fixtures are the
-   limit.** Four services, four gallery images, three team members and no
-   `process` section in any committed config means most archetypes are
-   previewed at a size the real client will exceed. The nineteen-service
-   clone used to check `services/index` was done by hand and thrown away.
+**The spec path is wired (C2/C3).** See the section below. What is still
+open: the archetype count is now large enough that the fixtures are the
+limit. Four services, four gallery images, three team members and no
+`process` section in any committed config means most archetypes are
+previewed at a size the real client will exceed. The nineteen-service clone
+used to check `services/index` was done by hand and thrown away.
 
 Two cleanups worth doing at some point, neither urgent: delete the legacy
 `hero/default` and `services/default`, which read no tokens and look
@@ -1199,3 +1195,141 @@ anything an archetype reads from `config` beyond motion, which is the gap
 that produced three separate surprises. Both blocking decisions are settled: `verify` is green on both fixtures and
 `/library` renders each direction's own faces, so an archetype review can
 now judge type as well as composition.
+
+
+## C2/C3 — the spec path is wired, and four things were wrong behind it
+
+`design.ts` no longer emits a `DesignDna` for the site to be built from. It
+scores the four directions from the brief's new `tone`/`tier`/`audience`/
+`contentVolume` enums and the measured photographs, applies the cross-sector
+rotation penalty, samples a `DesignSpec` from the winner's ranges, and
+generates `tokens.css` and `fonts.ts` from that spec. `design.json` IS the
+spec now; the fingerprint ledger survives as `dna.json` beside it, because
+the ledger is still what makes "no two neighbours get the same site"
+checkable. The DNA renderers are deleted rather than left in place — an
+unused generator in that folder is indistinguishable from a second
+supported path.
+
+| was | is |
+|---|---|
+| `renderTokens(dna)` / `renderFonts(dna)` | `renderSpecTokens(spec)` / `planLocalFonts(spec)` |
+| `design.json` = DNA | `design.json` = `DesignSpec` v2; `dna.json` = fingerprint + palette |
+| sector-scoped fingerprint only | plus a 30-day, **all-sector** direction count (`designs.direction`) |
+| fonts from `next/font/google` | self-hosted, copied per run by the generate stage |
+
+`verify` is green on all three fixtures and on a page built from each of the
+four directions. typecheck 0, lint 0, 382 tests.
+
+### The catalog named layouts that did not exist
+
+A3 wrote the four directions before B4 built the library, so the archetype
+lists were almost entirely fictional: `grid-bordered`, `quote-large`,
+`masonry-reveal`, `list-rule`, `inset-pairs`, `word-swap`, `accordion-rule`,
+`statement-left`. Three of roughly thirty names were real. Nothing failed,
+because no stage read the catalog — the first run to use it would have
+produced a page of silent registry fallbacks inside the generate stage,
+where the feedback costs a model session. All four are repointed at the real
+registry and widened to all eleven section types, and
+`archetypes.test.ts` now checks the catalog the same way it has always
+checked the DNA table, plus coverage: a direction that lists nothing for
+`team` gives every client the same team page.
+
+### Dark mode had never worked
+
+`globals.css` imports `tokens.css` and then redefined `--background`,
+`--foreground`, `--muted`, `--card` and `--border` with shadcn's stock light
+neutrals, which therefore won. A `mode: "dark"` direction produced a page
+whose paper tokens were dark and whose shadcn utilities were still light —
+near-black text on a near-black panel, and the generated background
+overridden back to white. Those surfaces now follow the paper/ink ramp, the
+way `--primary` already did. Nothing caught it because every fixture
+previewed a light direction.
+
+### The template never defined the colour ramp
+
+Same shape as the missing type steps in B4, and found the same way. The
+template's committed `tokens.css` carried the generated scale but **no**
+`--paper-*` / `--ink-*` at all, so every section written against
+`--ink-400` or `text-paper-50` emitted an invalid declaration and inherited
+its parent's colour. The pages looked right for the wrong reason. The first
+real generated ramp replaced the inheritance with an actual colour and axe
+immediately failed three elements.
+
+The template's defaults are now generated from a `DEFAULT_SPEC` by
+`pnpm --filter @pipeline/orchestrator defaults`, and `template-defaults.test.ts`
+fails if the committed files drift from it. The template renders what a run
+renders, through the same two generators.
+
+### The ramp itself was not legible, and now checks itself
+
+With the tokens actually defined, the numbers could be measured for the
+first time:
+
+| | was | measured | is |
+|---|---|---|---|
+| light `ink-400` on `paper-200` | L 0.64 | **2.83:1** | L 0.50 → 5.05:1 |
+| dark `ink-400` on `paper-50` | L 0.60 | **4.37:1** | L 0.66 → 5.99:1 |
+| light accent (c 0.18, hue 190) | L 0.52 | **4.15:1** | L 0.48 → 4.88:1 |
+
+`contrast.ts` does OKLCH → sRGB → WCAG, and `rampViolations` checks every
+text-on-background pair the generator can produce **at the worst hue on the
+circle**, because the hue is the client's: a pair that passes at 220 fails
+at 190. `renderSpecTokens` throws rather than emit a failing ramp, so the
+check runs on every spec and not only in tests. The template's own note had
+already recorded this failure mode once ("L 0.57 measured ~4.0–4.2:1 and
+failed the axe color-contrast gate") — a generator that can emit any
+lightness for any hue has to be able to check itself, or every direction
+rediscovers it by failing verify.
+
+### Three smaller ones, all on the same path
+
+- **`split` mode rendered as light.** `renderRamp` branches on
+  `mode === "dark"`, so a sampled `quiet-luxury` spec saying `split` — a
+  direction whose declared `paperLightness` is [0.12, 0.28] — produced a
+  white page. `sample-spec.ts` now resolves `split` to the polarity the
+  direction states, reading `color.paperLightness`, which the catalog had
+  declared since A3 and nothing read. The per-section half of `split` (a
+  dark hero above a light body) is still unbuilt and belongs with §9.
+- **The same face downloaded twice.** `swiss-grid` is Archivo over Archivo,
+  and `planLocalFonts` emitted one `localFont()` per *role*, which Next
+  treats as independent fonts. LCP measured 3684 ms against a 3500 ms
+  budget; one declaration per family brought it back under. The token
+  generator reads `fontRoles()` rather than assuming `--font-body-face`
+  exists, because when body reuses the display face it does not.
+- **The nav was legible by accident.** `mix-blend-difference` with
+  `text-paper-50` over every hero, and `--paper-50` was one of the undefined
+  tokens — so the bar inherited near-black text and read correctly on light
+  pages. Once the token existed, a `type-only` hero was near-white on
+  near-white, and axe cannot see through blend modes. Three of four
+  directions prefer a non-photo hero, so this would have failed most real
+  runs. The bar now branches on whether the first section is the one
+  archetype that puts a photograph behind it.
+
+### The pattern, again
+
+Every one of these was found by rendering, not by reading: four more
+instances of **measurements verify presence and dimension; only rendering
+verifies legibility**, and three of them specifically because *dark or
+flat-light* backgrounds break what a photo hero on a light page hides. The
+new twist is a second pattern worth naming — **a token that is referenced
+but never defined fails silently in the direction of looking correct**. CSS
+drops the invalid declaration and the element inherits, which on this
+template meant near-black text on white: exactly what was wanted, for none
+of the right reasons, until something finally defined the token.
+
+## Next
+
+Phase C's remaining halves: §6.4 `compose` (which sections, in what order,
+from the brief rather than carried over from the DNA), §8 structural and
+visual distance, and calibration. Then Phase D's signature section and the
+judge work.
+
+Smaller things this turn left open, none blocking:
+
+- `signature` is `{ sectionIndex: 0, concept: "<direction> hero" }` — a true
+  statement, not a decision. §9 owns the real one.
+- `color.paperLightness` still only decides `split`'s polarity. Sampling the
+  page's own lightness from that range would mean re-deriving the contrast
+  floors per draw, which is A4 work this did not do.
+- `rejected[].distance` carries the score gap, because no visual-distance
+  metric exists until C4.
