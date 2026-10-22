@@ -707,32 +707,50 @@ Two gaps this surfaced, neither fixed here:
   `archetypes.test.ts` caught it — the test added in an earlier session for
   exactly this. Both are explicit archetype entries now, in both tables.
 
-## Open: LCP is over budget on the reference fixture
+## Self-hosted faces wired — both open items closed
 
-`verify` exits 1 on the reference config, on LHCI
-`largest-contentful-paint`: **3576 / 3581 / 3589 ms against a 3500 budget**
-across three of the last five runs. The calm fixture passes.
+**The font pin is gone.** `template/src/lib/fonts.ts` self-hosts Archivo and
+Inter Tight from `public/fonts` with `weight: "100 900"`. It previously
+loaded Archivo at `weight: ["800"]`, so every direction rendered the same
+glyphs however light its range said it was — `getComputedStyle` reported 300
+and DJ16 passed a page that visibly contradicted its own direction.
 
-I previously recorded this as noise after two passing runs. That was wrong —
-it is bimodal and consistently just over. The cause is mine: **B2 changed the
-reference hero from `default` to `photo-full`** so the motion flags would be
-exercised, and that moved LCP from comfortably under to borderline.
+**`/library` now shows each direction's real faces.** The library loads all
+eleven registry faces, each exposing `--face-<slug>`, and a direction's
+injected CSS points `--font-display-face` at whichever it chose. Measured
+through the previews:
 
-Not fixed here, because the fix is its own task (font preload, hero image
-sizing) and not part of an archetype review. Flagged rather than re-rolled
-until green: a gate that is re-run until it passes is a gate that has stopped
-meaning anything.
+| direction | display | weight | body |
+|---|---|---|---|
+| kinetic-bold | Archivo | 700 | Archivo |
+| editorial-serif | **Fraunces** | **300** | **Karla** |
+| swiss-grid | **Inter Tight** | **400** | Inter Tight |
+| quiet-luxury | **Instrument Serif** | **300** | Karla |
+
+Before this, all four read `Archivo / 800`. A `/library` review can now judge
+type, which it structurally could not for `hero/type-only` — that archetype
+was accepted on composition alone and is worth a second look under its real
+faces.
+
+A client site still loads only the two or three faces its own direction
+picked; loading all eleven is a library-only cost.
+
+**LCP is fixed, and by the same change.** `largest-contentful-paint` is now
+**3.2 s** against the 3500 ms budget, with CLS 0 and TBT 0 — from 3576–3589
+ms failing three of five runs. Self-hosting removes the third-party
+connection on the critical path and `preload` on the display face puts it
+ahead of the headline it sets. The body face is deliberately not preloaded.
+
+`verify` exits 0 on both fixtures, all seven gates.
+
+That also settles the earlier judgement call honestly: I called the LCP miss
+noise in B3 after two passing runs, then recorded it as a real regression in
+B4 once it failed three of five. The second reading was right, and the cause
+was B2's switch of the reference hero to `photo-full`.
 
 ## Next
 
 The rest of B4, one archetype at a time — §7.1 wants 8 heroes and the
-template now has 3. Two decisions are outstanding and both change what the
-next sessions should do, so they are worth settling first:
-
-1. **LCP over budget** (below). `verify` exits 1 on the reference fixture
-   today, which means no B4 archetype can claim a green end-to-end run until
-   it is fixed or the fixture is changed back.
-2. **The font pin.** Until `local-fonts.ts` is wired, every direction renders
-   Archivo 800, so a `/library` review cannot judge typeface or weight — only
-   composition. That limits what an operator review is actually able to
-   approve, for every remaining archetype.
+template now has 3. Both blocking decisions are settled: `verify` is green on both fixtures and
+`/library` renders each direction's own faces, so an archetype review can
+now judge type as well as composition.
