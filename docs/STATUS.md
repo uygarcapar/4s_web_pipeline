@@ -1002,8 +1002,44 @@ reads from `config` rather than from a token.
 design stage will not pick and which B-phase should eventually delete rather
 than leave as a trap.
 
-Next is **services, 2 of 6** (§7.1: pinned rail, index list, numbered rows,
-image grid, accordion, alternating media — `rail-pinned` and the legacy
-`default` exist). Both blocking decisions are settled: `verify` is green on both fixtures and
+## B4 · `services/alternating`
+
+First services archetype. Each service a full row, photograph and words
+swapping sides down the page. Composition from `lpas` and `butter.video`.
+
+This is the archetype that answers an old complaint directly. A Turkish
+SMB's services page usually has a real photograph per treatment, and the
+card grid the template shipped with renders them as thumbnails — at card
+size a missing picture is a hole and a present one is decoration. At row
+size the photograph is the argument.
+
+**It degrades per row, not per section.** A service with no `image` takes
+the full row as text rather than leaving half of it empty. Mixed is the
+normal case, so the reference fixture now carries it: two of four services
+photographed, two not. A fixture where every row looks the same would not
+have caught the bug below.
+
+**The bug it caught.** Alternation was keyed off the item index, so two
+services photographed at positions 0 and 2 both landed left — the page
+stopped alternating, which is the one thing the archetype does. It counts
+*photographed* rows now: `L-R-` across all four directions, verified.
+
+Image framing follows the direction, 3/4 under `kinetic-bold` and
+`quiet-luxury`, 4/3 under the other two. No overflow at either width.
+
+`verify` exits 0 on both fixtures. 326 tests.
+
+## Next
+
+**Services, 3 of 6** — `rail-pinned`, `alternating`, and the legacy
+`default`. §7.1 still wants index list, numbered rows, image grid and
+accordion.
+
+Two cleanups worth doing at some point, neither urgent: delete the legacy
+`hero/default` and `services/default`, which read no tokens and look
+identical under every direction (the design stage will not pick either, so
+they are traps rather than options); and the library still cannot show
+anything an archetype reads from `config` beyond motion, which is the gap
+that produced three separate surprises. Both blocking decisions are settled: `verify` is green on both fixtures and
 `/library` renders each direction's own faces, so an archetype review can
 now judge type as well as composition.
