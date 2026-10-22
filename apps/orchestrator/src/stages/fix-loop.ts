@@ -36,7 +36,15 @@ work, and do not refactor anything the digest does not mention.
 ${digest}
 
 Rules:
-- Edit only site.config.ts, src/sections/** and src/styles/tokens.css.
+- Edit only site.config.ts and src/sections/**.
+- src/styles/tokens.css and src/lib/fonts.ts are GENERATED from design.json
+  and are not yours to edit (D10 §5). Every colour and type step in them is
+  derived from the spec and the whole ramp's contrast is checked before the
+  file is written, so a gate failing because of a token is a bug in the
+  generator rather than something to patch on one site. If you believe a
+  token is the cause, say so in your final message and change nothing —
+  a silent patch here makes one site pass and leaves the generator wrong
+  for every site after it.
 - Tests, lighthouserc.cjs, playwright.config.ts, budget.json and acceptance.json
   are off limits; a hook will deny the write. Fix the code, not the gate.
 - Entries marked as a recommendation (öneri) are not failures — ignore them
