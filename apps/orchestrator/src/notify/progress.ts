@@ -10,22 +10,34 @@ import { sendTelegram } from "./telegram.js";
  *    only `flush()` at the end of a run.
  *  - It must not spam. One line per stage transition, in Turkish, carrying the
  *    numbers that actually tell the operator how it is going.
+ *
+ * **No icons, and a formal register** (operator instruction, 2026-10-23).
+ * These messages are the only thing the operator sees while a client's site
+ * is being built, and they get forwarded — the tone has to be one you would
+ * put in front of the client whose site it is. Full sentences, no emoji, no
+ * check marks, and "tamamlandı" rather than "bitti". The stage name and the
+ * numbers carry the meaning; a symbol in front of them adds nothing a
+ * reader cannot already see.
  */
 
 export type ProgressChannel = "telegram" | "none";
 
 /** Turkish copy per stage. Keyed by stage name; unknown stages fall back. */
 const STAGE_START: Record<string, string> = {
-  crawl: "📥 Eski site taranıyor — metinler, fotoğraflar, çalışma saatleri",
-  audit: "📊 Mevcut site ölçülüyor — hız, erişilebilirlik, SEO",
-  brief: "🧠 İşletme okunuyor — ne yapıyor, kim geliyor, sitenin tek işi ne",
-  design: "🎨 Tasarım yönü seçiliyor — tipografi, renk, bölüm düzenleri",
-  plan: "🧩 Sayfa planı hazırlanıyor",
-  generate: "🛠 Yeni site üretiliyor",
-  signature: "✨ Sayfanın tek cesur bölümü yazılıyor",
-  verify: "🔍 Doğrulanıyor — testler, Lighthouse, tasarım jürisi",
-  notify: "📨 Bildirim hazırlanıyor",
-  deploy: "🚀 Yayına alınıyor",
+  crawl: "Mevcut site taranıyor. Metinler, görseller ve çalışma saatleri alınıyor.",
+  audit: "Mevcut site ölçülüyor. Performans, erişilebilirlik ve SEO değerlendiriliyor.",
+  brief:
+    "İşletme profili çıkarılıyor. Faaliyet alanı, hedef kitle ve sitenin " +
+    "birincil amacı belirleniyor.",
+  design: "Tasarım yönü belirleniyor. Tipografi, renk ve bölüm düzenleri seçiliyor.",
+  plan: "Sayfa planı hazırlanıyor.",
+  generate: "Yeni site oluşturuluyor.",
+  signature: "Sayfanın öne çıkan bölümü hazırlanıyor.",
+  verify:
+    "Doğrulama yürütülüyor. Testler, Lighthouse ölçümleri ve tasarım " +
+    "değerlendirmesi uygulanıyor.",
+  notify: "Bildirim hazırlanıyor.",
+  deploy: "Yayına alma işlemi başlatıldı.",
 };
 
 /**
@@ -34,31 +46,33 @@ const STAGE_START: Record<string, string> = {
  */
 const STAGE_PASS: Record<string, (data: Record<string, unknown>) => string> = {
   crawl: (d) =>
-    `✓ Tarama bitti — ${num(d.pages, "sayfa")}, ${num(d.contentBlocks, "içerik bloğu")}, ${num(d.assets, "görsel")}`,
+    `Tarama tamamlandı. ${num(d.pages, "sayfa")}, ${num(d.contentBlocks, "içerik bloğu")}, ${num(d.assets, "görsel")}.`,
   audit: (d) =>
-    `✓ Ölçüm bitti — performans ${pct(d.performance)}, erişilebilirlik ${pct(d.accessibility)}, SEO ${pct(d.seo)}`,
-  brief: (d) => `✓ Brief hazır — sitenin tek işi: ${str(d.theOneJob)}`,
+    `Ölçüm tamamlandı. Performans ${pct(d.performance)}, erişilebilirlik ${pct(d.accessibility)}, SEO ${pct(d.seo)}.`,
+  brief: (d) => `İşletme profili hazır. Sitenin birincil amacı: ${str(d.theOneJob)}`,
   // The direction is the most interesting fact this stage produces and the
   // line did not carry it: it decided the whole look, and "palet nötr,
   // tipografi Archivo/Archivo" says nothing about which of the seven
   // languages the client got.
   design: (d) =>
-    `✓ Tasarım hazır — yön ${str(d.direction)}, tipografi ${str(d.typePair)}, palet ${str(d.paletteName)}`,
-  plan: (d) => `✓ Plan hazır — ${num(d.sections, "bölüm")}`,
+    `Tasarım hazır. Yön: ${str(d.direction)}. Tipografi: ${str(d.typePair)}. ` +
+    `Palet: ${str(d.paletteName)}.`,
+  plan: (d) => `Sayfa planı hazır. ${num(d.sections, "bölüm")}.`,
   signature: (d) =>
     d.built === true
-      ? `✓ Cesur bölüm yazıldı — ${num(d.rounds, "turda")}`
-      : "✓ Cesur bölüm için varsayılan kullanıldı — site bundan dolayı durmaz",
+      ? `Öne çıkan bölüm hazırlandı. ${num(d.rounds, "tur")}.`
+      : "Öne çıkan bölüm için varsayılan düzen kullanıldı. Süreç devam ediyor.",
   notify: (d) =>
     d.delivered === true
-      ? `✓ Bildirim gönderildi (${str(d.channel)})`
-      : `⚠ Bildirim gönderilemedi (${str(d.channel)}) — site hazır, haber ulaşmadı`,
-  deploy: (d) => `✓ Yayında — ${str(d.url)}`,
-  generate: (d) => `✓ Site üretildi${d.costUsd ? ` — $${Number(d.costUsd).toFixed(2)}` : ""}`,
+      ? `Bildirim iletildi. Kanal: ${str(d.channel)}.`
+      : `Bildirim iletilemedi. Kanal: ${str(d.channel)}. Site hazır.`,
+  deploy: (d) => `Yayına alındı. ${str(d.url)}`,
+  generate: (d) =>
+    `Site oluşturuldu.${d.costUsd ? ` Maliyet: $${Number(d.costUsd).toFixed(2)}.` : ""}`,
   verify: (d) =>
     d.passed === true
-      ? "✓ Tüm kapılar geçildi"
-      : `⚠️ Doğrulama başarısız — ${str(d.failedGate ?? "bilinmeyen kapı")}`,
+      ? "Doğrulama tamamlandı. Tüm kontroller başarılı."
+      : `Doğrulama başarısız. Kontrol: ${str(d.failedGate ?? "belirlenemedi")}.`,
 };
 
 function num(v: unknown, label: string): string {
@@ -133,17 +147,18 @@ export function createProgressNotifier(options?: {
   };
 
   return {
-    runStarted: (domain, url) => post(`🔎 ${domain}\nÇalışma başladı — kaynak: ${url}`),
+    runStarted: (domain, url) =>
+      post(`${domain}\nSüreç başlatıldı. Kaynak: ${url}`),
     stageStarted: (domain, stage) =>
-      post(`${domain}\n${STAGE_START[stage] ?? `▶ ${stage} başladı`}`),
+      post(`${domain}\n${STAGE_START[stage] ?? `${stage} adımı başlatıldı.`}`),
     stagePassed: (domain, stage, data) => {
       const line = STAGE_PASS[stage]?.(data ?? {});
       if (line) post(`${domain}\n${line}`);
     },
     stageFailed: (domain, stage, error) =>
-      post(`${domain}\n⚠️ ${stage} adımı başarısız:\n${error.slice(0, 400)}`),
+      post(`${domain}\n${stage} adımı başarısız oldu.\n${error.slice(0, 400)}`),
     runHalted: (domain, stage) =>
-      post(`${domain}\n⏸ ${stage} adımında durdu — bu adım henüz uygulanmadı.`),
+      post(`${domain}\nSüreç ${stage} adımında durduruldu. Bu adım henüz uygulanmadı.`),
     async flush() {
       await Promise.allSettled(inFlight);
       inFlight.length = 0;
