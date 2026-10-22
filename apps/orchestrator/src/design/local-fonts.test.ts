@@ -6,7 +6,7 @@ import type { DesignSpec } from "@pipeline/core";
 import { afterEach, describe, expect, it } from "vitest";
 
 import { DIRECTIONS, DIRECTION_IDS } from "./directions/index.js";
-import { copyFaces, planLocalFonts } from "./local-fonts.js";
+import { copyFaces, fontRoles, planLocalFonts } from "./local-fonts.js";
 
 const REPO_ROOT = join(dirname(fileURLToPath(import.meta.url)), "../../../..");
 
@@ -51,7 +51,8 @@ afterEach(() => {
 });
 
 describe.each(DIRECTION_IDS)("%s", (id) => {
-  const plan = planLocalFonts(specFor(id));
+  const spec = specFor(id);
+  const plan = planLocalFonts(spec);
 
   it("plans only registered faces", () => {
     expect(plan.faces.length).toBeGreaterThan(0);
@@ -60,8 +61,33 @@ describe.each(DIRECTION_IDS)("%s", (id) => {
   it("emits a next/font/local module", () => {
     expect(plan.module).toContain('import localFont from "next/font/local"');
     expect(plan.module).toContain("export const displayFont");
-    expect(plan.module).toContain("export const bodyFont");
     expect(plan.module).toContain("export const fontVariables");
+    // NOT `bodyFont`: a direction that pairs a face with itself declares the
+    // family once. Asserting the symbol is what made the duplicate download
+    // look correct.
+    for (const role of fontRoles(spec).filter((r) => r.declares)) {
+      expect(plan.module).toContain(`export const ${role.role}Font`);
+    }
+  });
+
+  /**
+   * One download per family. `swiss-grid` is Archivo over Archivo; declaring
+   * it twice cost 180 ms of LCP against a budget with none to spare.
+   */
+  it("declares each family exactly once", () => {
+    const slugs = plan.faces.map((f) => f.slug);
+    expect(new Set(slugs).size).toBe(slugs.length);
+    for (const face of plan.faces) {
+      const declarations = plan.module.split(`${face.slug}-latin.woff2`).length - 1;
+      expect(declarations, `${face.family} appears in ${declarations} declarations`).toBe(1);
+    }
+  });
+
+  /** Every role has to resolve to a variable the module actually defines. */
+  it("gives every role a declared variable", () => {
+    for (const role of fontRoles(spec)) {
+      expect(plan.module).toContain(`variable: "${role.variable}"`);
+    }
   });
 
   it("loads latin and latin-ext for every face", () => {

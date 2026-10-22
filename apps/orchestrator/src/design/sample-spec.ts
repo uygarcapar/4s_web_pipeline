@@ -54,6 +54,62 @@ function pick<T>(rng: () => number, options: readonly T[]): T {
 }
 
 /**
+ * Settle `split` into the polarity the direction actually declares.
+ *
+ * `split` names a page that is part dark and part light, and the half of
+ * that which exists today is the page's own polarity. The token generator
+ * only knows `mode`, so a spec left saying `split` was rendered as light —
+ * which for `quiet-luxury`, whose `paperLightness` is [0.12, 0.28], meant a
+ * near-black direction producing a white page.
+ *
+ * The answer comes from `color.paperLightness`, which the catalog has
+ * declared since A3 and nothing read: below 0.5 the page is dark, above it
+ * light. Resolved here rather than in `spec-tokens.ts` because it is a fact
+ * about the direction, and the spec is supposed to be self-contained (§5).
+ *
+ * What remains unbuilt is the per-section half — a dark hero above a light
+ * body. That needs a section-level token and belongs with the signature
+ * work (§9), so `split` currently differs from `light`/`dark` only in that
+ * the polarity is the direction's to state rather than the sampler's to draw.
+ */
+function resolveMode(
+  mode: Direction["color"]["modes"][number],
+  direction: Direction,
+): DesignSpec["color"]["mode"] {
+  if (mode !== "split") return mode;
+  const [min, max] = direction.color.paperLightness;
+  return (min + max) / 2 < 0.5 ? "dark" : "light";
+}
+
+/**
+ * Choose one archetype per section from the direction's own list.
+ *
+ * Seeded from `seed` plus the section type, so the same client always gets
+ * the same layout for a section and two clients on the same direction do
+ * not: picking `[0]` everywhere would make a direction mean one page rather
+ * than a range of them.
+ *
+ * A type the direction lists nothing for falls back to `"default"`, which is
+ * the template registry's own per-type fallback. That is the honest answer
+ * for `contact`, which has one layout — and a silent sameness anywhere else,
+ * which is why `archetypes.test.ts` fails on an unlisted section type.
+ */
+export function pickArchetypes(
+  direction: Direction,
+  sections: readonly string[],
+  seed: string,
+): { type: string; archetype: string }[] {
+  return sections.map((type) => {
+    const options = direction.archetypes[type];
+    if (options === undefined || options.length === 0) {
+      return { type, archetype: "default" };
+    }
+    const rng = mulberry32(hashSeed(`${seed}-${type}`));
+    return { type, archetype: pick(rng, options) };
+  });
+}
+
+/**
  * Draw candidate `index` for `seedBase` from `direction`.
  *
  * `sections` and `signature` are left to the compose stage (§6.4) — they
@@ -85,7 +141,7 @@ export function sampleSpec(
       displayCase: pick(rng, direction.type.displayCase),
     },
     color: {
-      mode: pick(rng, direction.color.modes),
+      mode: resolveMode(pick(rng, direction.color.modes), direction),
       strategy: pick(rng, direction.color.strategies),
       // Hue is the client's, not the direction's (§13 Q3: soft, hue only).
       // The library passes one in; a run takes it from the photographs.
@@ -107,11 +163,7 @@ export function sampleSpec(
       heroEntrance: direction.motion.heroEntrance,
       smoothScroll: direction.motion.smoothScroll,
     },
-    sections: [
-      { type: "hero", archetype: direction.archetypes.hero?.[0] ?? "photo-full" },
-      { type: "services", archetype: direction.archetypes.services?.[0] ?? "list-rule" },
-      { type: "contact", archetype: "split-form" },
-    ],
+    sections: pickArchetypes(direction, ["hero", "services", "contact"], seed),
     signature: { sectionIndex: 0, concept: "sampled" },
     rejected: [],
   };

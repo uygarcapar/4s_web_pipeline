@@ -106,3 +106,34 @@ describe.each(DIRECTION_IDS)("sampleSpec — %s", (id) => {
     }
   });
 });
+
+/**
+ * `split` had to stop reaching the token generator: it renders anything that
+ * is not literally `"dark"` as a light page, so a sampled `quiet-luxury`
+ * spec saying `split` produced a white page for a direction that declares
+ * itself near-black.
+ */
+describe("split resolves to the direction's own polarity", () => {
+  it.each(DIRECTION_IDS)("%s never samples split", (id) => {
+    const direction = DIRECTIONS[id]!;
+    for (let i = 0; i < 40; i += 1) {
+      expect(sampleSpec(direction, `seed-${id}`, i).color.mode).not.toBe("split");
+    }
+  });
+
+  it("gives a near-black direction a dark page", () => {
+    const direction = DIRECTIONS["quiet-luxury"]!;
+    expect(direction.color.modes).toContain("split");
+    for (let i = 0; i < 40; i += 1) {
+      expect(sampleSpec(direction, "lux", i).color.mode).toBe("dark");
+    }
+  });
+
+  it("leaves a light direction light", () => {
+    const direction = DIRECTIONS["swiss-grid"]!;
+    expect(direction.color.modes).toContain("split");
+    for (let i = 0; i < 40; i += 1) {
+      expect(sampleSpec(direction, "swiss", i).color.mode).toBe("light");
+    }
+  });
+});
