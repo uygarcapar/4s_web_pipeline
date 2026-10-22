@@ -23,9 +23,57 @@ describe("progress notifier", () => {
     await n.flush();
 
     expect(r.sent).toHaveLength(3);
-    expect(r.sent[1]).toContain("Eski site taranıyor");
+    expect(r.sent[1]).toContain("taranıyor");
     expect(r.sent[2]).toContain("12 sayfa");
     expect(r.sent[2]).toContain("438 içerik bloğu");
+  });
+
+
+  /**
+   * The operator's standing instruction (2026-10-23): no icons, formal
+   * register. These messages are the only thing they see while a client's
+   * site is being built, and they get forwarded — the tone has to be one
+   * you would put in front of the client whose site it is.
+   *
+   * Pinned as a test rather than trusted to review, because an emoji is
+   * exactly the kind of thing that creeps back in one helpful line at a
+   * time.
+   */
+  it("sends no icons, in any message", async () => {
+    const r = recorder();
+    const n = createProgressNotifier({ channel: "telegram", send: r.send });
+
+    n.runStarted("diskent.com", "https://www.diskent.com");
+    for (const stage of AUTO_STAGES) {
+      n.stageStarted("diskent.com", stage);
+      n.stagePassed("diskent.com", stage, { pages: 1, rounds: 2, delivered: true });
+    }
+    n.stageFailed("diskent.com", "verify", "lighthouse");
+    n.runHalted("diskent.com", "deploy");
+    await n.flush();
+
+    // Emoji, dingbats, arrows and the check/cross marks the copy used to
+    // lead with. Turkish letters and the currency sign stay legal.
+    const icons =
+      /[\u2190-\u21FF\u2300-\u23FF\u2460-\u27BF\u2B00-\u2BFF\uFE0F]|[\u{1F000}-\u{1FAFF}]/u;
+    for (const message of r.sent) {
+      expect(message, `icon in: ${message}`).not.toMatch(icons);
+    }
+    expect(r.sent.length).toBeGreaterThan(AUTO_STAGES.length);
+  });
+
+  /** Formal register: full sentences, and never the casual "bitti". */
+  it("reports completions formally", async () => {
+    const r = recorder();
+    const n = createProgressNotifier({ channel: "telegram", send: r.send });
+    n.stagePassed("diskent.com", "crawl", { pages: 12, contentBlocks: 438, assets: 56 });
+    n.stagePassed("diskent.com", "verify", { passed: true });
+    await n.flush();
+
+    for (const message of r.sent) {
+      expect(message).not.toContain("bitti");
+      expect(message.trimEnd()).toMatch(/[.:]$/);
+    }
   });
 
   /**

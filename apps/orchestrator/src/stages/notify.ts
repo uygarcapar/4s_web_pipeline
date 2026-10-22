@@ -21,12 +21,15 @@ export const notifyStage: StageModule = {
     const deployedUrl = existsSync(deployUrlFile)
       ? readFileSync(deployUrlFile, "utf8").trim()
       : null;
+    // No icons, formal register (operator instruction, 2026-10-23). This is
+    // the message most likely to be forwarded to the client whose site it
+    // is, so it reads as something a business would send.
     const text =
-      `✅ ${businessName} için yeni site hazır.\n` +
-      `Eski site: ${ctx.url}\n` +
+      `${businessName} için yeni site hazır.\n` +
+      `Mevcut site: ${ctx.url}\n` +
       (deployedUrl
-        ? `Önizleme: ${deployedUrl}`
-        : `Lokalde incele: ${previewHint}`);
+        ? `Önizleme adresi: ${deployedUrl}`
+        : `Yerel önizleme: ${previewHint}`);
 
     const sent: Record<string, unknown> = {
       channel,
