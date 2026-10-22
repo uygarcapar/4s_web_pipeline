@@ -1,3 +1,78 @@
+# §8.2 visual distance — calibrated
+
+**Superseded measurement below.** The matrix in the second half was taken
+against the four-direction catalog that the 2026-10-22 review replaced, and
+is kept only as the record of how the detector was first characterised.
+What follows is the operator-labelled calibration §8.3 actually asked for.
+
+## The result
+
+Two rounds, thirty pairs each, labelled by the operator against renders
+they had not seen the numbers for.
+
+**Round 1** — the gate agreed with all thirty.
+
+```
+structural < 0.40  OR  either fold >= 0.93  →  reject       30/30
+```
+
+Three of the five "alike" pairs were cross-direction, all involving
+`kinetic-bold` against `stark-display` or `technical-accent`. The cause was
+found and fixed: Archivo was the display face in **six of seven**
+directions, and those two had identical pools.
+
+**Round 2**, after the faces were made disjoint — two of the three flipped
+to "different". The eye confirmed the fix that the visual metric had said
+was inconclusive; the metric was the wrong instrument for the question.
+
+```
+agrees with 16/18 labels
+```
+
+## Where the detector stops
+
+The two new misses are **false rejects**, and no threshold fixes them:
+
+| pair | label | structural | desktop | mobile |
+|---|---|---|---|---|
+| `kinetic-bold-1 ↔ technical-accent-0` | alike | 0.7778 | 0.912 | 0.939 |
+| `kinetic-bold-1 ↔ stark-display-0` | different | 0.7778 | 0.933 | 0.846 |
+
+Identical structural distance, opposite labels. On the desktop fold the
+pair the operator calls *different* scores **more similar** than the one
+they call *alike*; on mobile the two sit 0.001 apart. The ten axes do not
+capture whatever is being seen here, and neither does the embedding.
+
+## Why the thresholds did not move
+
+Both misses fail in the **safe direction**. A false reject costs one more
+candidate draw — pure arithmetic, free. A false accept ships a repeat to a
+client. A gate biased toward rejecting is the correct bias, and two
+unnecessary rejections in eighteen is a cheap price for never making the
+expensive mistake.
+
+Loosening to 0.94 would buy those two decisions and move the gate toward
+the failure that matters. So nothing moved: **0.40 / 0.93 / 0.93 stands**,
+now with evidence instead of a guess behind it.
+
+Re-weighting was tested too, and does not help. The "alike" pairs share
+`colorMode` and `radius` 5/5 while `direction` — §8.1's joint-heaviest
+axis — scores 2/5. Moving weight accordingly scores 27/30: identical to the
+current weights, missing the same three pairs.
+
+## What is left
+
+One residual pair, `kinetic-bold ↔ technical-accent`. Both are light,
+square-cornered and heavy-weighted, and the fixture that produced them
+holds the hue and the photographs constant — which is exactly what varies
+between real clients, and `technical-accent`'s whole argument is an accent
+colour the fixture renders in an arbitrary sampled hue.
+
+Ten real clients will say more about that pair than another fixture round.
+It goes to the §12 ship test.
+
+---
+
 # §8.2 visual distance — the first measurement
 
 D10 §8.3 asks the operator to label ~30 site pairs and set the thresholds to

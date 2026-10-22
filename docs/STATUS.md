@@ -1781,9 +1781,68 @@ catalog changed. Regenerating is exactly when the old labels matter most:
 they are what says whether the change did anything. It now clears only
 `shots/`, and labels key on pair names so they survive.
 
+## §8.3 is done — and the second round corrected me
+
+Two rounds of thirty labels. **Round 1: the gate agreed with all thirty.**
+The three cross-direction "alike" pairs were traced to Archivo being the
+display face in six of seven directions, with `kinetic-bold` and
+`stark-display` holding identical pools.
+
+**Round 2, after the faces were made disjoint: two of the three flipped to
+"different".** I had reported that the reassignment "did not demonstrably
+fix" anything, on the strength of the visual metric moving in both
+directions. The operator's eye says it fixed two of three. The metric was
+the wrong instrument for the question, and the honest record is that the
+change worked and the measurement of it did not.
+
+### Where the detectors stop
+
+16/18 on the second round, and both misses are **false rejects** that no
+threshold can fix:
+
+| pair | label | structural | desktop | mobile |
+|---|---|---|---|---|
+| `kinetic-bold-1 ↔ technical-accent-0` | alike | 0.7778 | 0.912 | 0.939 |
+| `kinetic-bold-1 ↔ stark-display-0` | different | 0.7778 | 0.933 | 0.846 |
+
+Identical structural distance, opposite labels. On the desktop fold the
+pair the operator calls *different* scores **more similar** than the one
+they call *alike*. The ten axes do not capture what is being seen, and
+neither does the embedding.
+
+**Nothing moved. 0.40 / 0.93 / 0.93 stands**, now with evidence behind it.
+Both misses fail in the safe direction: a false reject costs one more
+candidate draw, which is free arithmetic, while a false accept ships a
+repeat to a client. Loosening to 0.94 would buy two correct decisions and
+move the gate toward the expensive mistake. Re-weighting was tested too and
+does not help — detail in `docs/D10-visual-calibration.md`.
+
+## The ship test is set up
+
+`/ship` in the library puts every finished site's fold in one grid, which
+is what §12 actually asks for. It reads the post-verify screenshots
+`recordFinalVector` already takes, so nothing is re-rendered.
+
+**Direction names are hidden until asked for.** The test is whether two
+pages group by eye, and a label under each card answers the question before
+it is asked. Select the ones that group, then reveal — the follow-up is the
+useful part:
+
+- **Same direction** → the rotation did not push hard enough (§6.2's λ,
+  §6.4's window).
+- **Different directions** → the gate passed them both and they still read
+  alike, which is a catalog problem rather than a threshold one. That is
+  exactly where `kinetic-bold ↔ technical-accent` sits today.
+
+Served through a route handler rather than a symlink into `public/`: the
+symlink worked and also pulled every generated client site into the
+library's typecheck, where `tsc` began reporting errors inside a stranger's
+generated code.
+
 ## Next
 
-**A re-label — operator.** ~30 labelled pairs. Both thresholds move to
+**The ship test — operator.** Ten real clients, three or more sectors.
+`docs/RUNBOOK.md` has the three commands. ~30 labelled pairs. Both thresholds move to
 match: the structural 0.40/0.55 and the visual 0.93. A threshold that
 disagrees with the operator's eye is a broken detector (design-rules §12).
 
