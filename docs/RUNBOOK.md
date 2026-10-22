@@ -7,8 +7,8 @@ vardır ya da Claude Code'a verilecek **tek bir prompt**.
 İşaretler: 🧑 = sen (korumalı dosya ya da karar) · 🤖 = Claude Code
 
 Durum: **Faz A bitti**; B1 ve B2 de bitti (**K8 kapandı**). Operatör
-bekleyen bir şey yok. Sıradaki **B4** — ve B4'ün her oturumu senin
-`/library` incelemenle bitiyor, merge'den önce durur. Faz B'nin asıl yükü B4: her arketipte senin `/library`
+Sıradaki: B4 devam (hero 3/8). İki karar bekliyor — LCP bütçesi ve font
+pin'i (`docs/STATUS.md`), ikisi de sonraki oturumları etkiliyor. Faz B'nin asıl yükü B4: her arketipte senin `/library`
 incelemenle bitiyor (`pnpm --filter @pipeline/library dev`, :3106).
 
 ---
@@ -157,7 +157,7 @@ Ayrıntı: `docs/STATUS.md` → "A0b".
 | ✅ | **B1** `/library` route | — | merged · `apps/library` ayrı uygulama (gerekçe STATUS'ta) · `pnpm --filter @pipeline/library dev`, :3106 |
 | ✅ | **B2** token-only refactor + K8 | — | merged · **K8 kapandı**: calm fixture Lenis'siz, entrance'sız, pin'siz render ediyor · her iki fixture'da verify 0 |
 | ✅ | **B3** statement/visit/closing/marquee | — | merged · statement/visit zaten vardı; **closing ve marquee hiç yoktu**, eklendi · `/library` artık 13 arketip |
-| 5 | **B4** arketipler, **tek tek** | 🤖 + 🧑 | aşağıya bak |
+| 🔄 | **B4** arketipler, **tek tek** | 🤖 + 🧑 | başladı: `hero/type-only` merged (PR #18) · hero 3/8 · aşağıya bak |
 
 B4 döngüsü, her arketip için:
 
