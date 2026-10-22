@@ -20,10 +20,12 @@ export const instant = false;
 export default async function LibraryPreview({
   searchParams,
 }: {
-  searchParams: Promise<{ direction?: string; archetype?: string }>;
+  searchParams: Promise<{ direction?: string; archetype?: string; variant?: string }>;
 }) {
-  const { direction = "", archetype = "" } = await searchParams;
-  const css = DIRECTION_CSS[direction];
+  const { direction = "", archetype = "", variant = "0" } = await searchParams;
+  // A direction has a range, not a value: `variant` picks which candidate
+  // of it this preview renders (D10 §6.3).
+  const css = DIRECTION_CSS[direction]?.[Number(variant)]?.css;
   const entry = LIBRARY_ARCHETYPES.find((a) => a.id === archetype);
   if (css === undefined || entry === undefined) notFound();
 

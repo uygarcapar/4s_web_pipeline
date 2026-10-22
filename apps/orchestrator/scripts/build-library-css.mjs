@@ -21,56 +21,36 @@ import { fileURLToPath } from "node:url";
 
 import { DIRECTIONS, DIRECTION_IDS } from "../src/design/directions/index.js";
 import { FACES, FACE_BY_FAMILY } from "../src/design/faces.js";
+import { sampleSpec } from "../src/design/sample-spec.js";
 import { renderSpecTokens } from "../src/design/spec-tokens.js";
 
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), "../../..");
 const OUT = join(ROOT, "apps/library/src/app/directions.generated.ts");
 const FACES_OUT = join(ROOT, "apps/library/src/app/faces.generated.ts");
 
-/** The midpoint of every range — what the §6.3 sampler will produce. */
-function specFor(id) {
-  const d = DIRECTIONS[id];
-  const mid = ([a, b]) => Math.round(((a + b) / 2) * 1000) / 1000;
-  const pair = d.type.pairs[0];
-  return {
-    version: 2,
-    direction: d.id,
-    seed: `${d.id}-library`,
-    type: {
-      display: pair.display,
-      body: pair.body,
-      ...(d.type.mono[0] === undefined ? {} : { mono: d.type.mono[0] }),
-      displayWeight: d.type.displayWeights[0],
-      displayTracking: mid(d.type.displayTracking),
-      scaleRatio: mid(d.type.scaleRatio),
-      displayCase: d.type.displayCase[0],
-    },
-    color: {
-      mode: d.color.modes[0],
-      strategy: d.color.strategies[0],
-      brandH: 318,
-      brandC: Math.min(d.color.maxChroma, 0.08),
-    },
-    shape: {
-      radius: d.shape.radius[0],
-      rules: d.shape.rules[0],
-      imageFrame: d.shape.imageFrame[0],
-    },
-    grid: { alignment: d.grid.alignment[0], density: d.grid.density[0] },
-    motion: {
-      profile: d.motion.profiles[0],
-      signatures: [...d.motion.required],
-      heroEntrance: d.motion.heroEntrance,
-      smoothScroll: d.motion.smoothScroll,
-    },
-    sections: [
-      { type: "hero", archetype: "photo-full" },
-      { type: "services", archetype: "list-rule" },
-      { type: "contact", archetype: "split-form" },
-    ],
-    signature: { sectionIndex: 0, concept: "library" },
-    rejected: [],
-  };
+/**
+ * How many candidate specs each direction shows.
+ *
+ * Three, because the point is to show that a direction has a range without
+ * making the grid unreadable: eleven archetypes × four directions × two
+ * widths is already 88 frames, and this multiplies it.
+ */
+const VARIANTS = 3;
+
+/**
+ * Draw a candidate with the real sampler (§6.3) rather than taking option
+ * `[0]` of every axis.
+ *
+ * The previous version did the latter, so radius, image frame, colour mode
+ * and type pairing never varied inside a direction and the library showed a
+ * corner of what each one can produce. The hue is fixed across variants on
+ * purpose: it is the client's, not the direction's (§13 Q3, soft/hue-only),
+ * so letting it wander would attribute to the direction something the
+ * direction does not decide.
+ */
+function specFor(id, variant) {
+  const spec = sampleSpec(DIRECTIONS[id], `library-${id}`, variant);
+  return { ...spec, color: { ...spec.color, brandH: 318 } };
 }
 
 const camel = (slug) => slug.replace(/-([a-z])/g, (_, c) => c.toUpperCase());
@@ -103,10 +83,26 @@ function faceVars(spec) {
 }
 
 const entries = DIRECTION_IDS.map((id) => {
-  const spec = specFor(id);
-  const css = `${injectable(renderSpecTokens(spec))}\n\n${faceVars(spec)}`;
-  return `  ${JSON.stringify(id)}: ${JSON.stringify(css)},`;
+  const variants = Array.from({ length: VARIANTS }, (_, v) => {
+    const spec = specFor(id, v);
+    const css = `${injectable(renderSpecTokens(spec))}\n\n${faceVars(spec)}`;
+    return { css, summary: summarise(spec) };
+  });
+  return `  ${JSON.stringify(id)}: ${JSON.stringify(variants)},`;
 });
+
+/** What a reviewer needs to see about a variant without reading its CSS. */
+function summarise(spec) {
+  return [
+    `${spec.type.display} ${spec.type.displayWeight}`,
+    `ratio ${spec.type.scaleRatio}`,
+    spec.color.mode,
+    spec.shape.imageFrame,
+    `radius ${spec.shape.radius}`,
+    spec.grid.alignment,
+    spec.grid.density,
+  ].join(" · ");
+}
 
 mkdirSync(dirname(OUT), { recursive: true });
 writeFileSync(
@@ -115,11 +111,19 @@ writeFileSync(
 // The injectable half of each direction's tokens.css: custom properties and
 // the eight type classes, with @import and @theme stripped because the
 // library preview inherits Tailwind from the template's own build.
-export const DIRECTION_CSS: Record<string, string> = {
+export interface DirectionVariant {
+  /** The injectable half of this candidate's tokens.css. */
+  css: string;
+  /** One line naming what this candidate drew, for the grid's caption. */
+  summary: string;
+}
+
+export const DIRECTION_CSS: Record<string, DirectionVariant[]> = {
 ${entries.join("\n")}
 };
 
 export const LIBRARY_DIRECTIONS = ${JSON.stringify(DIRECTION_IDS)};
+export const LIBRARY_VARIANTS = ${VARIANTS};
 `,
 );
 
