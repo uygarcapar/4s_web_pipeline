@@ -15,9 +15,16 @@ import { siteConfig } from "../../site.config.js";
  * the section types that did not exist at all — `closing` and `marquee`;
  * `statement` and `visit` were already built. This pins what exists so the
  * count in `/library` and the count here cannot drift apart.
+ *
+ * `signature` is the twelfth and is not one of the eleven: it is §9's one
+ * bold element, whose markup a model writes into a single registered slot
+ * rather than being chosen from the library. It has a registry entry for
+ * exactly the same reason everything else does — build-rules §4 admits no
+ * section that renders outside the registry, bespoke or not.
  */
 const EXPECTED_TYPES: SectionType[] = [
   "hero",
+  "signature",
   "statement",
   "visit",
   "closing",

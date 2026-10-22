@@ -63,6 +63,16 @@ function archetypesInTemplate(): Record<string, string[]> {
  * archetype that no direction lists is a component that was built,
  * reviewed, and can never appear on a client's site.
  */
+/**
+ * `signature` is reachable, but not through a direction.
+ *
+ * Its archetype is always `custom` and the design stage places the section
+ * itself (§9) — a direction listing it would be claiming a choice it does
+ * not get to make. Exempted here explicitly so the exemption is a decision
+ * somebody can find, rather than a gap in a list.
+ */
+const NOT_DIRECTION_CHOSEN = new Set(["signature"]);
+
 describe("every built archetype is reachable", () => {
   const template = archetypesInTemplate();
 
@@ -76,6 +86,7 @@ describe("every built archetype is reachable", () => {
 
     const unreachable: string[] = [];
     for (const [type, keys] of Object.entries(template)) {
+      if (NOT_DIRECTION_CHOSEN.has(type)) continue;
       for (const key of keys) {
         if (!reachable.has(`${type}/${key}`)) unreachable.push(`${type}/${key}`);
       }
@@ -135,7 +146,7 @@ describe("the direction catalog names layouts the template has", () => {
    * reintroduced one unlisted section at a time.
    */
   it("covers every section type the template can render", () => {
-    const types = Object.keys(template);
+    const types = Object.keys(template).filter((t) => !NOT_DIRECTION_CHOSEN.has(t));
     const gaps: string[] = [];
     for (const id of DIRECTION_IDS) {
       for (const type of types) {

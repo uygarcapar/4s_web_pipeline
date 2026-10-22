@@ -9,6 +9,7 @@ import { notifyStage } from "./notify.js";
 import { deployStage } from "./deploy.js";
 import { planStage } from "./plan.js";
 import { generateStage } from "./generate.js";
+import { signatureStage } from "./signature.js";
 
 export const stageRegistry: Record<Stage, StageModule & { notImplemented?: boolean }> = {
   crawl: crawlStage,
@@ -17,6 +18,7 @@ export const stageRegistry: Record<Stage, StageModule & { notImplemented?: boole
   design: designStage,
   plan: planStage,
   generate: generateStage,
+  signature: signatureStage,
   verify: verifyStage,
   notify: notifyStage,
   deploy: deployStage,

@@ -198,12 +198,11 @@ export const designStage: StageModule = {
             brandH: palette.hue,
             brandC: brandChroma(palette.chroma, direction.color.maxChroma),
           },
-          sections: composed.map(({ type, archetype }) => ({ type, archetype })),
-          // §9 (the signature section) is D-phase work. Until it lands the
-          // bold element is the hero and the concept names the direction's
-          // own argument, so the plan stage reads something true rather than
-          // a placeholder that reads as a decision.
-          signature: { sectionIndex: 0, concept: `${scored.id} hero` },
+          ...placeSignature(
+            composed.map(({ type, archetype }) => ({ type, archetype })),
+            direction,
+            hasStatement,
+          ),
           rejected: [],
         }),
       };
@@ -676,4 +675,56 @@ function crawlImages(runDir: string): CrawlImage[] {
   return manifest
     .filter((entry): entry is { file: string } => typeof entry.file === "string")
     .map((entry) => ({ src: `/images/crawl/${entry.file}` }));
+}
+
+/**
+ * Where the one bold element goes, and what it is for (D10 §9).
+ *
+ * The signature REPLACES the statement section rather than being added
+ * beside it. The two want the same thing — the client's own sentence, large
+ * — and a page carrying both says it twice, which is the opposite of one
+ * bold element. The schema makes the trade explicit: `signature.text` is
+ * required, so the section can only exist for a client who actually wrote a
+ * sentence the brief vouched for.
+ *
+ * A client with no such sentence gets no signature section at all, and the
+ * `sectionIndex` points at the hero instead. That is not a fallback dressed
+ * up as a decision: §9's bold element is a thing the model writes markup
+ * for, and there is nothing to write markup *about* without the client's own
+ * words. The hero is then the loudest thing on the page, which it was going
+ * to be anyway.
+ */
+function placeSignature(
+  sections: { type: string; archetype: string }[],
+  direction: Direction,
+  hasStatement: boolean,
+): Pick<DesignSpec, "sections" | "signature"> {
+  const at = sections.findIndex((s) => s.type === "statement");
+  if (!hasStatement || at === -1) {
+    return {
+      sections,
+      signature: {
+        sectionIndex: 0,
+        concept:
+          `no vouched sentence, so the hero carries the page in ` +
+          `${direction.id}'s register`,
+      },
+    };
+  }
+
+  const withSignature = [...sections];
+  withSignature[at] = { type: "signature", archetype: "custom" };
+  return {
+    sections: withSignature,
+    signature: {
+      sectionIndex: at,
+      // The direction's argument, narrowed to this slot. It is never
+      // rendered — the signature stage reads it as the brief for the one
+      // component a model writes, and a human reading design.json can tell
+      // what the section was meant to do.
+      concept:
+        `the client's own sentence as the one bold element, in ` +
+        `${direction.id}'s register: ${direction.intent}`,
+    },
+  };
 }

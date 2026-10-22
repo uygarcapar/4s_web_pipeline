@@ -75,7 +75,15 @@ Produce exactly these artifacts, in this order:
 
 2. ${join(planDir, "sitemap.json")} — write this LAST. Shape:
    {"pages":[{"path":"/","title":"...","sections":[{"id":"hero","type":"hero","variant":"default"}]}]}
-   Valid section types, use each at most once: hero, services, gallery, testimonials, faq, contact, map, hours.
+   The sections and their order are ALREADY DECIDED, in design.json's
+   \`sections\` array — which sections exist is a function of which facts
+   exist (D6), and which layout each gets was chosen against the rotation
+   ledger (D10 §6.4). Copy that list, in that order, and give each its
+   \`archetype\` as its \`variant\`. Do not add a section design.json does
+   not list, do not drop one it does, and do not reorder them.
+
+   One of them may be \`signature\`: the one bold element (§9). Its markup is
+   written later by its own stage — your job is its COPY and nothing else.
    IMPORTANT: "variant" is a closed enum per section type, defined in
    ${join(ctx.repoRoot, "template", "src", "lib", "schema.ts")}. Read that file and use only the
    literal variant strings it allows (they are short words like "default" or

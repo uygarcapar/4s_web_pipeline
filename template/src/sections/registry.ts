@@ -18,6 +18,8 @@ import { ProcessNumbered } from "@/sections/process/numbered";
 import { ProcessRail } from "@/sections/process/rail";
 import { ProcessTimeline } from "@/sections/process/timeline";
 import { Contact } from "@/sections/contact";
+import { Signature } from "@/sections/signature";
+import { SignatureCustom } from "@/sections/signature/custom";
 import { Faq } from "@/sections/faq";
 import { Gallery } from "@/sections/gallery";
 import { GalleryContactSheet } from "@/sections/gallery/contact-sheet";
@@ -63,6 +65,9 @@ type SectionComponent<T extends SectionType> = ComponentType<{
  */
 export const sectionRegistry: { [T in SectionType]: SectionComponent<T> } = {
   hero: HeroSplit,
+  // The §9 fallback. `signature/custom` is the slot a model writes; this
+  // is what renders when it did not converge.
+  signature: Signature,
   statement: Statement,
   visit: Visit,
   closing: Closing,
@@ -100,6 +105,12 @@ const archetypeRegistry: {
     "collage": HeroCollage,
     "offset-grid": HeroOffsetGrid,
     "marquee": HeroMarquee,
+  },
+  signature: {
+    // One entry, and it is the only component in the template a model may
+    // write. It ships re-exporting the default, so the registry rule
+    // (build-rules §4) holds whether or not the §9 loop ever ran.
+    "custom": SignatureCustom,
   },
   statement: {
     "word-reveal": Statement,
