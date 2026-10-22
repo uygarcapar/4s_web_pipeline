@@ -42,7 +42,11 @@ export function MapFacade({ embedUrl, title, address, className }: MapFacadeProp
       <button
         type="button"
         onClick={() => setLoaded(true)}
-        className="inline-flex min-h-11 items-center rounded-lg bg-brand-600 px-4 py-2 text-sm font-semibold text-white transition-colors hover:bg-brand-700 focus-visible:ring-2 focus-visible:ring-brand-600 focus-visible:ring-offset-2 focus-visible:outline-none"
+        /* `text-brand-50`, not `text-white`: brand-600 is the direction's
+           accent, and a `photo-led` direction's accent is a LIGHT ink in
+           dark mode — white on it measured below 4.5:1. brand-50 is the
+           paper the ramp already guarantees contrast against. */
+        className="inline-flex min-h-11 items-center rounded-lg bg-brand-600 px-4 py-2 text-sm font-semibold text-brand-50 transition-colors hover:bg-brand-700 focus-visible:ring-2 focus-visible:ring-brand-600 focus-visible:ring-offset-2 focus-visible:outline-none"
       >
         Haritayı Göster
       </button>

@@ -46,25 +46,44 @@
   --radius-4xl: calc(var(--radius) * 2.6);
 }
 
+/*
+ * shadcn's semantic surfaces, pointed at the generated paper/ink ramp.
+ *
+ * These used to be shadcn's stock neutrals — `--background: oklch(1 0 0)`,
+ * `--foreground: oklch(0.145 0 0)` and so on. Because this file imports
+ * tokens.css ABOVE and then redefines the same custom properties, those
+ * hardcoded values won, and a `mode: "dark"` direction produced a page
+ * whose paper tokens were dark and whose shadcn utilities were still light:
+ * near-black `text-foreground` on a near-black panel, and the generated
+ * `--background` overridden back to white. Dark mode had never actually
+ * worked, in any direction, and nothing caught it because every fixture
+ * previewed a light one.
+ *
+ * Polarity now comes from one place — the direction's `color.mode`, through
+ * the paper/ink ramp. The `.dark` block below is shadcn's own and is not how
+ * this template inverts; nothing applies the class.
+ */
 :root {
-  --background: oklch(1 0 0);
-  --foreground: oklch(0.145 0 0);
-  --card: oklch(1 0 0);
-  --card-foreground: oklch(0.145 0 0);
-  --popover: oklch(1 0 0);
-  --popover-foreground: oklch(0.145 0 0);
+  --background: var(--paper-100);
+  --foreground: var(--ink-900);
+  --card: var(--paper-50);
+  --card-foreground: var(--ink-900);
+  --popover: var(--paper-50);
+  --popover-foreground: var(--ink-900);
   /* Primary + ring follow the brand ramp defined in src/styles/tokens.css. */
   --primary: var(--color-brand-600);
   --primary-foreground: var(--color-brand-50);
-  --secondary: oklch(0.97 0 0);
-  --secondary-foreground: oklch(0.205 0 0);
-  --muted: oklch(0.97 0 0);
-  --muted-foreground: oklch(0.556 0 0);
-  --accent: oklch(0.97 0 0);
-  --accent-foreground: oklch(0.205 0 0);
+  --secondary: var(--paper-200);
+  --secondary-foreground: var(--ink-900);
+  --muted: var(--paper-200);
+  /* ink-600, not a fixed grey: it is text, and the ramp's contrast is
+     checked at ink-600 against every paper step it can sit on. */
+  --muted-foreground: var(--ink-600);
+  --accent: var(--paper-200);
+  --accent-foreground: var(--ink-900);
   --destructive: oklch(0.577 0.245 27.325);
-  --border: oklch(0.922 0 0);
-  --input: oklch(0.922 0 0);
+  --border: var(--rule-color);
+  --input: var(--rule-color);
   --ring: var(--color-brand-400);
   --chart-1: oklch(0.87 0 0);
   --chart-2: oklch(0.556 0 0);
