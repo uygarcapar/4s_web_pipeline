@@ -9,6 +9,7 @@ import { Hero } from "@/sections/hero";
 import { HeroPhotoFull } from "@/sections/hero/photo-full";
 import { HeroCollage } from "@/sections/hero/collage";
 import { HeroIndex } from "@/sections/hero/index-list";
+import { HeroMarquee } from "@/sections/hero/marquee";
 import { HeroOffsetGrid } from "@/sections/hero/offset-grid";
 import { HeroSplit } from "@/sections/hero/split";
 import { HeroTypeOnly } from "@/sections/hero/type-only";
@@ -81,6 +82,7 @@ export const LIBRARY_ARCHETYPES: LibraryArchetype[] = [
   entry("hero/index", "hero", "index", HeroIndex, bySectionType("hero")),
   entry("hero/collage", "hero", "collage", HeroCollage, bySectionType("hero")),
   entry("hero/offset-grid", "hero", "offset-grid", HeroOffsetGrid, bySectionType("hero")),
+  entry("hero/marquee", "hero", "marquee", HeroMarquee, bySectionType("hero")),
   entry("statement/word-reveal", "statement", "word-reveal", Statement, STATEMENT),
   entry("services/default", "services", "default", Services, bySectionType("services")),
   entry("services/rail-pinned", "services", "rail-pinned", ServicesRailPinned, bySectionType("services")),

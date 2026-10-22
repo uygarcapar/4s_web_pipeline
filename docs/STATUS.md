@@ -945,10 +945,65 @@ screenshot caught, after `hero/type-only`'s invisible CTA and the library's
 Measured across four directions × two widths: five cells, no overflow, zero
 tap targets under 44px. `verify` exits 0 on both fixtures.
 
+## B4 · `hero/marquee` — heroes complete
+
+Seventh and last hero. §7.1's target is met.
+
+The headline with a running band of the client's own phrases set into the
+fold. On the standalone `marquee` section the band divides two parts of the
+page; in the fold it shows the *breadth* of what the business does in the
+first screen, which a headline cannot and a services list only does at
+length. For a trade with many small services that breadth is the
+proposition.
+
+It **composes** the `marquee` section rather than reimplementing it. The
+band's behaviour is not trivial — runs only under `editorial`/`kinetic`,
+pauses off-screen, duplicates items `aria-hidden` for a seamless loop,
+degrades to a static wrapped row — and a second copy would be a second place
+to get it wrong, with the drifting one being whichever nobody is looking at.
+
+## The library had never shown motion at all
+
+Found by this archetype, and the most useful thing in it.
+
+The band moved under **all four** directions, including the two that are
+`calm`. The cause: archetypes gate motion on `config.motion`, which is not a
+token, and the library only ever injected per-direction **CSS**. Every
+preview therefore ran the template's own kinetic motion regardless of the
+direction it claimed to be showing.
+
+So `/library` had been silently unable to show motion differences since B1 —
+through B2, which closed K8, and through four archetype reviews. Any
+judgement about movement made in that window was made against the wrong
+configuration.
+
+The preview now builds a config carrying the sampled candidate's motion
+block, and the generator emits it alongside the CSS. Measured after the fix:
+
+| direction | profile | band | spans |
+|---|---|---|---|
+| kinetic-bold | kinetic | moves | 8 (duplicated) |
+| swiss-grid | editorial | moves | 8 |
+| editorial-serif | calm | **static** | 4 |
+| quiet-luxury | calm | **static** | 4 |
+
+This is the same shape as the font pin and the 404'd images: the library
+showed *a* page per direction, not *that direction's* page, and each gap was
+invisible until an archetype happened to depend on it. Type, images and now
+motion are covered; what remains uncovered is anything else an archetype
+reads from `config` rather than from a token.
+
+`verify` exits 0 on both fixtures. 326 tests.
+
 ## Next
 
-Heroes are 6 of 7 (`photo-full`, `type-only`, `split`, `index`, `collage`,
-`offset-grid`, plus the legacy `default` the design stage will not pick).
-Only `marquee hero` remains, then services, which has 2 of 6. Both blocking decisions are settled: `verify` is green on both fixtures and
+**Heroes are done: 7 of 7.** `photo-full`, `type-only`, `split`, `index`,
+`collage`, `offset-grid`, `marquee` — plus the legacy `default`, which the
+design stage will not pick and which B-phase should eventually delete rather
+than leave as a trap.
+
+Next is **services, 2 of 6** (§7.1: pinned rail, index list, numbered rows,
+image grid, accordion, alternating media — `rail-pinned` and the legacy
+`default` exist). Both blocking decisions are settled: `verify` is green on both fixtures and
 `/library` renders each direction's own faces, so an archetype review can
 now judge type as well as composition.

@@ -86,7 +86,11 @@ const entries = DIRECTION_IDS.map((id) => {
   const variants = Array.from({ length: VARIANTS }, (_, v) => {
     const spec = specFor(id, v);
     const css = `${injectable(renderSpecTokens(spec))}\n\n${faceVars(spec)}`;
-    return { css, summary: summarise(spec) };
+    // Motion is NOT a token: the archetypes read `config.motion`, so a
+    // preview that only injects CSS shows every direction's motion as the
+    // template's own. Carried through so the preview can build a config
+    // that matches the direction it is rendering.
+    return { css, summary: summarise(spec), motion: spec.motion };
   });
   return `  ${JSON.stringify(id)}: ${JSON.stringify(variants)},`;
 });
@@ -116,6 +120,18 @@ export interface DirectionVariant {
   css: string;
   /** One line naming what this candidate drew, for the grid's caption. */
   summary: string;
+  /**
+   * This candidate's motion profile. Archetypes read config.motion, not a
+   * CSS variable, so the preview has to hand them a config that matches —
+   * otherwise a calm direction previews with the template's own kinetic
+   * motion, which is what it did until this was added.
+   */
+  motion: {
+    profile: "still" | "calm" | "editorial" | "kinetic";
+    signatures: string[];
+    heroEntrance: boolean;
+    smoothScroll: boolean;
+  };
 }
 
 export const DIRECTION_CSS: Record<string, DirectionVariant[]> = {
