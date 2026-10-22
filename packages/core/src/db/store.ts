@@ -12,6 +12,11 @@ export type Store = BetterSQLite3Database<typeof schema> & {
  * Hand-written DDL kept in sync with schema.ts. Milestone 1 keeps migrations
  * this simple on purpose (single-file DB, additive changes only); if the
  * schema starts churning, switch to drizzle-kit generated migrations.
+ *
+ * `CREATE TABLE IF NOT EXISTS` covers a fresh database and does nothing at
+ * all to an existing one, so a column added here never reaches the operator's
+ * `data/pipeline.db` — `ADDED_COLUMNS` below closes that, which is the whole
+ * of "additive changes only" made to actually work.
  */
 const DDL = `
 CREATE TABLE IF NOT EXISTS designs (
@@ -26,6 +31,7 @@ CREATE TABLE IF NOT EXISTS designs (
   headline_grammar TEXT NOT NULL,
   archetypes TEXT NOT NULL,
   motion TEXT NOT NULL,
+  direction TEXT,
   created_at TEXT NOT NULL
 );
 CREATE INDEX IF NOT EXISTS idx_designs_sector ON designs(sector, created_at);
@@ -123,6 +129,28 @@ CREATE TABLE IF NOT EXISTS costs (
 CREATE INDEX IF NOT EXISTS idx_costs_domain ON costs(domain);
 `;
 
+/**
+ * Columns added to a table after it shipped, applied to databases that
+ * already exist.
+ *
+ * Every entry must be nullable or carry a DEFAULT — SQLite's `ADD COLUMN`
+ * cannot add a NOT NULL column without one, and a column the existing rows
+ * genuinely have no value for should be nullable anyway.
+ */
+const ADDED_COLUMNS: { table: string; column: string; type: string }[] = [
+  { table: "designs", column: "direction", type: "TEXT" },
+];
+
+function applyAddedColumns(client: Database.Database): void {
+  for (const { table, column, type } of ADDED_COLUMNS) {
+    const existing = client
+      .prepare(`PRAGMA table_info(${table})`)
+      .all() as { name: string }[];
+    if (existing.some((c) => c.name === column)) continue;
+    client.exec(`ALTER TABLE ${table} ADD COLUMN ${column} ${type}`);
+  }
+}
+
 export interface OpenStoreOptions {
   /** Path to the SQLite file. Defaults to data/pipeline.db under cwd/repo root. */
   dbPath?: string;
@@ -139,5 +167,6 @@ export function openStore(options: OpenStoreOptions = {}): Store {
   client.pragma("journal_mode = WAL");
   client.pragma("foreign_keys = ON");
   client.exec(DDL);
+  applyAddedColumns(client);
   return drizzle(client, { schema }) as Store;
 }

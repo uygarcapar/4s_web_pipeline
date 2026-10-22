@@ -56,15 +56,22 @@ export const quietLuxury: Direction = {
     heroEntrance: false,
     smoothScroll: true,
   },
+  // Photograph-led: every option here gives an image room. That is also
+  // why the scorer pushes this direction away from a client with no
+  // usable photographs — these layouts have nothing to render without them.
   archetypes: {
-    hero: ["photo-full"],
-    statement: ["quote-rule"],
-    services: ["list-rule", "inset-pairs"],
-    gallery: ["masonry-reveal", "inset-pairs"],
-    testimonials: ["quote-large"],
-    faq: ["accordion-rule"],
-    visit: ["map-split"],
-    contact: ["split-form"],
+    hero: ["photo-full", "collage"],
+    statement: ["static", "quote-split"],
+    services: ["alternating", "rail-pinned"],
+    team: ["lead", "portrait-rows"],
+    gallery: ["full-bleed", "pairs"],
+    testimonials: ["single-large"],
+    visit: ["card", "map-split"],
+    faq: ["two-column"],
+    process: ["timeline"],
+    marquee: ["static-band"],
+    closing: ["statement-cta", "split-panel"],
+    contact: ["default"],
   },
   affinity: {
     tone: { premium: 3, warm: 1, clinical: 1, technical: -2, playful: -3 },

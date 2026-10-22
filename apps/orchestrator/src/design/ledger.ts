@@ -1,4 +1,4 @@
-import { desc, eq } from "drizzle-orm";
+import { desc, eq, gte, isNotNull, and } from "drizzle-orm";
 import { designs, type Store } from "@pipeline/core";
 import type { DesignDna, SectionType } from "./dna.js";
 
@@ -29,9 +29,52 @@ export function recentDesigns(
     .all();
 }
 
+/** How far back a direction counts as "recently used" (D10 §6.2). */
+export const DIRECTION_WINDOW_DAYS = 30;
+
+/**
+ * How many times each direction was used recently, across **all** sectors.
+ *
+ * Deliberately not scoped to one sector, unlike `recentDesigns` above. D6's
+ * ledger was per-sector, which let a dentist and the barber next door receive
+ * the same visual language — and the operator reviews every run, so sameness
+ * is perceived globally rather than within a trade (D10 §6.2).
+ *
+ * `now` is a parameter rather than a `Date.now()` call so the window can be
+ * tested without waiting thirty days.
+ */
+export function recentDirectionUsage(
+  store: Store,
+  now: Date = new Date(),
+  windowDays = DIRECTION_WINDOW_DAYS,
+): Record<string, number> {
+  const cutoff = new Date(
+    now.getTime() - windowDays * 24 * 60 * 60 * 1000,
+  ).toISOString();
+
+  const rows = store
+    .select({ direction: designs.direction })
+    .from(designs)
+    .where(and(isNotNull(designs.direction), gte(designs.createdAt, cutoff)))
+    .all();
+
+  const out: Record<string, number> = {};
+  for (const row of rows) {
+    if (row.direction === null) continue;
+    out[row.direction] = (out[row.direction] ?? 0) + 1;
+  }
+  return out;
+}
+
 export function recordDesign(
   store: Store,
-  input: { domain: string; sector: string; dna: DesignDna },
+  input: {
+    domain: string;
+    sector: string;
+    dna: DesignDna;
+    /** The D10 direction, once the spec path has chosen one. */
+    direction?: string;
+  },
 ): void {
   const { domain, sector, dna } = input;
 
@@ -53,6 +96,7 @@ export function recordDesign(
       headlineGrammar: dna.headlineGrammar,
       archetypes: JSON.stringify(dna.archetypes),
       motion: JSON.stringify(dna.motion),
+      direction: input.direction ?? null,
       createdAt: new Date().toISOString(),
     })
     .run();

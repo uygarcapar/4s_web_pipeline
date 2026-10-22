@@ -51,15 +51,22 @@ export const editorialSerif: Direction = {
     heroEntrance: false,
     smoothScroll: true,
   },
+  // Text-led throughout: the layouts that carry a page on type and rules
+  // rather than on photographs, because this direction is chosen partly
+  // for clients whose imagery is thin.
   archetypes: {
-    hero: ["photo-full", "statement-left"],
-    statement: ["quote-rule"],
-    services: ["list-rule", "grid-bordered"],
-    gallery: ["inset-pairs"],
-    testimonials: ["quote-large"],
-    faq: ["accordion-rule"],
-    visit: ["map-split"],
-    contact: ["split-form"],
+    hero: ["type-only", "index", "split"],
+    statement: ["quote-split"],
+    services: ["index", "accordion"],
+    team: ["roster", "portrait-rows"],
+    gallery: ["pairs", "contact-sheet"],
+    testimonials: ["ruled-list"],
+    visit: ["rows"],
+    faq: ["two-column"],
+    process: ["numbered"],
+    marquee: ["static-band"],
+    closing: ["statement-cta", "split-panel"],
+    contact: ["default"],
   },
   affinity: {
     tone: { traditional: 3, clinical: 2, premium: 1, playful: -3, technical: 0 },

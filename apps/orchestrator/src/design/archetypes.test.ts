@@ -2,6 +2,7 @@ import { readFileSync } from "node:fs";
 import { join } from "node:path";
 import { describe, expect, it } from "vitest";
 import { ARCHETYPES } from "./dna.js";
+import { DIRECTIONS, DIRECTION_IDS } from "./directions/index.js";
 
 /**
  * The design stage and the template keep two separate lists of layout
@@ -28,8 +29,14 @@ const REGISTRY = join(
 
 function archetypesInTemplate(): Record<string, string[]> {
   const source = readFileSync(REGISTRY, "utf8");
-  const start = source.indexOf("const archetypeRegistry");
-  expect(start, "archetypeRegistry not found in the template registry").toBeGreaterThan(-1);
+  const decl = source.indexOf("const archetypeRegistry");
+  expect(decl, "archetypeRegistry not found in the template registry").toBeGreaterThan(-1);
+  // Past the mapped-type annotation to the object literal itself. Starting at
+  // the declaration instead captured `archetypeRegistry` as if it were a
+  // section type with no archetypes — harmless for the two tests below it,
+  // but it made the coverage test report four phantom gaps.
+  const start = source.indexOf("} = {", decl);
+  expect(start, "archetypeRegistry is not the annotated object literal").toBeGreaterThan(-1);
   const block = source.slice(start, source.indexOf("};", start));
 
   const out: Record<string, string[]> = {};
@@ -83,5 +90,52 @@ describe("archetype tables stay in step", () => {
     for (const [type, options] of Object.entries(ARCHETYPES)) {
       expect(options.length, `${type} has no archetype`).toBeGreaterThan(0);
     }
+  });
+});
+
+/**
+ * The same check for the D10 direction catalog, which is a second, separate
+ * list of archetype names — and was wrong on arrival.
+ *
+ * A3 wrote the four directions before B4 built the library, so every
+ * direction named layouts like `grid-bordered`, `quote-large` and
+ * `masonry-reveal` that no component ever existed for. Three of roughly
+ * thirty names happened to be real. Nothing failed, because no stage read
+ * the catalog yet: the first run to use it would have produced a page of
+ * silent fallbacks inside the generate stage, where the feedback costs a
+ * model session.
+ */
+describe("the direction catalog names layouts the template has", () => {
+  const template = archetypesInTemplate();
+
+  it.each(DIRECTION_IDS)("%s", (id) => {
+    const direction = DIRECTIONS[id]!;
+    const missing: string[] = [];
+    for (const [type, options] of Object.entries(direction.archetypes)) {
+      for (const archetype of options) {
+        // The registry's own per-type fallback, not a component file. It is
+        // the honest answer for `contact`, which has one layout.
+        if (archetype === "default") continue;
+        if (!template[type]?.includes(archetype)) missing.push(`${type}/${archetype}`);
+      }
+    }
+    expect(missing, `${id} would silently fall back for: ${missing.join(", ")}`).toEqual([]);
+  });
+
+  /**
+   * Coverage, not just validity. A direction that lists nothing for `team`
+   * renders every team section at the registry default, so all four
+   * directions produce the same team page — the sameness D10 exists to end,
+   * reintroduced one unlisted section at a time.
+   */
+  it("covers every section type the template can render", () => {
+    const types = Object.keys(template);
+    const gaps: string[] = [];
+    for (const id of DIRECTION_IDS) {
+      for (const type of types) {
+        if (!DIRECTIONS[id]!.archetypes[type]) gaps.push(`${id}/${type}`);
+      }
+    }
+    expect(gaps, `no archetype listed, so the default wins: ${gaps.join(", ")}`).toEqual([]);
   });
 });

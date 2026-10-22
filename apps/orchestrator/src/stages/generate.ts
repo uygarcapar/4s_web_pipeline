@@ -10,8 +10,10 @@ import {
 } from "node:fs";
 import { join } from "node:path";
 import type { StageContext, StageModule } from "./types.js";
+import { designSpecSchema } from "@pipeline/core";
 import { runLlmSession } from "../llm/session.js";
 import { verifyFacts } from "./facts-check.js";
+import { copyFaces, planLocalFonts } from "../design/local-fonts.js";
 
 /**
  * Generate stage (LLM). Copies the template into runs/<domain>/generate and
@@ -282,5 +284,23 @@ function stageDesign(ctx: StageContext, siteDir: string): boolean {
   mkdirSync(join(siteDir, "src", "lib"), { recursive: true });
   copyFileSync(tokens, join(siteDir, "src", "styles", "tokens.css"));
   copyFileSync(fonts, join(siteDir, "src", "lib", "fonts.ts"));
+
+  // The font module `next/font/local`s its faces out of the site's own
+  // public/fonts, so the woff2 files have to travel with it (D10 §11 C1).
+  // Copied per run rather than vendored into the template because a site
+  // needs the two or three faces its direction chose, not all eleven — and
+  // the OFL.txt goes with them, which OFL §2 requires of a redistribution.
+  const spec = designSpecSchema.safeParse(
+    JSON.parse(readFileSync(join(designDir, "design.json"), "utf8")),
+  );
+  if (spec.success) {
+    copyFaces(planLocalFonts(spec.data), ctx.repoRoot, siteDir);
+  } else {
+    // A pre-D10 design.json carried a DNA, whose fonts.ts used
+    // next/font/google and needs nothing copied. Worth a line in the log
+    // rather than silence, because the same branch is taken if the spec is
+    // genuinely malformed.
+    ctx.log("design.json is not a DesignSpec — no self-hosted faces to copy");
+  }
   return true;
 }

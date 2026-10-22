@@ -48,15 +48,22 @@ export const kineticBold: Direction = {
     heroEntrance: true,
     smoothScroll: true,
   },
+  // Every name here exists in the template registry; archetypes.test.ts
+  // fails the build if one does not. Chosen for how loud each layout is:
+  // this direction's whole argument is scale and movement.
   archetypes: {
-    hero: ["photo-full"],
-    statement: ["word-swap"],
-    services: ["rail-pinned", "grid-bordered"],
-    gallery: ["masonry-reveal"],
-    testimonials: ["quote-large"],
-    faq: ["accordion-rule"],
-    visit: ["map-split"],
-    contact: ["split-form"],
+    hero: ["photo-full", "marquee", "offset-grid"],
+    statement: ["word-reveal"],
+    services: ["rail-pinned", "image-grid"],
+    team: ["sticky-swap"],
+    gallery: ["full-bleed", "mosaic"],
+    testimonials: ["single-large"],
+    visit: ["map-split", "card"],
+    faq: ["rows"],
+    process: ["rail"],
+    marquee: ["ticker"],
+    closing: ["statement-cta", "banner"],
+    contact: ["default"],
   },
   affinity: {
     tone: { premium: 2, clinical: 1, technical: 1, traditional: -2, warm: -1 },

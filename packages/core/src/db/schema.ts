@@ -142,5 +142,13 @@ export const designs = sqliteTable("designs", {
   /** JSON: the per-section archetype choices and the motion signature. */
   archetypes: text("archetypes").notNull(),
   motion: text("motion").notNull(),
+  /**
+   * The D10 direction this run was built in (§6.2). Nullable because rows
+   * written before the design space existed have no answer, and inventing
+   * one for them would skew the rotation penalty against whichever direction
+   * we guessed. The scorer counts across ALL sectors, unlike `fingerprint`
+   * above, which is scoped to one — see `recentDirectionUsage`.
+   */
+  direction: text("direction"),
   createdAt: text("created_at").notNull(),
 });

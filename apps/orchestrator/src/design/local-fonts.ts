@@ -25,19 +25,40 @@ export interface LocalFontPlan {
   module: string;
 }
 
-export function planLocalFonts(spec: DesignSpec): LocalFontPlan {
-  const wanted: Array<[role: string, family: string]> = [
+export type FontRoleName = "display" | "body" | "mono";
+
+export interface FontRole {
+  role: FontRoleName;
+  family: string;
+  face: Face;
+  /** The CSS variable that actually carries this face. */
+  variable: string;
+  /** False when an earlier role already declared this family. */
+  declares: boolean;
+}
+
+/**
+ * Which face serves each role, with families declared exactly once.
+ *
+ * Several directions pair a face with itself — `swiss-grid` is Archivo over
+ * Archivo — and the first version of this emitted two `localFont()` calls
+ * over the same two woff2 files. Next treats those as independent fonts, so
+ * the page downloaded Archivo twice and LCP measured 3684 ms against a
+ * 3500 ms budget. Deduplicating here is also why the token generator reads
+ * this function rather than assuming `--font-body-face` always exists: when
+ * body reuses the display face, it does not.
+ */
+export function fontRoles(spec: DesignSpec): FontRole[] {
+  const wanted: Array<[FontRoleName, string]> = [
     ["display", spec.type.display],
     ["body", spec.type.body],
     ...(spec.type.mono === undefined
       ? []
-      : ([["mono", spec.type.mono]] as Array<[string, string]>)),
+      : ([["mono", spec.type.mono]] as Array<[FontRoleName, string]>)),
   ];
 
-  const faces: Face[] = [];
-  const decls: string[] = [];
-
-  for (const [role, family] of wanted) {
+  const declared = new Map<string, string>();
+  return wanted.map(([role, family]) => {
     const face = FACE_BY_FAMILY.get(family);
     if (!face) {
       throw new Error(
@@ -46,14 +67,22 @@ export function planLocalFonts(spec: DesignSpec): LocalFontPlan {
           "(D10 §13 Q2).",
       );
     }
-    // display and body may legitimately be the same family — several
-    // directions pair a face with itself. Copy it once.
-    if (!faces.some((f) => f.slug === face.slug)) faces.push(face);
-    decls.push(declaration(role, face));
-  }
+    const existing = declared.get(face.slug);
+    if (existing !== undefined) {
+      return { role, family, face, variable: existing, declares: false };
+    }
+    const variable = `--font-${role}-face`;
+    declared.set(face.slug, variable);
+    return { role, family, face, variable, declares: true };
+  });
+}
+
+export function planLocalFonts(spec: DesignSpec): LocalFontPlan {
+  const roles = fontRoles(spec);
+  const declaring = roles.filter((r) => r.declares);
 
   return {
-    faces,
+    faces: declaring.map((r) => r.face),
     module: `// Generated from design.json by the design stage — do not hand-edit.
 // direction: ${spec.direction}
 //
@@ -63,14 +92,30 @@ export function planLocalFonts(spec: DesignSpec): LocalFontPlan {
 // Weights are NOT pinned: a variable face loaded at one weight cannot do an
 // optical-size curve, which is what made earlier runs read as the same page
 // whatever family was chosen.
+//
+// One declaration per FAMILY, not per role: ${describeRoles(roles)}
 import localFont from "next/font/local";
 
-${decls.join("\n\n")}
+${declaring.map((r) => declaration(r.role, r.face)).join("\n\n")}
 
 /** Every variable, for the <html> className. */
-export const fontVariables = ${variablesExpr(wanted.map(([role]) => role))};
+export const fontVariables = ${variablesExpr(declaring.map((r) => r.role))};
 `,
   };
+}
+
+/** `display+body: Archivo · mono: JetBrains Mono`, for the module header. */
+function describeRoles(roles: FontRole[]): string {
+  const byVariable = new Map<string, FontRoleName[]>();
+  for (const r of roles) {
+    byVariable.set(r.variable, [...(byVariable.get(r.variable) ?? []), r.role]);
+  }
+  return [...byVariable.entries()]
+    .map(([variable, names]) => {
+      const family = roles.find((r) => r.variable === variable)!.family;
+      return `${names.join("+")}: ${family}`;
+    })
+    .join(" · ");
 }
 
 function declaration(role: string, face: Face): string {
@@ -82,6 +127,14 @@ function declaration(role: string, face: Face): string {
     )
     .join(",\n");
 
+  // Matched to template/src/lib/fonts.ts, which is the configuration the
+  // LCP budget was actually measured against. A generated site loading its
+  // fonts differently from the template would be measured against a budget
+  // nothing ever met: `preload` on the display face only (it sets the
+  // largest text, so it is on the LCP path; the body face resolves below
+  // the fold often enough that the extra request costs more than it saves),
+  // and `adjustFontFallback: false` because the synthetic metric adjustment
+  // measured WORSE here, not better.
   return `/** ${face.family} — ${face.licence}${face.variable ? ", variable" : ""}. */
 export const ${name} = localFont({
   src: [
@@ -89,10 +142,11 @@ ${sources},
   ],
   variable: "--font-${role}-face",
   display: "swap",${face.variable ? '\n  weight: "100 900",' : ""}
-  // The browser falls back here only while the face loads; a Turkish page
-  // with a metric-mismatched fallback shifts visibly, so the adjustment
-  // stays with the system stack rather than an arbitrary alternative.
-  fallback: ["system-ui", "sans-serif"],
+  preload: ${role === "display"},
+  // A metric-compatible stack: the swap from fallback to face should not
+  // move the headline, which is both a CLS cost and visibly cheap.
+  fallback: ["system-ui", "Segoe UI", "sans-serif"],
+  adjustFontFallback: false,
 });`;
 }
 
@@ -112,15 +166,33 @@ export function copyFaces(
   repoRoot: string,
   siteDir: string,
 ): void {
+  assertVendored(plan, repoRoot);
   for (const face of plan.faces) {
     const from = join(repoRoot, "data", "fonts", face.slug);
     const to = join(siteDir, "public", "fonts", face.slug);
-    if (!existsSync(from)) {
-      throw new Error(
-        `${face.family} is not vendored: run apps/orchestrator/scripts/vendor-fonts.mjs`,
-      );
-    }
     mkdirSync(to, { recursive: true });
     cpSync(from, to, { recursive: true });
+  }
+}
+
+/**
+ * Fail now if a planned face is not on disk.
+ *
+ * Separate from `copyFaces` because the two happen at different stages: the
+ * design stage plans the fonts, the generate stage copies them into a site
+ * that does not exist yet. Without this, "Instrument Serif was never
+ * vendored" surfaces after the plan and generate stages have each spent a
+ * model session — the cheapest possible check, placed at the cheapest
+ * possible moment.
+ */
+export function assertVendored(plan: LocalFontPlan, repoRoot: string): void {
+  const missing = plan.faces
+    .filter((f) => !existsSync(join(repoRoot, "data", "fonts", f.slug)))
+    .map((f) => f.family);
+  if (missing.length > 0) {
+    throw new Error(
+      `not vendored: ${missing.join(", ")} — run ` +
+        "apps/orchestrator/scripts/vendor-fonts.mjs",
+    );
   }
 }

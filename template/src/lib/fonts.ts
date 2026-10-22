@@ -1,34 +1,25 @@
-// Replaced per client by the design stage (apps/orchestrator/src/design/local-fonts.ts).
-// This copy is the template's own default so that `pnpm dev` in template/
-// works without a run; a generated site gets the faces its direction chose.
+// Generated from design.json by the design stage — do not hand-edit.
+// direction: swiss-grid
+//
+// Self-hosted from public/fonts (D10 §11 C1); every face is free
+// open-licence (§13 Q2) and its OFL.txt ships beside the woff2.
+//
+// Weights are NOT pinned: a variable face loaded at one weight cannot do an
+// optical-size curve, which is what made earlier runs read as the same page
+// whatever family was chosen.
+//
+// One declaration per FAMILY, not per role: display+body: Archivo · mono: JetBrains Mono
 import localFont from "next/font/local";
 
-/**
- * Self-hosted, from `public/fonts` (D10 §11 C1, §13 Q2: free open-licence
- * faces only — Archivo and Inter Tight are both OFL and ship their licence
- * beside the woff2).
- *
- * **No weight is pinned, and that is the whole point.** This file used to
- * load Archivo at `weight: ["800"]`. A variable face loaded at one weight
- * cannot do an optical-size curve, so every direction rendered the same
- * glyphs however light its range said it was — a direction asking for 300
- * got 800, while `getComputedStyle` dutifully reported 300 and DJ16 passed
- * a page that visibly contradicted its own direction. `weight: "100 900"`
- * hands the whole axis to the CSS.
- *
- * `preload` on the display face: it sets the largest text on the page, so it
- * is on the critical path for LCP. The body face is not preloaded — it
- * resolves below the fold often enough that the extra request costs more
- * than it saves.
- */
+/** Archivo — OFL, variable. */
 export const displayFont = localFont({
   src: [
     { path: "../../public/fonts/archivo/archivo-latin.woff2", style: "normal" },
     { path: "../../public/fonts/archivo/archivo-latin-ext.woff2", style: "normal" },
   ],
   variable: "--font-display-face",
-  weight: "100 900",
   display: "swap",
+  weight: "100 900",
   preload: true,
   // A metric-compatible stack: the swap from fallback to face should not
   // move the headline, which is both a CLS cost and visibly cheap.
@@ -36,18 +27,21 @@ export const displayFont = localFont({
   adjustFontFallback: false,
 });
 
-export const bodyFont = localFont({
+/** JetBrains Mono — OFL, variable. */
+export const monoFont = localFont({
   src: [
-    { path: "../../public/fonts/inter-tight/inter-tight-latin.woff2", style: "normal" },
-    { path: "../../public/fonts/inter-tight/inter-tight-latin-ext.woff2", style: "normal" },
+    { path: "../../public/fonts/jetbrains-mono/jetbrains-mono-latin.woff2", style: "normal" },
+    { path: "../../public/fonts/jetbrains-mono/jetbrains-mono-latin-ext.woff2", style: "normal" },
   ],
-  variable: "--font-body-face",
-  weight: "100 900",
+  variable: "--font-mono-face",
   display: "swap",
+  weight: "100 900",
   preload: false,
+  // A metric-compatible stack: the swap from fallback to face should not
+  // move the headline, which is both a CLS cost and visibly cheap.
   fallback: ["system-ui", "Segoe UI", "sans-serif"],
   adjustFontFallback: false,
 });
 
-/** Both variables, for the <html> className. */
-export const fontVariables = `${displayFont.variable} ${bodyFont.variable}`;
+/** Every variable, for the <html> className. */
+export const fontVariables = `${displayFont.variable} ${monoFont.variable}`;
