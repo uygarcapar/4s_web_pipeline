@@ -1086,15 +1086,49 @@ passed and a screenshot caught.
 
 `verify` exits 0 on both fixtures.
 
+## B4 · `services/index` — services complete
+
+Sixth and last services archetype. §7.1's target is met for both hero and
+services.
+
+The whole list visible at once, flowing across columns. Composition from
+`cerebrium` and `offforum`.
+
+**Why it is not the accordion with a flag**, which is the question §7.2
+asks and which killed "centered statement" earlier. The accordion is one
+stack of full-width rows whose descriptions are hidden; this is two or three
+columns of short ones with every description shown. Opening every accordion
+row does not produce this — it produces a longer stack. The compositions
+differ, not a prop.
+
+Columns rather than a grid: a grid gives every entry the same height and
+leaves ragged space under the short ones, while flowed columns pack by
+content, which is the whole point when a salon lists twenty treatments.
+
+**Verified at realistic length, not at fixture length.** The reference
+fixture has four services, which is not enough to exercise a multi-column
+flow — so the list was cloned to nineteen, the count the clinic this
+pipeline was built against actually publishes. Result: 3 columns, **0
+entries split across a column break** (`break-inside: avoid` holding), and a
+section 1568px tall where a single stack would be roughly three times that.
+
+A fixture that cannot exercise the behaviour is the same gap as the calm
+fixture using the wrong hero in B2, and the half-photographed services list
+in `alternating`. Worth doing deliberately each time rather than noticing
+afterwards.
+
+`verify` exits 0 on both fixtures.
+
 ## Next
 
-**Services, 5 of 6** — `rail-pinned`, `alternating`, `accordion`,
-`image-grid`, plus the legacy `default`. §7.1 wants one more: index list.
+**Hero 7/7, services 6/6.** Remaining §7.1 targets: team (1 of 5), gallery
+(1 of 5), visit (1 of 4), statement (1 of 3), faq (1 of 3), closing (1 of
+3), testimonials (1 of 3), marquee (1 of 2), process (0 of 3).
 
-Then team (1 of 5), gallery (1 of 5), visit (1 of 4), and the smaller
-targets. The legacy `hero/default` and `services/default` are still in the
-registry reading no tokens; they should be deleted rather than left as
-traps.
+The legacy `hero/default` and `services/default` are still in the registry
+reading no tokens and rendering identically under every direction. The
+design stage will not pick either, so they are traps for whoever reads the
+registry next rather than options — they should go.
 
 Two cleanups worth doing at some point, neither urgent: delete the legacy
 `hero/default` and `services/default`, which read no tokens and look
