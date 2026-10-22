@@ -32,6 +32,7 @@ CREATE TABLE IF NOT EXISTS designs (
   archetypes TEXT NOT NULL,
   motion TEXT NOT NULL,
   direction TEXT,
+  spec TEXT,
   created_at TEXT NOT NULL
 );
 CREATE INDEX IF NOT EXISTS idx_designs_sector ON designs(sector, created_at);
@@ -139,6 +140,7 @@ CREATE INDEX IF NOT EXISTS idx_costs_domain ON costs(domain);
  */
 const ADDED_COLUMNS: { table: string; column: string; type: string }[] = [
   { table: "designs", column: "direction", type: "TEXT" },
+  { table: "designs", column: "spec", type: "TEXT" },
 ];
 
 function applyAddedColumns(client: Database.Database): void {

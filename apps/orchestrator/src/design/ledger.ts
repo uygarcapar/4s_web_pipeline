@@ -2,6 +2,7 @@ import { desc, eq, gte, isNotNull, and } from "drizzle-orm";
 import { designs, type DesignSpec, type Store } from "@pipeline/core";
 
 import { ARCHETYPE_WINDOW, fingerprintSpec } from "./compose.js";
+import { WINDOW_DAYS, type Neighbour } from "./distance.js";
 import type { SectionType } from "./sections.js";
 
 /**
@@ -107,6 +108,76 @@ export function recentArchetypes(
 }
 
 /**
+ * The recent runs a candidate is measured against (D10 §8.1).
+ *
+ * One query, two windows: the all-sectors comparison looks back 30 days,
+ * the same-sector one 90, and the "previous N runs" rule needs the ordering
+ * regardless of either. Running three queries would mean three chances for
+ * the windows to disagree about what "recent" means.
+ *
+ * `rank` is position in the ledger, 0 = most recent, which is what the
+ * previous-N-runs rule counts. Rows written before C4 carry no serialized
+ * spec and are skipped — they cannot be measured, and a neighbour that
+ * cannot be measured must not silently read as "far away".
+ */
+export function recentNeighbours(
+  store: Store,
+  input: { sector: string; now?: Date; limit?: number },
+): Neighbour[] {
+  const now = input.now ?? new Date();
+  const since = (days: number): string =>
+    new Date(now.getTime() - days * 24 * 60 * 60 * 1000).toISOString();
+  const allSectorsCutoff = since(WINDOW_DAYS.allSectors);
+  const sameSectorCutoff = since(WINDOW_DAYS.sameSector);
+
+  const rows = store
+    .select({
+      domain: designs.domain,
+      sector: designs.sector,
+      spec: designs.spec,
+      createdAt: designs.createdAt,
+    })
+    .from(designs)
+    .where(isNotNull(designs.spec))
+    .orderBy(desc(designs.createdAt), desc(designs.id))
+    .limit(input.limit ?? NEIGHBOUR_LIMIT)
+    .all();
+
+  const out: Neighbour[] = [];
+  for (const row of rows) {
+    if (row.spec === null) continue;
+    let spec: DesignSpec;
+    try {
+      spec = JSON.parse(row.spec) as DesignSpec;
+    } catch {
+      continue;
+    }
+    // `rank` counts the rows that can actually be compared, so an
+    // unparseable row does not consume a slot in the previous-3 rule.
+    out.push({
+      domain: row.domain,
+      spec,
+      rank: out.length,
+      within: {
+        allSectors: row.createdAt >= allSectorsCutoff,
+        sameSector: row.sector === input.sector && row.createdAt >= sameSectorCutoff,
+      },
+    });
+  }
+  return out;
+}
+
+/**
+ * How far back the neighbour query reads at all.
+ *
+ * Bounded because the 90-day window has no natural size: a pipeline running
+ * ten sites a day would compare every candidate against nine hundred rows,
+ * six times over, for a check whose answer the nearest few dozen already
+ * decide.
+ */
+export const NEIGHBOUR_LIMIT = 60;
+
+/**
  * Record what this client was actually built as.
  *
  * `paletteName` and `paletteHue` are passed separately because they are the
@@ -144,6 +215,7 @@ export function recordSpec(
       archetypes: JSON.stringify(spec.sections),
       motion: JSON.stringify(spec.motion),
       direction: spec.direction,
+      spec: JSON.stringify(spec),
       createdAt: new Date().toISOString(),
     })
     .run();

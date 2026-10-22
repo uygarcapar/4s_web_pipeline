@@ -150,5 +150,15 @@ export const designs = sqliteTable("designs", {
    * above, which is scoped to one — see `recentDirectionUsage`.
    */
   direction: text("direction"),
+  /**
+   * The whole `DesignSpec`, serialized. D10 §8.1 measures distance across
+   * ten axes — colour mode, grid alignment, image frame, radius and display
+   * weight among them — and a column per axis would go stale the first time
+   * the spec gains one. The columns above stay because they are what a human
+   * reads in a `SELECT`; this is what the distance check parses.
+   *
+   * Nullable: rows written before C4 do not have it.
+   */
+  spec: text("spec"),
   createdAt: text("created_at").notNull(),
 });
