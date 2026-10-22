@@ -32,7 +32,14 @@ Playwright · Lighthouse 13 / LHCI 0.15 · Crawlee.
 - Facts from `runs/<domain>/audit/facts.json` are verbatim. Never invent
   hours, prices, phone numbers, services.
 - Generated-site edits only in `site.config.ts`, `src/sections/**`,
-  `src/styles/tokens.css`, `public/images/**`.
+  `public/images/**`, and — for the signature stage alone —
+  `src/sections/signature/custom.tsx`.
+  `src/styles/tokens.css` and `src/lib/fonts.ts` were on this list and are
+  not any more: both are generated from `design.json` and the whole colour
+  ramp's contrast is checked before either is written (D10 §5). A gate that
+  fails because of a token is a bug in `spec-tokens.ts`, and patching it on
+  one site makes that site pass while leaving the generator wrong for every
+  site after it.
 - It is unacceptable to remove or edit tests, `lighthouserc.cjs`,
   `playwright.config.ts`, `budget.json`, `acceptance.json`
   (protect-tests hook denies writes).

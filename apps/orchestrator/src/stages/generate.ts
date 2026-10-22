@@ -50,12 +50,16 @@ export const generateStage: StageModule = {
     const prompt = `Fill the Next.js template at ${siteDir} for this client.
 
 Read first:
-- ${join(planDir, "design-plan.md")} — the design you are implementing. Follow it; the "one bold element" must survive into the build.
+- ${join(planDir, "design-plan.md")} — the design you are implementing.
+  Follow it. If the sitemap has a "signature" section, write its COPY and
+  its images into site.config.ts and nothing else: its markup is written
+  after you by the signature stage (D10 §9), into a component you must not
+  touch.
 - ${join(planDir, "sitemap.json")} — the exact sections and their order.
-- ${join(ctx.runDir, "design", "design.json")} — this client's design DNA:
-  the palette derived from their own photographs, their type pairing, the
-  layout archetype per section, and which section carries the pinned
-  hand-off and which the text transformation.
+- ${join(ctx.runDir, "design", "design.json")} — this client's DesignSpec:
+  the direction, the type pairing, the colour mode, the layout archetype per
+  section, and the motion profile with the signatures it requires. There is
+  no per-section motion assignment in it — "motion" describes the page.
 - ${join(planDir, "sections")}/ — one spec per section.
 - ${factsPath} — verbatim ground truth (name, phone, address, hours).
 - ${join(ctx.runDir, "crawl", "content.json")} — the client's own Turkish text.
@@ -79,11 +83,11 @@ Edit ONLY these paths:
 - ${siteDir}/src/sections/**
 (public/images/ is already populated — reference the files, do not add any)
 
-Do NOT edit src/styles/tokens.css or src/lib/fonts.ts. Both are generated:
-the palette was derived from this client's own photographs and the type
-pairing was chosen for their sector and checked against the design
-fingerprint ledger, so that two businesses in the same trade cannot be
-handed the same-looking site. Use the tokens that are there.
+Do NOT edit src/styles/tokens.css or src/lib/fonts.ts. Both are generated
+from design.json: every colour, every type step and every radius is derived
+from the spec, and the contrast of the whole ramp is checked before the file
+is written. A token you change by hand is a token nothing has verified. Use
+what is there.
 
 Rules that will be checked mechanically after you finish:
 - Every value in facts.json is verbatim. Do not invent or alter a phone number, address, opening hour, service name or price. A fact that is absent must not be claimed.
