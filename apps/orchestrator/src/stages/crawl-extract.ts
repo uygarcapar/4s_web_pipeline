@@ -295,17 +295,31 @@ export const TIME_RE = /\d{1,2}[:.]\d{2}/;
 export const TIME_RANGE_RE =
   /\d{1,2}[:.]\d{2}\s*[-–—/]\s*\d{1,2}[:.]\d{2}/;
 
+/**
+ * A label meaning "every day", which maps a single time range onto all seven
+ * days without inventing anything. minaguzellik.com publishes its only hours
+ * as "Tüm Günler:" / "09:00 – 20:00"; neither label matched, so the facts
+ * recorded no hours at all for a salon that states them plainly.
+ */
+export const ALL_DAYS_LABEL_RE =
+  /((tüm|her)\s*gün(ler)?|hergün|haftan[ıi]n\s*(7|yedi)\s*günü|7\s*\/\s*24)/i;
+
 /** Labels an SMB site puts above its opening hours. */
 export const HOURS_LABEL_RE =
-  /(çalışma\s*saat|açılış|kapanış|saatler|mesai|hafta\s*içi|hafta\s*sonu)/i;
+  /(çalışma\s*saat|açılış|kapanış|saatler|mesai|hafta\s*içi|hafta\s*sonu|(tüm|her)\s*gün(ler)?|hergün|7\s*\/\s*24)/i;
 
 /**
  * Turkish street-address tokens. Case-insensitive on purpose: SMB sites write
  * "Atakent mah. 227. sokak ... no: 2/S" as often as the title-cased form, and
  * a case-sensitive match silently loses the whole address.
+ *
+ * The leading lookbehind is load-bearing: without it `Kat:` matched inside
+ * "Dik**kat:**", so a microblading aftercare sentence ("Duş Alırken Dikkat:
+ * ...") was collected as an address candidate and — being the longest one —
+ * became the published address of the first real client.
  */
 export const ADDRESS_TOKEN_RE =
-  /(Mah\.|Mahalle|Cad\.|Cadde|Sok\.|Sokak|Bulvar|Blv\.|Sitesi|Çarşı|Plaza|No:|Kat:)/i;
+  /(?<!\p{L})(Mah\.|Mahalle|Cad\.|Cadde|Sok\.|Sokak|Bulvar|Blv\.|Sitesi|Çarşı|Plaza|Blok|Daire|Apt\.|No\s*:|Kat\s*:)/iu;
 
 /** UTF-8-as-Latin-1 mojibake sequences for ç/ı/ş. */
 export const MOJIBAKE_RE = /(Ã§|Ä±|ÅŸ)/;
@@ -338,14 +352,42 @@ export function findPhoneCandidates(text: string): PhoneCandidates {
   return { mobile, landline };
 }
 
-/** Lines that mention a Turkish weekday AND a clock time. */
+/**
+ * Lines that state hours for days that can be identified: a Turkish weekday
+ * with a clock time, or an "every day" label with a time range.
+ *
+ * The all-days pass joins the label to the range when they sit on separate
+ * lines, which is how sites lay them out ("Tüm Günler:" then "09:00 – 20:00").
+ * Emitting the range alone would strip the only thing that says which days it
+ * covers, and the day mapping may never be guessed back (DECISIONS D8).
+ */
 export function findHoursCandidates(text: string): string[] {
+  const lines = text.split(/\r?\n/).map((line) => line.trim());
   const out: string[] = [];
-  for (const line of text.split(/\r?\n/)) {
-    const trimmed = line.trim();
+  for (const trimmed of lines) {
     if (trimmed === "" || trimmed.length > 200) continue;
     if (TR_DAY_RE.test(trimmed) && TIME_RE.test(trimmed)) out.push(trimmed);
     if (out.length >= 40) break;
+  }
+
+  for (let i = 0; i < lines.length && out.length < 40; i += 1) {
+    const label = lines[i]!;
+    if (label === "" || label.length > 200) continue;
+    if (!ALL_DAYS_LABEL_RE.test(label)) continue;
+    if (TR_DAY_RE.test(label)) continue;
+    if (TIME_RANGE_RE.test(label)) {
+      out.push(label);
+      continue;
+    }
+    // The range sits within the next two lines, as for the unmapped case.
+    for (let j = i + 1; j <= Math.min(i + 2, lines.length - 1); j += 1) {
+      const candidate = lines[j]!;
+      if (candidate === "" || candidate.length > 200) continue;
+      if (!TIME_RANGE_RE.test(candidate)) continue;
+      if (TR_DAY_RE.test(candidate)) continue;
+      out.push(`${label} ${candidate}`.replace(/\s+/g, " ").trim());
+      break;
+    }
   }
   return dedupe(out);
 }

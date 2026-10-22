@@ -1866,3 +1866,79 @@ Smaller things this turn left open, none blocking:
   floors per draw, which is A4 work this did not do.
 - `rejected[].distance` carries the score gap, because no visual-distance
   metric exists until C4.
+
+## The first real client, and what the fixtures could never have shown
+
+`minaguzellik.com` is the first site the pipeline has ever crawled that it
+did not also author the fixtures for. The crawl was excellent — 29 pages,
+424 content blocks, 17 FAQ pairs, 34 images. Then `audit` built this:
+
+```
+businessName : "Galeri"
+address      : "Duş Alırken Dikkat: Duş alırken kaşları yoğun su
+                temasından korumak için vazelin uygulayabilirsiniz."
+services     : []
+openingHours : []
+```
+
+The run was stopped at `plan`, $0.09 spent. Facts are verbatim by hard
+rule, so `generate` would have faithfully printed a microblading aftercare
+sentence as the salon's street address.
+
+**Five defects, none of which any fixture could expose**, because the
+fixtures were written by someone who already knew the answers:
+
+1. **`Kat:` had no word boundary**, so it matched inside "Dik**kat:**".
+   That is how an aftercare sentence became an address candidate — and the
+   picker took the *longest* candidate, so at 100 characters it beat the
+   real 71-character address.
+2. **`WebSite.name` was not a name source.** WordPress SEO plugins publish
+   the business name there and nothing typed `Organization` or
+   `LocalBusiness` at all. "Mina Güzellik Merkezi" sat in the JSON-LD of
+   all 29 pages while the builder fell through to `<title>` — and took
+   whichever page the crawl returned first, which was `/gallery`.
+3. **`extracted.phones` was always empty.** The crawl writes
+   `{mobile, landline}`; the reader called `strArray` on it and got `[]`.
+   The mobile survived only because the same number was also a `tel:`
+   href. The landline was lost on every site ever crawled.
+4. **`services: []` was hardcoded** in `buildFacts`. This salon publishes
+   21 service pages. `design` was told it had two, and — reasoning
+   correctly from false evidence — chose a gallery-led layout for a
+   business whose entire offering is its service list.
+5. **The hours label was "Tüm Günler:"**, which matched no pattern, so
+   `09:00 – 20:00` was never collected. The salon states its hours plainly
+   and the facts recorded none.
+
+Fixing (1) then exposed a sixth, which had been invisible underneath it:
+`trLocalityFromAddress` returned the whole preceding segment as `district`,
+so with the address finally correct the district became the entire street
+line. It only became visible once the address above it was right.
+
+### The pattern
+
+Earlier turns kept finding that *measurements verify presence and
+dimension; only rendering verifies legibility*. This is the same shape one
+layer down: **fixtures verify that the parser runs; only a site you did not
+write verifies that it parses.** Every one of these six passed a green test
+suite. The suite was green because the fixtures spell "Kat: 2" with a space
+and put the business name in `Organization.name`, which is what someone
+writes when they already know what the code is looking for.
+
+The six regressions are now tested with the real client's literal values —
+`"Dik**kat:**"`, `WebSite.name`, `{mobile, landline}`, `"Tüm Günler:"` —
+because the shapes are the finding, not the values.
+
+### Still wrong, and known
+
+- **`content.json` services and `facts.services` disagree.**
+  `servicesFromContentBlocks` needs a heading plus a ≥20-character
+  paragraph and found 1; the page-based extractor finds 21 names without
+  descriptions. The generator therefore has 21 service names and one
+  description. Names-only is honest and renders fine, but the two lists
+  should come from one place.
+- **The salon has two branches** (Beylikdüzü and Esenyurt — two addresses,
+  two map embeds). `Facts` holds one address. Nothing in the schema can
+  express the second, so it is silently dropped.
+- `mapsEmbedQuery` now reads the `!2s` field of a `pb=` embed, which points
+  at the Esenyurt branch while `address` is the Beylikdüzü one. Both are
+  real; they are simply not the same place.
