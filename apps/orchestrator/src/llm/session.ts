@@ -88,26 +88,45 @@ export async function runLlmSession(input: LlmSessionInput): Promise<LlmSessionR
   let error: string | undefined;
   let ok = false;
 
-  for await (const message of query({ prompt: input.prompt, options })) {
-    if (message.type === "assistant") {
-      for (const block of message.message.content) {
-        if (block.type === "text" && block.text.trim()) {
-          input.log(`assistant: ${block.text.trim().slice(0, 160)}`);
+  // The SDK throws out of the iterator for some terminal conditions — a
+  // turn-limit stop among them — rather than yielding a result message. That
+  // breaks the contract this function advertises, which is an `ok` flag and
+  // an `error` string, and callers are written against the contract: the
+  // design judge returns `ok: true` with "judge did not run" when a session
+  // does not complete, precisely so a run whose gates are all green is not
+  // killed by the judge running out of turns. A throw skipped that and
+  // failed the whole stage.
+  try {
+    for await (const message of query({ prompt: input.prompt, options })) {
+      if (message.type === "assistant") {
+        for (const block of message.message.content) {
+          if (block.type === "text" && block.text.trim()) {
+            input.log(`assistant: ${block.text.trim().slice(0, 160)}`);
+          }
         }
+        continue;
       }
-      continue;
-    }
-    if (message.type !== "result") continue;
+      if (message.type !== "result") continue;
 
-    costUsd = message.total_cost_usd;
-    numTurns = message.num_turns;
-    if (message.subtype === "success") {
-      text = message.result;
-      ok = !message.is_error;
-      if (message.is_error) error = `session reported an error: ${message.result.slice(0, 300)}`;
-    } else {
-      error = `session ended with ${message.subtype}`;
+      costUsd = message.total_cost_usd;
+      numTurns = message.num_turns;
+      if (message.subtype === "success") {
+        text = message.result;
+        ok = !message.is_error;
+        if (message.is_error) error = `session reported an error: ${message.result.slice(0, 300)}`;
+      } else {
+        error = `session ended with ${message.subtype}`;
+      }
     }
+  } catch (thrown) {
+    // Whatever was accumulated before the throw is still true and still
+    // worth reporting — the cost in particular, which the caller adds to the
+    // run's total whether or not the session finished.
+    ok = false;
+    error = `session threw: ${thrown instanceof Error ? thrown.message : String(thrown)}`.slice(
+      0,
+      300,
+    );
   }
 
   input.log(`session finished: $${costUsd.toFixed(4)} over ${numTurns} turn(s)`, {
