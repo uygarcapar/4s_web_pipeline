@@ -2364,3 +2364,72 @@ The rule that falls out: **a digest line that reports a number must also
 carry whatever the report says the number is about.** An audit that names a
 file, an element or a reason should hand it over, because the fix loop
 cannot open the report and a plausible guess costs an iteration.
+
+## The digest changed the agent's reasoning, and the gate still did not pass
+
+The fix loop ran again with the diagnostics from #57 in the digest. Its
+reasoning changed, visibly, in a comment it wrote into the hero:
+
+> The LCP element on this archetype is the headline text in the accent
+> block, not this photograph (it carries a reversed-out h1, not an image) —
+> an over-wide `sizes` guess was pulling a next-breakpoint-up image (and,
+> via `priority`'s preload, bandwidth the render-blocking CSS needed first)
+> for no visual gain.
+
+That is the right model of the page, and it is only available because the
+digest now names the LCP element and its phase split. The two earlier
+iterations, with `image-delivery-insight 0.5` as their only lead, spent
+$3.21 compressing images.
+
+**And it made no measurable difference.** Six Lighthouse runs, two
+configurations:
+
+| | performance | LCP |
+|---|---|---|
+| fix agent (`priority` + `quality=60` + exact `sizes`) | 0.89 · 0.89 · 0.89 | 3678 · 3734 · 3729 |
+| template original (`priority` + coarse `sizes`) | 0.89 · **0.93** · 0.89 | 3745 · **3089** · 3733 |
+
+`image-delivery-insight` was 0.5 in all six. The precise `sizes` did not
+move it at all.
+
+### The gate is marginal for this client, and that is the finding
+
+LCP swings 3089-3745 ms across runs. The hard gate is 3500. The threshold
+sits *inside* the noise band, so the same site passes or fails depending on
+which three runs you take.
+
+D4 set 3500 deliberately: "measured LCP for the reference template swings
+2.7-3.2 s on this harness while the performance category sits at
+0.94-0.96. 3500 ms is the hard gate that catches real regressions without
+tripping on run-to-run noise." That reasoning was sound for the template.
+A real client with 44 of its own photographs sits ~600 ms higher, and the
+same noise band now straddles the threshold rather than sitting below it.
+
+So this is not a defect in the site, the fonts or the fix loop. It is the
+budget meeting a real client for the first time. The remaining lever is
+904 ms of render-blocking CSS — Next/Tailwind output, not the generated
+site's editable surface, so no fix-loop iteration can reach it.
+
+### I claimed determinism from three samples and was wrong
+
+After the fix I measured 0.89, 0.89, 0.89 and wrote that the score was
+"deterministic, not noise". The next three runs of the *unchanged* template
+configuration gave 0.89, 0.93, 0.89. Three identical samples were a
+coincidence, and I read them as proof. The correction matters because the
+false conclusion pointed at the fix agent as having caused a regression,
+when the measurement could not support that claim either way.
+
+### Still open
+
+- `image-delivery-insight` is stably 0.5 and is not a `sizes` problem.
+  Nothing has yet established what it *is*.
+- The digest still does not carry the per-image breakdown (which file, how
+  many bytes wasted), so the fix agent spent several turns chunk-reading a
+  multi-megabyte LHR to get it. That is a cheap addition to
+  `lhci-diagnostics.mjs` and would have saved most of an iteration.
+- `fix-agent` could not run `pnpm run verify` despite `Bash(pnpm run *)`
+  being in its allowed tools, so it cannot check its own work and the outer
+  agent has to re-run the gates for it.
+- Fix-loop cost still never reaches `state.json`. This run recorded $4.71
+  while roughly $10.1 was actually spent, so the $10 cap did not and could
+  not fire. The cap was enforced by hand.
