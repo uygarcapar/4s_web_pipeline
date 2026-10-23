@@ -2212,3 +2212,232 @@ template's own baseline face — because `generate` copies the template whole
 and `copyFaces` then adds the direction's faces on top. It is never
 referenced, so it is never fetched and costs no LCP, but it ships in every
 deploy.
+
+## The digest fix, tested against the thing it was written for
+
+The same failure, the same fix agent, different information. Previous two
+iterations, given only `image-delivery-insight 0.5` next to
+`largest-contentful-paint 3952`, spent $3.21 compressing images. This run,
+given the LCP element and phase split, the agent wrote this in the code:
+
+> The LCP element on this archetype is the headline text in the accent
+> block, not this photograph (it carries a reversed-out h1, not an image) —
+> an over-wide `sizes` guess was pulling a next-breakpoint-up image (and,
+> via `priority`'s preload, bandwidth the render-blocking CSS needed first)
+> for no visual gain.
+
+It removed `priority` from the hero image — reasoning that preloading a
+non-LCP element steals bandwidth from the render-blocking CSS that the
+actual LCP waits on — and replaced the `sizes` guess with the grid's own
+arithmetic. That is the right diagnosis, reached because the digest named
+the LCP element. **#57 works**, and the evidence is a behaviour change
+rather than a claim.
+
+It did not move either number. That turned out to be the more interesting
+result.
+
+## `image-delivery-insight` penalises correct behaviour
+
+The audit compares a served image against its **CSS pixel** size and
+ignores device pixel ratio:
+
+```
+displayed   372 CSS px
+DPR         1.75   (Lighthouse's own mobile emulation)
+needed      651 device px
+source      640x480 — the client's own photograph; no larger original exists
+```
+
+`next/image` serves the 640 px source. For a 1.75x screen that is correct
+and still slightly short of ideal. Lighthouse compares 640 against 372 and
+calls it oversized.
+
+Passing the audit means serving ~372 px — shipping a visibly soft hero
+photograph to every high-DPR phone. **The gate is asking us to degrade the
+client's site to move a number**, which is the definition of a
+mis-calibrated hard gate.
+
+D4 already built this category. `legacy-javascript-insight` and
+`network-dependency-tree-insight` are `warn` for exactly this reason:
+"structural to Next.js output, not fixable from a generated site's editable
+surface, so they ride along as digest recommendations." This belongs with
+them. Patch in `docs/patches/D10-image-delivery/`, verified with
+`git apply --check` — operator's call, as a protected file.
+
+Cost of learning this the hard way: three fix iterations and $5.43 across
+two runs, all of it spent on an audit no edit in the editable surface can
+satisfy.
+
+## Where the client stands
+
+| gate | |
+|---|---|
+| tsc | ✅ |
+| eslint | ✅ |
+| build | ✅ |
+| playwright | ✅ (a11y, smoke, visual) |
+| lhci | ❌ two assertions |
+| links, geometry | skipped behind lhci |
+
+Four of the gates that have ever run on a real client now pass. `lhci` has
+two failures left, and neither is a defect in the site:
+
+1. `image-delivery-insight` — above; mis-calibrated for DPR.
+2. `largest-contentful-paint` 3733 ms vs 3500 — 88% render delay on a text
+   element, now dominated by 904 ms of render-blocking CSS from Next's own
+   chunks. Not reachable from `site.config.ts` or `src/sections/**`. The
+   template baseline is 2.7-3.2 s on a fixture; this client's page carries
+   21 services, 17 FAQ pairs and 44 photographs, and is legitimately
+   heavier.
+
+## Two accounting defects worth fixing before the ship test
+
+**The $10 cap cannot see the fix loop.** `state.json` records $4.71 for
+this run; the real spend is ~$10.1. Fix-loop sessions ($1.10, $2.11, $2.22)
+are never added, because the cost is written when a stage *completes* and
+`verify` never completed. The loop is up to three full agent sessions — the
+most expensive thing after `generate` — so the cap is blind to its largest
+discretionary cost. Ten clients at this rate is a real number to be wrong
+about.
+
+**Visual baselines go stale silently.** Baselines are per-client and
+compare "how did this copy look before". When the template or the fonts
+legitimately change and an existing run is re-verified, the baseline is
+invalid and the diff reads to the fix loop as a real regression — it had
+started repairing one before it was stopped. The pipeline does not normally
+hit this, because `generate` copies the template fresh each time; it
+appeared here because `generate` was skipped and files were synced by hand.
+It would also appear for an operator re-verifying an existing run after a
+template change.
+
+## The same gap again, one audit over
+
+The digest fix told the fix loop what an LCP failure was about and said
+nothing about images. So the loop burned two more iterations, on this line:
+
+```
+image-delivery-insight — expected >= 0.9, actual 0.5
+```
+
+Which image? How much is wasted? Too big a file, or merely requested too
+large? None of it was there, and the report had all of it.
+
+Iteration 1 read the raw Lighthouse JSON in chunks, hit its 25-turn limit
+mid-investigation, was resumed, and edited the hero — adding `sizes`,
+`loading="eager"` and `quality={60}`. Iteration 2 was starting on the same
+information when the run was stopped.
+
+**The hero was the right component.** The fix still did nothing:
+
+```
+before : ?url=…mina-guzellik-01-640x480_c.jpg&w=750&q=75
+after  : ?url=…mina-guzellik-01-640x480_c.jpg&w=750&q=75
+```
+
+Two reasons, both invisible from the source:
+
+- `quality={60}` is **silently ignored**. Next 16 only honours quality
+  values listed in `images.qualities`, which defaults to `[75]`. The source
+  reads as fixed; the URL is the only place the truth shows.
+- `w=750` is not a bug in `sizes`. The displayed box is 372 CSS px and the
+  emulated device is 1.75 DPR, so ~651 physical px are needed and Next picks
+  the next step up. The real problem is that **the source is 640x480**, so
+  750 upscales it — more bytes for no more detail.
+
+So the digest now carries the failing image audits' own items: the request
+URL, bytes wasted against bytes total, and the `reason`, which states
+natural against displayed dimensions. The URL earns its place on its own —
+it is what makes an ineffective change visible, because `q=75` coming back
+is the only evidence `quality={60}` never applied.
+
+Passing image audits stay out, and an audit with a null score is not
+reported as failing.
+
+### The shape of the mistake, twice
+
+Both times the digest named a *measurement* and withheld the *subject*:
+"LCP is slow" without which element; "images are undelivered" without which
+image. Both times the agent reasoned soundly from what it had and spent real
+money on the wrong thing — $3.21, then $2.22.
+
+The rule that falls out: **a digest line that reports a number must also
+carry whatever the report says the number is about.** An audit that names a
+file, an element or a reason should hand it over, because the fix loop
+cannot open the report and a plausible guess costs an iteration.
+
+One correction to the section above, from the analysis that follows it: the
+quality allowlist and the upscale explain why *that edit* changed nothing,
+but they are not why the audit fails. No edit in the editable surface can
+satisfy it — the audit ignores device pixel ratio, and the only way to pass
+is to ship a soft photograph. Both things are true, and the second is the
+one that matters: the digest should have named the image either way, and
+the gate should not have been hard in the first place.
+
+## The digest changed the agent's reasoning, and the gate still did not pass
+
+The fix loop ran again with the diagnostics from #57 in the digest. Its
+reasoning changed, visibly, in a comment it wrote into the hero:
+
+> The LCP element on this archetype is the headline text in the accent
+> block, not this photograph (it carries a reversed-out h1, not an image) —
+> an over-wide `sizes` guess was pulling a next-breakpoint-up image (and,
+> via `priority`'s preload, bandwidth the render-blocking CSS needed first)
+> for no visual gain.
+
+That is the right model of the page, and it is only available because the
+digest now names the LCP element and its phase split. The two earlier
+iterations, with `image-delivery-insight 0.5` as their only lead, spent
+$3.21 compressing images.
+
+**And it made no measurable difference.** Six Lighthouse runs, two
+configurations:
+
+| | performance | LCP |
+|---|---|---|
+| fix agent (`priority` + `quality=60` + exact `sizes`) | 0.89 · 0.89 · 0.89 | 3678 · 3734 · 3729 |
+| template original (`priority` + coarse `sizes`) | 0.89 · **0.93** · 0.89 | 3745 · **3089** · 3733 |
+
+`image-delivery-insight` was 0.5 in all six. The precise `sizes` did not
+move it at all.
+
+### The gate is marginal for this client, and that is the finding
+
+LCP swings 3089-3745 ms across runs. The hard gate is 3500. The threshold
+sits *inside* the noise band, so the same site passes or fails depending on
+which three runs you take.
+
+D4 set 3500 deliberately: "measured LCP for the reference template swings
+2.7-3.2 s on this harness while the performance category sits at
+0.94-0.96. 3500 ms is the hard gate that catches real regressions without
+tripping on run-to-run noise." That reasoning was sound for the template.
+A real client with 44 of its own photographs sits ~600 ms higher, and the
+same noise band now straddles the threshold rather than sitting below it.
+
+So this is not a defect in the site, the fonts or the fix loop. It is the
+budget meeting a real client for the first time. The remaining lever is
+904 ms of render-blocking CSS — Next/Tailwind output, not the generated
+site's editable surface, so no fix-loop iteration can reach it.
+
+### I claimed determinism from three samples and was wrong
+
+After the fix I measured 0.89, 0.89, 0.89 and wrote that the score was
+"deterministic, not noise". The next three runs of the *unchanged* template
+configuration gave 0.89, 0.93, 0.89. Three identical samples were a
+coincidence, and I read them as proof. The correction matters because the
+false conclusion pointed at the fix agent as having caused a regression,
+when the measurement could not support that claim either way.
+
+### Still open
+
+- `image-delivery-insight` is stably 0.5 and is not a `sizes` problem.
+  Nothing has yet established what it *is*.
+- The digest still does not carry the per-image breakdown (which file, how
+  many bytes wasted), so the fix agent spent several turns chunk-reading a
+  multi-megabyte LHR to get it. That is a cheap addition to
+  `lhci-diagnostics.mjs` and would have saved most of an iteration.
+- `fix-agent` could not run `pnpm run verify` despite `Bash(pnpm run *)`
+  being in its allowed tools, so it cannot check its own work and the outer
+  agent has to re-run the gates for it.
+- Fix-loop cost still never reaches `state.json`. This run recorded $4.71
+  while roughly $10.1 was actually spent, so the $10 cap did not and could
+  not fire. The cap was enforced by hand.

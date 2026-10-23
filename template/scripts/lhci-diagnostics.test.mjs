@@ -55,6 +55,30 @@ const failingLhr = {
         ],
       },
     },
+    "image-delivery-insight": {
+      score: 0.5,
+      details: {
+        items: [
+          {
+            url: "http://localhost:3101/_next/image?url=%2Fimages%2Fcrawl%2Fmina-guzellik-01-640x480_c.jpg&w=750&q=75",
+            totalBytes: 31_282,
+            wastedBytes: 20_713,
+            subItems: {
+              type: "subitems",
+              items: [
+                {
+                  reason:
+                    "This image file is larger than it needs to be (640x480) for its displayed dimensions (372x279). Use responsive images to reduce the image download size.",
+                },
+              ],
+            },
+          },
+        ],
+      },
+    },
+    // Passing image audits must stay out of the digest entirely.
+    "modern-image-formats": { score: 1, details: { items: [{ url: "fine.webp" }] } },
+    "unsized-images": { score: null, details: { items: [] } },
   },
 };
 
@@ -87,6 +111,41 @@ describe("lhciDiagnostics", () => {
 
   it("skips resource types that are noise at digest size", () => {
     expect(joined(failingLhr)).not.toContain("third-party");
+  });
+
+  /**
+   * `image-delivery-insight — expected >= 0.9, actual 0.5` names no file.
+   * The fix loop burned two iterations on that one line: the first rewrote
+   * the wrong thing, the second was about to repeat it.
+   */
+  describe("names the image at fault", () => {
+    it("reports the request URL, so a change that did not apply is visible", () => {
+      // `quality={60}` reads as applied in the source and is ignored unless
+      // the value is in `images.qualities`; `q=75` in the URL is the only
+      // place that shows it did not take effect.
+      expect(joined(failingLhr)).toContain("w=750&q=75");
+    });
+
+    it("reports how many bytes are wasted, and of what", () => {
+      expect(joined(failingLhr)).toContain("wasted=20 KB of 31 KB");
+    });
+
+    it("reports natural against displayed dimensions", () => {
+      // This is what distinguishes "the file is too big" from "it was
+      // requested too large" — different fixes entirely.
+      const text = joined(failingLhr);
+      expect(text).toContain("(640x480)");
+      expect(text).toContain("displayed dimensions (372x279)");
+    });
+
+    it("stays silent about image audits that passed", () => {
+      expect(joined(failingLhr)).not.toContain("modern-image-formats");
+      expect(joined(failingLhr)).not.toContain("fine.webp");
+    });
+
+    it("ignores an audit with no score rather than reporting it as failing", () => {
+      expect(joined(failingLhr)).not.toContain("unsized-images");
+    });
   });
 
   it("caps the element snippet so one minified line cannot flood the digest", () => {

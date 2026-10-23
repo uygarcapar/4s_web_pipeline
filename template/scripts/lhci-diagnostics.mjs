@@ -80,5 +80,54 @@ export function lhciDiagnostics(lhr) {
     );
   }
 
+  out.push(...imageLines(audits));
+
+  return out;
+}
+
+/** Image audits whose details name the specific file at fault. */
+const IMAGE_AUDITS = [
+  "image-delivery-insight",
+  "uses-responsive-images",
+  "modern-image-formats",
+  "uses-optimized-images",
+  "unsized-images",
+];
+
+/**
+ * Which image, and why.
+ *
+ * `image-delivery-insight — expected >= 0.9, actual 0.5` names no file. On
+ * the first real client the fix loop burned two iterations on that one line:
+ * the first rewrote the wrong component, the second was about to repeat it.
+ * The report had the answer the whole time — one image, its request URL, the
+ * bytes wasted, and a `reason` giving natural against displayed dimensions,
+ * which is what says whether the file is too big or merely requested too
+ * large.
+ *
+ * The request URL matters as much as the reason: it carries next/image's
+ * `w=` and `q=`, so a change that did not take effect is visible as the same
+ * parameters coming back. `quality={60}` reads as applied in the source and
+ * is silently ignored unless the value is in `images.qualities` — the URL is
+ * the only place that shows it.
+ */
+function imageLines(audits) {
+  const out = [];
+  for (const id of IMAGE_AUDITS) {
+    const audit = audits[id];
+    if (!audit || audit.score === null || audit.score === undefined) continue;
+    if (audit.score >= 0.9) continue;
+    for (const row of asArray(audit.details?.items).slice(0, 4)) {
+      const url = String(row?.url ?? row?.node?.snippet ?? "").slice(-100);
+      const wasted = row?.wastedBytes ? ` wasted=${Math.round(row.wastedBytes / 1024)} KB` : "";
+      const total = row?.totalBytes ? ` of ${Math.round(row.totalBytes / 1024)} KB` : "";
+      out.push(`context: ${id} — ${url}${wasted}${total}`);
+      for (const sub of asArray(row?.subItems?.items).slice(0, 1)) {
+        if (sub?.reason) {
+          out.push(`context: ${id} reason — ${String(sub.reason).slice(0, 170)}`);
+        }
+      }
+    }
+  }
   return out;
 }
