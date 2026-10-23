@@ -2087,3 +2087,53 @@ and the choice is the operator's because two of them touch protected files:
 
 Note that a `font:count <= 2` budget already exists as a `warn`, and the
 template's own 4 files exceed it. Someone suspected this before it happened.
+
+## Four section types had never been rendered by any gate
+
+The fix loop repaired `visit` in the generated copy, which made that one
+client pass and left the shared archetype broken for every site after it —
+the same shape as patching a token on one site. The fix is ported to
+`template/src/sections/visit/index.tsx` now, and it is the fix loop's own:
+the outer `<dl>` becomes a plain container and each row is its own
+single-pair `<dl>`, because the mask frame and the GSAP-transformed node
+cannot be the same element (a transform cannot be clipped by `overflow` set
+on that same element). `text-paper-500` becomes `text-[var(--ink-400)]` —
+a paper ramp step was being used as a text colour on a paper background,
+which the ramp's contrast check never covered because it validates
+ink-on-paper pairs.
+
+### Why the gate never caught it
+
+The template fixture published `hours` and `map` — the two older types
+`visit` superseded — and never published `visit` at all. The a11y, visual
+and perf gates all run against a fixture, and they can only check markup
+that is on the page. So `visit` shipped two serious axe violations in a
+shared archetype while the gate that exists to catch exactly that stayed
+green.
+
+It was not alone. Of fifteen registered section types, **four had never been
+rendered by any fixture**: `visit`, `statement`, `process`, `signature`.
+`visit` was simply the first one a real client's design asked for.
+
+All four are in the reference fixture now, and `sections.test.ts` fails if a
+registered type is missing from every fixture — no rendering, no browser,
+just the registry against the fixtures, which is the cheapest possible guard
+for a whole class of blind spot.
+
+Verified by rendering rather than by the gate alone, because the client's
+colour ramp is not the template's and passing axe there proves nothing here:
+
+- `a11y.spec.ts` — 2 passed, desktop and mobile, with all fifteen sections
+- `smoke.spec.ts` — 10 passed
+- the `visit` DOM — three `DL` elements, each exactly `DT+DD`, no orphans
+- looked at: labels, ruled rows, the hours table and the phone all legible
+- `statement`, `process` and `signature` render with real height and content
+- visual baselines regenerated, since the fixture legitimately changed
+
+### The standing open item was mis-stated
+
+"The committed fixtures are smaller than real clients (4 services, 4 gallery
+images, 3 team members, no `process` section)" has been open for several
+turns, filed as a question of *size*. It was not. Four types had **zero**
+coverage, and a gate cannot be partially blind to a section that is not
+there at all. Size is a real and separate issue; this was absence.

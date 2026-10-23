@@ -103,7 +103,35 @@ describe("marquee", () => {
   });
 });
 
-describe("both fixtures exercise the new sections", () => {
+describe("fixture coverage of the registry", () => {
+  /**
+   * A section type no fixture renders is a section type no gate has ever
+   * rendered — the a11y, visual and perf gates all run against a fixture,
+   * and they can only check markup that exists on the page.
+   *
+   * `visit`, `statement`, `process` and `signature` were all missing here.
+   * `visit` was the first one a real client's design asked for, and it failed
+   * axe immediately: a `<dl>` whose `dt`/`dd` sat two `div`s deep, and a
+   * paper ramp step used as a text colour at 2.8:1. Both had shipped in the
+   * shared archetype to every site that got a visit section, while the gate
+   * that exists to catch exactly that stayed green — because the fixture
+   * published `hours` and `map` instead, the two older types `visit`
+   * superseded.
+   *
+   * This is the cheapest possible guard for that: no rendering, no browser,
+   * just the registry against the fixtures.
+   */
+  it("renders every registered section type in at least one fixture", () => {
+    const covered = new Set(
+      [siteConfig, calmConfig].flatMap((config) => config.sections.map((s) => s.type)),
+    );
+    const uncovered = EXPECTED_TYPES.filter((type) => !covered.has(type));
+    expect(
+      uncovered,
+      `no fixture renders: ${uncovered.join(", ")} — a gate cannot check markup that is never on the page`,
+    ).toEqual([]);
+  });
+
   it.each([
     ["reference", siteConfig],
     ["calm", calmConfig],

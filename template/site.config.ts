@@ -231,6 +231,67 @@ const config: SiteConfigInput = {
       title: "İletişim",
       showForm: true,
     },
+    /*
+     * The four types below are here because no fixture rendered them, which
+     * meant no gate had ever rendered them either. `visit` was the first one
+     * a real client asked for and it failed axe immediately on two serious
+     * violations — a `<dl>` whose `dt`/`dd` sat two divs deep, and a paper
+     * ramp step used as text colour. Both shipped to every site that got a
+     * visit section. `sections.test.ts` now fails if a registered type is
+     * missing from every fixture, so this cannot quietly happen again.
+     */
+    {
+      type: "statement",
+      id: "statement",
+      variant: "static",
+      text: "Diş hekimliğinde acele edilmemesi gereken tek şey karardır; muayenede önce dinler, sonra seçenekleri birlikte değerlendiririz.",
+    },
+    {
+      type: "visit",
+      id: "visit",
+      variant: "rows",
+      title: "Bize Gelin",
+    },
+    {
+      type: "process",
+      id: "process",
+      variant: "numbered",
+      title: "Tedavi Süreci",
+      steps: [
+        {
+          title: "Muayene ve film",
+          description:
+            "Ağız içi muayene ve gerekli görüntüleme aynı randevuda yapılır, bulgular size gösterilir.",
+          duration: "30 dakika",
+        },
+        {
+          title: "Tedavi planı",
+          description:
+            "Seçenekler, süre ve ücret yazılı olarak paylaşılır; onayınız olmadan işlem başlamaz.",
+        },
+        {
+          title: "Uygulama",
+          description:
+            "Planlanan işlem randevulara bölünerek uygulanır, her randevu sonunda ne yapıldığı anlatılır.",
+        },
+        {
+          title: "Kontrol",
+          description:
+            "İşlemden sonra kontrol randevusu verilir; sorun olursa aynı gün bakılır.",
+          duration: "15 dakika",
+        },
+      ],
+    },
+    {
+      type: "signature",
+      id: "signature",
+      concept: "The fallback for §9 — rendered when the signature loop did not converge.",
+      text: "Kliniğimizde her tedavi, hastanın kendi ağzının fotoğraflarıyla planlanır.",
+      images: [
+        { src: "/images/gallery-1.svg", alt: "Klinik bekleme salonu" },
+        { src: "/images/gallery-2.svg", alt: "Muayene ünitesi" },
+      ],
+    },
     {
       type: "marquee",
       id: "marquee",
