@@ -1,0 +1,23 @@
+diff --git a/template/design-rules.md b/template/design-rules.md
+index cc12f35..da44e3b 100644
+--- a/template/design-rules.md
++++ b/template/design-rules.md
+@@ -152,10 +152,14 @@ One scale per site, declared in `tokens.css`. No section invents a size.
+ 
+ - `<html lang="tr">`; `openGraph.locale: 'tr_TR'`; hreflang `tr-TR` +
+   `x-default`.
+-- Fonts via `next/font/google` **or** `next/font/local`,
+-  `subsets: ['latin','latin-ext']` — ş/ğ/ı/İ/ç/ö/ü must render, confirmed by
+-  rendering them, not by trusting a catalogue page. At most two display/body
+-  families plus an optional monospace accent. Which faces are permitted is
++- Fonts via `next/font/google` **or** `next/font/local`, ONE file per
++  family, subset to `SUBSET_CHARSET` (`apps/orchestrator/src/design/faces.ts`)
++  rather than to Google's `latin` + `latin-ext` pair — ş/ğ/ı/İ/ç/ö/ü must
++  render, confirmed by rendering them, not by trusting a catalogue page.
++  `faces.turkish.test.ts` is that confirmation: it renders every vendored
++  face in a browser and fails on any character that arrives from the
++  fallback. At most two display/body families plus an optional monospace
++  accent. Which faces are permitted is
+   the direction's decision (D10 §3.2, §11 C1/C3). Self-hosted faces are free
+   open-licence faces only — no foundry licence is bought, so a per-domain or
+   pageview-capped licence disqualifies a face (D10 §13 Q2).

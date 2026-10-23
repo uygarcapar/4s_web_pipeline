@@ -4,7 +4,12 @@ import { fileURLToPath } from "node:url";
 import { chromium, type Browser } from "playwright";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
 
-import { FACES, FREE_LICENCES, TURKISH_TEST_STRING } from "./faces.js";
+import {
+  FACES,
+  FREE_LICENCES,
+  SUBSET_CHARSET,
+  TURKISH_TEST_STRING,
+} from "./faces.js";
 import { DIRECTIONS, DIRECTION_IDS } from "./directions/index.js";
 
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), "../../../..");
@@ -36,27 +41,22 @@ afterAll(async () => {
 async function missingGlyphs(
   slug: string,
   family: string,
-  subsets: readonly string[] = ["latin", "latin-ext"],
+  text: string = TURKISH_TEST_STRING,
 ): Promise<string[]> {
   const page = await browser.newPage();
   try {
-    const files = subsets
-      .map((subset) => join(FONT_DIR, slug, `${slug}-${subset}.woff2`))
-      .filter((p) => existsSync(p))
-      .map((p) => readFileSync(p).toString("base64"));
+    // One file per face now: the registry is subset to SUBSET_CHARSET rather
+    // than shipping Google's latin + latin-ext pair, so there is a single
+    // @font-face and no question of which of two rules the browser consults.
+    const file = join(FONT_DIR, slug, `${slug}-tr.woff2`);
+    if (!existsSync(file)) throw new Error(`${family}: ${slug}-tr.woff2 not vendored`);
+    const b64 = readFileSync(file).toString("base64");
 
-    // One @font-face per subset, each with the full unicode range it covers.
-    // A single rule listing both files would use only the first that loads —
-    // latin — and latin-ext, where ş/ğ/ı/İ live, would never be consulted.
-    const rules = files
-      .map(
-        (b64) => `@font-face {
+    const rules = `@font-face {
           font-family: "UnderTest";
           src: url(data:font/woff2;base64,${b64}) format('woff2');
           font-display: block;
-        }`,
-      )
-      .join("\n");
+        }`;
 
     await page.setContent(`<!doctype html><meta charset="utf-8">
       <style>
@@ -73,10 +73,10 @@ async function missingGlyphs(
     // pending set and every later measurement reads the fallback. The first
     // version of this check reported all 11 faces as missing every glyph for
     // exactly that reason.
-    await page.evaluate(async (text) => {
-      await document.fonts.load('100px "UnderTest"', text);
+    await page.evaluate(async (probe) => {
+      await document.fonts.load('100px "UnderTest"', probe);
       await document.fonts.ready;
-    }, TURKISH_TEST_STRING);
+    }, text);
 
     const loaded = await page.evaluate(() =>
       [...document.fonts].some((f) => f.status === "loaded"),
@@ -105,7 +105,7 @@ async function missingGlyphs(
         }
         return out;
       },
-      { text: TURKISH_TEST_STRING },
+      { text },
     );
   } finally {
     await page.close();
@@ -133,22 +133,29 @@ describe("every vendored face carries Turkish", () => {
  * glyph, and a version that always passes is the same bug with the sign
  * flipped.
  *
- * `latin` alone genuinely lacks ş U+015F, ğ U+011F and İ U+0130, which live
- * in `latin-ext`. ç/ö/ü sit at U+00E7/F6/FC inside `latin`, and so — this
- * surprised me — does **ı U+0131**: Google's `latin` subset carries the
- * dotless i explicitly, alongside basic Latin and a handful of other
- * exceptions. So withholding latin-ext must fail exactly three characters,
- * not four, and a face that renders ı is not thereby Turkish-capable.
+ * This used to withhold `latin-ext` and assert that ş/ğ/İ went missing. The
+ * faces are one file now, so the control instead probes characters the
+ * subset provably does not carry: `SUBSET_CHARSET` is Latin, and Cyrillic
+ * and Han are deliberately outside it. That is a stronger control than the
+ * old one, because it depends on this repo's charset rather than on where
+ * Google chose to draw a subset boundary.
  */
 describe("the check can actually fail", () => {
-  it("catches the Turkish-only letters when latin-ext is withheld", async () => {
-    const missing = await missingGlyphs("karla", "Karla", ["latin"]);
-    expect([...missing].sort()).toEqual(["İ", "ğ", "ş"].sort());
+  it("reports characters the subset does not carry", async () => {
+    // Cyrillic, not CJK: headless Chromium ships no Han face at all, so a
+    // Han character measures the same in both arms for a reason that has
+    // nothing to do with the subset under test — which would make the
+    // control pass without testing anything.
+    const missing = await missingGlyphs("karla", "Karla", "Жфщ");
+    expect([...missing].sort()).toEqual(["Ж", "ф", "щ"].sort());
   }, 60_000);
 
-  it("still finds ç, ö and ü in latin alone, so it is not failing everything", async () => {
-    const missing = await missingGlyphs("karla", "Karla", ["latin"]);
-    for (const char of ["ç", "ö", "ü"]) expect(missing).not.toContain(char);
+  it("does not report the Turkish letters alongside them", async () => {
+    const missing = await missingGlyphs("karla", "Karla", "Жşğİıçöü");
+    for (const char of ["ş", "ğ", "İ", "ı", "ç", "ö", "ü"]) {
+      expect(missing, `${char} should be in the subset`).not.toContain(char);
+    }
+    expect(missing).toContain("Ж");
   }, 60_000);
 });
 
@@ -168,15 +175,40 @@ describe("the registry satisfies Q2", () => {
     }
   });
 
-  it("every face is vendored for both latin and latin-ext", () => {
+  it("every face is vendored as a single Turkish subset", () => {
     for (const face of FACES) {
-      for (const subset of ["latin", "latin-ext"]) {
+      expect(
+        existsSync(join(FONT_DIR, face.slug, `${face.slug}-tr.woff2`)),
+        `${face.family}: expected one ${face.slug}-tr.woff2`,
+      ).toBe(true);
+    }
+  });
+
+  /**
+   * The two-file layout this replaced. A leftover pair would still load and
+   * still render, so nothing would fail — the page would just quietly carry
+   * twice the fonts it needs, which is the cost the subset exists to remove.
+   */
+  it("no face still carries the latin/latin-ext pair", () => {
+    for (const face of FACES) {
+      for (const stale of ["latin", "latin-ext"]) {
         expect(
-          existsSync(join(FONT_DIR, face.slug, `${face.slug}-${subset}.woff2`)),
-          `${face.family}/${subset}`,
-        ).toBe(true);
+          existsSync(join(FONT_DIR, face.slug, `${face.slug}-${stale}.woff2`)),
+          `${face.family}: ${stale} is left over from the two-file layout`,
+        ).toBe(false);
       }
     }
+  });
+
+  /**
+   * The subset is only safe if it covers what the render check probes;
+   * otherwise a face could pass vendoring and fail on a client's page.
+   */
+  it("the charset covers every character the Turkish check probes", () => {
+    const uncovered = [...new Set([...TURKISH_TEST_STRING])].filter(
+      (char) => !SUBSET_CHARSET.includes(char),
+    );
+    expect(uncovered, `not in SUBSET_CHARSET: ${uncovered.join(" ")}`).toEqual([]);
   });
 
   /**

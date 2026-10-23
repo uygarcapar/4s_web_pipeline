@@ -1,0 +1,25 @@
+diff --git a/template/build-rules.md b/template/build-rules.md
+index 57d029d..39f492e 100644
+--- a/template/build-rules.md
++++ b/template/build-rules.md
+@@ -82,9 +82,17 @@ When a verify gate fails on performance, consult the matching rule file in
+   `src/styles/tokens.css`; the brand is steered by `--brand-h`/`--brand-c`
+   (OKLCH) — no arbitrary hex values in section code.
+ - Fonts: `next/font/google` **or** `next/font/local` (self-hosted, from
+-  `template/public/fonts/`), `latin` + `latin-ext` subsets. **At most two
+-  display/body families, plus an optional monospace accent** used only for
+-  `.meta`, `.btn-label` and index numbers.
++  `template/public/fonts/`), ONE file per family, subset to `SUBSET_CHARSET`
++  (`apps/orchestrator/src/design/faces.ts`). **At most two display/body
++  families, plus an optional monospace accent** used only for `.meta`,
++  `.btn-label` and index numbers.
++  Google's `latin` + `latin-ext` pair is NOT used. It is two requests per
++  family, and three families cost 235 KB — more than all of the page's
++  JavaScript, and the reason the first real client's LCP failed its gate at
++  3.95 s against a 2.7-3.2 s baseline. Neither half can be dropped on its
++  own, because Turkish straddles them (`ı` is U+0131, in `latin`; `ğ ş İ`
++  are in `latin-ext`), so the faces are subset by character instead:
++  119 KB across three families, down 49%, one request each.
+   Which faces a site may use is the direction's decision, not a global one
+   (docs/D10-design-variation.md §3.2, §4). Self-hosted faces are free
+   open-licence faces only (OFL and comparable): no foundry licence is bought,

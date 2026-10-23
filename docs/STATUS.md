@@ -2137,3 +2137,78 @@ images, 3 team members, no `process` section)" has been open for several
 turns, filed as a question of *size*. It was not. Four types had **zero**
 coverage, and a gate cannot be partially blind to a section that is not
 there at all. Size is a real and separate issue; this was absence.
+
+## One file per family, subset to the characters Turkish actually uses
+
+The policy-versus-budget collision is resolved the way that needed no policy
+change: faces are no longer vendored as Google's `latin` + `latin-ext` pair,
+but as a single file subset to `SUBSET_CHARSET` — 183 characters covering
+printable ASCII, Latin-1's letters, Turkish proper, typographic punctuation,
+currency including `₺`, and the symbols SMB copy contains.
+
+Neither Google subset could be dropped on its own, which is why the split
+survived this long: Turkish straddles them. Dotless `ı` is U+0131 and sits in
+`latin`; `ğ ş İ` are U+011F/U+015F/U+0130 and sit in `latin-ext`. Asking for
+the characters instead of the ranges sidesteps the boundary entirely.
+
+Measured on the first real client, whose direction (`swiss-grid`) uses all
+three families the design space permits:
+
+| | before | after |
+|---|---|---|
+| font requests | 6 | **3** |
+| font bytes | 232 KB | **117 KB** |
+| performance | 0.87 | **0.93** ✅ |
+| LCP (median-run) | 3953 ms | **3728 ms** |
+
+The whole registry: 22 files and 1.0 MB down to 11 files and 700 KB.
+
+**Performance now clears its gate.** LCP does not — 3728 ms against 3500 —
+and the remaining time is no longer fonts. The LCP element is still the
+hero's `<h1>`, still 88% render delay, now dominated by 904 ms of
+render-blocking CSS. The other open assertion is `image-delivery-insight`,
+which is one image served at `w=750` wasting 20.7 KB of 31.3 KB: a `sizes`
+problem in the editable surface, and exactly the kind of thing the fix loop
+can act on now that the digest names it.
+
+### Why an aggressive subset is safe to ship
+
+Subsetting trades bytes for the risk that an unanticipated character arrives
+from the fallback face mid-word — the same disfigurement that
+`faces.turkish.test.ts` was written for. That test now does the work: it
+renders all eleven vendored faces in a real browser and fails on any
+character that measures identically to the fallback. All eleven pass against
+the full Turkish string from their single file.
+
+Its negative control got stronger in the process. It used to withhold
+`latin-ext` and assert that ş/ğ/İ went missing, which tested where Google
+drew a boundary. It now probes Cyrillic, which this repo's charset
+deliberately excludes — a control that depends on our own decision rather
+than someone else's. (Han was the first choice and was wrong: headless
+Chromium ships no Han face, so those characters measure identically in both
+arms for a reason unrelated to the subset, and the control would have passed
+without testing anything.)
+
+Three further guards, because the failure mode here is silent:
+
+- `assertVendored` checks for the woff2 itself, not just the face's
+  directory. A face left in the old layout has a populated directory and no
+  `-tr.woff2`, which would have passed and then 404'd on the client's site,
+  where the only symptom is the page quietly rendering in the fallback.
+- A test fails if any face still carries a `latin`/`latin-ext` pair. A
+  leftover would still load and still render — the page would just silently
+  carry twice the fonts it needs, which is the cost this removes.
+- A test asserts `SUBSET_CHARSET` covers every character the render check
+  probes, so the two cannot drift apart.
+
+`template/build-rules.md` and `template/design-rules.md` both specify the old
+subset pair and are protected. Patches are in
+`docs/patches/D10-font-subset/`, both verified with `git apply --check`.
+
+### Noticed while measuring, not fixed
+
+Every generated site carries `public/fonts/archivo/` — 176 KB of the
+template's own baseline face — because `generate` copies the template whole
+and `copyFaces` then adds the direction's faces on top. It is never
+referenced, so it is never fetched and costs no LCP, but it ships in every
+deploy.

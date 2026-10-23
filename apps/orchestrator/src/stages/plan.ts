@@ -65,7 +65,7 @@ Produce exactly these artifacts, in this order:
 
 1. ${join(planDir, "design-plan.md")} — write this FIRST, before anything else. It must contain:
    - Palette: 4-6 named colors. The template derives its whole ramp from two OKLCH numbers, so state the brand hue (0-360) and chroma (0-0.4) explicitly, plus what each named color is for.
-   - Type: one or two typefaces with their roles. They must be Google Fonts with latin-ext coverage (Turkish needs ş ğ ı İ ç ö ü).
+   - Type: one or two typefaces with their roles. They must be faces from the vendored registry, which is subset to the characters Turkish SMB copy contains (ş ğ ı İ ç ö ü among them).
    - Layout: an ASCII wireframe per page and one sentence of alignment guidance.
    - The one bold element: the single memorable thing on this site. Everything else stays quiet.
    - A "generic check" section: compare your plan against the five clusters in design-rules.md §2, say which parts matched, and what you changed.

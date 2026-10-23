@@ -148,8 +148,7 @@ export const LIBRARY_VARIANTS = ${VARIANTS};
 const faceDecls = FACES.map(
   (f) => `export const ${camel(f.slug)} = localFont({
   src: [
-    { path: "../../../../data/fonts/${f.slug}/${f.slug}-latin.woff2", style: "normal" },
-    { path: "../../../../data/fonts/${f.slug}/${f.slug}-latin-ext.woff2", style: "normal" },
+    { path: "../../../../data/fonts/${f.slug}/${f.slug}-tr.woff2", style: "normal" },
   ],
   variable: "--face-${f.slug}",${f.variable ? '\n  weight: "100 900",' : ""}
   display: "swap",
