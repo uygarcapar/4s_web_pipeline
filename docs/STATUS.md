@@ -2309,3 +2309,58 @@ hit this, because `generate` copies the template fresh each time; it
 appeared here because `generate` was skipped and files were synced by hand.
 It would also appear for an operator re-verifying an existing run after a
 template change.
+
+## The same gap again, one audit over
+
+The digest fix told the fix loop what an LCP failure was about and said
+nothing about images. So the loop burned two more iterations, on this line:
+
+```
+image-delivery-insight — expected >= 0.9, actual 0.5
+```
+
+Which image? How much is wasted? Too big a file, or merely requested too
+large? None of it was there, and the report had all of it.
+
+Iteration 1 read the raw Lighthouse JSON in chunks, hit its 25-turn limit
+mid-investigation, was resumed, and edited the hero — adding `sizes`,
+`loading="eager"` and `quality={60}`. Iteration 2 was starting on the same
+information when the run was stopped.
+
+**The hero was the right component.** The fix still did nothing:
+
+```
+before : ?url=…mina-guzellik-01-640x480_c.jpg&w=750&q=75
+after  : ?url=…mina-guzellik-01-640x480_c.jpg&w=750&q=75
+```
+
+Two reasons, both invisible from the source:
+
+- `quality={60}` is **silently ignored**. Next 16 only honours quality
+  values listed in `images.qualities`, which defaults to `[75]`. The source
+  reads as fixed; the URL is the only place the truth shows.
+- `w=750` is not a bug in `sizes`. The displayed box is 372 CSS px and the
+  emulated device is 1.75 DPR, so ~651 physical px are needed and Next picks
+  the next step up. The real problem is that **the source is 640x480**, so
+  750 upscales it — more bytes for no more detail.
+
+So the digest now carries the failing image audits' own items: the request
+URL, bytes wasted against bytes total, and the `reason`, which states
+natural against displayed dimensions. The URL earns its place on its own —
+it is what makes an ineffective change visible, because `q=75` coming back
+is the only evidence `quality={60}` never applied.
+
+Passing image audits stay out, and an audit with a null score is not
+reported as failing.
+
+### The shape of the mistake, twice
+
+Both times the digest named a *measurement* and withheld the *subject*:
+"LCP is slow" without which element; "images are undelivered" without which
+image. Both times the agent reasoned soundly from what it had and spent real
+money on the wrong thing — $3.21, then $2.22.
+
+The rule that falls out: **a digest line that reports a number must also
+carry whatever the report says the number is about.** An audit that names a
+file, an element or a reason should hand it over, because the fix loop
+cannot open the report and a plausible guess costs an iteration.
