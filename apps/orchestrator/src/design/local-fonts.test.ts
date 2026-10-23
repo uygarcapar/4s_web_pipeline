@@ -78,7 +78,7 @@ describe.each(DIRECTION_IDS)("%s", (id) => {
     const slugs = plan.faces.map((f) => f.slug);
     expect(new Set(slugs).size).toBe(slugs.length);
     for (const face of plan.faces) {
-      const declarations = plan.module.split(`${face.slug}-latin.woff2`).length - 1;
+      const declarations = plan.module.split(`${face.slug}-tr.woff2`).length - 1;
       expect(declarations, `${face.family} appears in ${declarations} declarations`).toBe(1);
     }
   });
@@ -90,11 +90,23 @@ describe.each(DIRECTION_IDS)("%s", (id) => {
     }
   });
 
-  it("loads latin and latin-ext for every face", () => {
+  /**
+   * One file per family, not Google's latin + latin-ext pair. Three families
+   * used to mean six requests and 235 KB — the heaviest resource class on
+   * the page — and the first real client's LCP failed its gate because of
+   * it. The registry is subset to SUBSET_CHARSET instead.
+   */
+  it("loads exactly one file per face", () => {
     for (const face of plan.faces) {
-      expect(plan.module).toContain(`${face.slug}/${face.slug}-latin.woff2`);
-      expect(plan.module).toContain(`${face.slug}/${face.slug}-latin-ext.woff2`);
+      expect(plan.module).toContain(`${face.slug}/${face.slug}-tr.woff2`);
+      expect(plan.module).not.toContain(`${face.slug}-latin.woff2`);
+      expect(plan.module).not.toContain(`${face.slug}-latin-ext.woff2`);
     }
+  });
+
+  it("asks for no more woff2 files than it has families", () => {
+    const requests = (plan.module.match(/\.woff2/g) ?? []).length;
+    expect(requests).toBe(plan.faces.length);
   });
 
   /**
@@ -114,7 +126,7 @@ describe.each(DIRECTION_IDS)("%s", (id) => {
     temps.push(site);
     copyFaces(plan, REPO_ROOT, site);
     for (const face of plan.faces) {
-      expect(existsSync(join(site, "public/fonts", face.slug, `${face.slug}-latin.woff2`))).toBe(true);
+      expect(existsSync(join(site, "public/fonts", face.slug, `${face.slug}-tr.woff2`))).toBe(true);
       expect(
         existsSync(join(site, "public/fonts", face.slug, "OFL.txt")),
         "a generated site is a redistribution; OFL §2 applies to it too",

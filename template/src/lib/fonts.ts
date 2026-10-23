@@ -14,8 +14,7 @@ import localFont from "next/font/local";
 /** Archivo — OFL, variable. */
 export const displayFont = localFont({
   src: [
-    { path: "../../public/fonts/archivo/archivo-latin.woff2", style: "normal" },
-    { path: "../../public/fonts/archivo/archivo-latin-ext.woff2", style: "normal" },
+    { path: "../../public/fonts/archivo/archivo-tr.woff2", style: "normal" },
   ],
   variable: "--font-display-face",
   display: "swap",
@@ -30,8 +29,7 @@ export const displayFont = localFont({
 /** JetBrains Mono — OFL, variable. */
 export const monoFont = localFont({
   src: [
-    { path: "../../public/fonts/jetbrains-mono/jetbrains-mono-latin.woff2", style: "normal" },
-    { path: "../../public/fonts/jetbrains-mono/jetbrains-mono-latin-ext.woff2", style: "normal" },
+    { path: "../../public/fonts/jetbrains-mono/jetbrains-mono-tr.woff2", style: "normal" },
   ],
   variable: "--font-mono-face",
   display: "swap",

@@ -6,8 +6,7 @@ import localFont from "next/font/local";
 
 export const archivo = localFont({
   src: [
-    { path: "../../../../data/fonts/archivo/archivo-latin.woff2", style: "normal" },
-    { path: "../../../../data/fonts/archivo/archivo-latin-ext.woff2", style: "normal" },
+    { path: "../../../../data/fonts/archivo/archivo-tr.woff2", style: "normal" },
   ],
   variable: "--face-archivo",
   weight: "100 900",
@@ -18,8 +17,7 @@ export const archivo = localFont({
 
 export const anton = localFont({
   src: [
-    { path: "../../../../data/fonts/anton/anton-latin.woff2", style: "normal" },
-    { path: "../../../../data/fonts/anton/anton-latin-ext.woff2", style: "normal" },
+    { path: "../../../../data/fonts/anton/anton-tr.woff2", style: "normal" },
   ],
   variable: "--face-anton",
   display: "swap",
@@ -29,8 +27,7 @@ export const anton = localFont({
 
 export const bebasNeue = localFont({
   src: [
-    { path: "../../../../data/fonts/bebas-neue/bebas-neue-latin.woff2", style: "normal" },
-    { path: "../../../../data/fonts/bebas-neue/bebas-neue-latin-ext.woff2", style: "normal" },
+    { path: "../../../../data/fonts/bebas-neue/bebas-neue-tr.woff2", style: "normal" },
   ],
   variable: "--face-bebas-neue",
   display: "swap",
@@ -40,8 +37,7 @@ export const bebasNeue = localFont({
 
 export const fraunces = localFont({
   src: [
-    { path: "../../../../data/fonts/fraunces/fraunces-latin.woff2", style: "normal" },
-    { path: "../../../../data/fonts/fraunces/fraunces-latin-ext.woff2", style: "normal" },
+    { path: "../../../../data/fonts/fraunces/fraunces-tr.woff2", style: "normal" },
   ],
   variable: "--face-fraunces",
   weight: "100 900",
@@ -52,8 +48,7 @@ export const fraunces = localFont({
 
 export const newsreader = localFont({
   src: [
-    { path: "../../../../data/fonts/newsreader/newsreader-latin.woff2", style: "normal" },
-    { path: "../../../../data/fonts/newsreader/newsreader-latin-ext.woff2", style: "normal" },
+    { path: "../../../../data/fonts/newsreader/newsreader-tr.woff2", style: "normal" },
   ],
   variable: "--face-newsreader",
   weight: "100 900",
@@ -64,8 +59,7 @@ export const newsreader = localFont({
 
 export const instrumentSerif = localFont({
   src: [
-    { path: "../../../../data/fonts/instrument-serif/instrument-serif-latin.woff2", style: "normal" },
-    { path: "../../../../data/fonts/instrument-serif/instrument-serif-latin-ext.woff2", style: "normal" },
+    { path: "../../../../data/fonts/instrument-serif/instrument-serif-tr.woff2", style: "normal" },
   ],
   variable: "--face-instrument-serif",
   display: "swap",
@@ -75,8 +69,7 @@ export const instrumentSerif = localFont({
 
 export const karla = localFont({
   src: [
-    { path: "../../../../data/fonts/karla/karla-latin.woff2", style: "normal" },
-    { path: "../../../../data/fonts/karla/karla-latin-ext.woff2", style: "normal" },
+    { path: "../../../../data/fonts/karla/karla-tr.woff2", style: "normal" },
   ],
   variable: "--face-karla",
   weight: "100 900",
@@ -87,8 +80,7 @@ export const karla = localFont({
 
 export const publicSans = localFont({
   src: [
-    { path: "../../../../data/fonts/public-sans/public-sans-latin.woff2", style: "normal" },
-    { path: "../../../../data/fonts/public-sans/public-sans-latin-ext.woff2", style: "normal" },
+    { path: "../../../../data/fonts/public-sans/public-sans-tr.woff2", style: "normal" },
   ],
   variable: "--face-public-sans",
   weight: "100 900",
@@ -99,8 +91,7 @@ export const publicSans = localFont({
 
 export const interTight = localFont({
   src: [
-    { path: "../../../../data/fonts/inter-tight/inter-tight-latin.woff2", style: "normal" },
-    { path: "../../../../data/fonts/inter-tight/inter-tight-latin-ext.woff2", style: "normal" },
+    { path: "../../../../data/fonts/inter-tight/inter-tight-tr.woff2", style: "normal" },
   ],
   variable: "--face-inter-tight",
   weight: "100 900",
@@ -111,8 +102,7 @@ export const interTight = localFont({
 
 export const spaceMono = localFont({
   src: [
-    { path: "../../../../data/fonts/space-mono/space-mono-latin.woff2", style: "normal" },
-    { path: "../../../../data/fonts/space-mono/space-mono-latin-ext.woff2", style: "normal" },
+    { path: "../../../../data/fonts/space-mono/space-mono-tr.woff2", style: "normal" },
   ],
   variable: "--face-space-mono",
   display: "swap",
@@ -122,8 +112,7 @@ export const spaceMono = localFont({
 
 export const jetbrainsMono = localFont({
   src: [
-    { path: "../../../../data/fonts/jetbrains-mono/jetbrains-mono-latin.woff2", style: "normal" },
-    { path: "../../../../data/fonts/jetbrains-mono/jetbrains-mono-latin-ext.woff2", style: "normal" },
+    { path: "../../../../data/fonts/jetbrains-mono/jetbrains-mono-tr.woff2", style: "normal" },
   ],
   variable: "--face-jetbrains-mono",
   weight: "100 900",

@@ -120,12 +120,14 @@ function describeRoles(roles: FontRole[]): string {
 
 function declaration(role: string, face: Face): string {
   const name = `${role}Font`;
-  const sources = ["latin", "latin-ext"]
-    .map(
-      (subset) =>
-        `    { path: "../../public/fonts/${face.slug}/${face.slug}-${subset}.woff2", style: "normal" }`,
-    )
-    .join(",\n");
+  // One file per family, subset to SUBSET_CHARSET by the vendoring script.
+  // This was Google's `latin` + `latin-ext` pair until the first real client:
+  // three families meant six requests and 235 KB, the page's heaviest
+  // resource class and three times the font budget, and its LCP failed at
+  // 3.95 s against a 2.7-3.2 s baseline. Turkish straddles both Google
+  // subsets — `ı` is in `latin`, `ğ ş İ` in `latin-ext` — so neither could be
+  // dropped; asking for the characters instead gives one file (D10 §11).
+  const sources = `    { path: "../../public/fonts/${face.slug}/${face.slug}-tr.woff2", style: "normal" }`;
 
   // Matched to template/src/lib/fonts.ts, which is the configuration the
   // LCP budget was actually measured against. A generated site loading its
@@ -186,8 +188,15 @@ export function copyFaces(
  * possible moment.
  */
 export function assertVendored(plan: LocalFontPlan, repoRoot: string): void {
+  // The woff2 itself, not just the directory. A face vendored under the old
+  // two-file layout leaves a populated directory with no `-tr.woff2` in it,
+  // which would pass a directory check and then 404 on the generated site —
+  // where the only symptom is the page silently rendering in the fallback.
   const missing = plan.faces
-    .filter((f) => !existsSync(join(repoRoot, "data", "fonts", f.slug)))
+    .filter(
+      (f) =>
+        !existsSync(join(repoRoot, "data", "fonts", f.slug, `${f.slug}-tr.woff2`)),
+    )
     .map((f) => f.family);
   if (missing.length > 0) {
     throw new Error(

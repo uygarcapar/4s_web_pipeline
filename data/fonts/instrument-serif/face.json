@@ -4,16 +4,10 @@
   "variable": false,
   "files": [
     {
-      "subset": "latin-ext",
-      "file": "instrument-serif-latin-ext.woff2",
+      "subset": "tr",
+      "file": "instrument-serif-tr.woff2",
       "weight": "400",
-      "unicodeRange": "U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF, U+0304, U+0308, U+0329, U+1D00-1DBF, U+1E00-1E9F, U+1EF2-1EFF, U+2020, U+20A0-20AB, U+20AD-20C4, U+2113, U+2C60-2C7F, U+A720-A7FF"
-    },
-    {
-      "subset": "latin",
-      "file": "instrument-serif-latin.woff2",
-      "weight": "400",
-      "unicodeRange": "U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD"
+      "unicodeRange": "U+20-7e, U+a2-a3, U+a5, U+a7, U+a9, U+ab, U+ae, U+b0-b1, U+b5-b7, U+bb-be, U+c0-c4, U+c7-cf, U+d1-d7, U+d9-dd, U+df-e4, U+e7-ef, U+f1-f7, U+f9-fd, U+ff, U+102-103, U+106-10b, U+114-117, U+11c-125, U+128-129, U+12c-12d, U+130-131, U+134-137, U+139-13c, U+143-146, U+14e-14f, U+152-157, U+15a-15f, U+162-163, U+168-169, U+16c-16d, U+174-17c, U+1d7-1d8, U+1db-1dc, U+1f4-1f5, U+1f8-1f9, U+226-229, U+22e-22f, U+300-303, U+306-308, U+327, U+338, U+1e02-1e03, U+1e08-1e0b, U+1e10-1e11, U+1e1c-1e1f, U+1e22-1e23, U+1e26-1e29, U+1e2e-1e31, U+1e3e-1e41, U+1e44-1e45, U+1e4c-1e4f, U+1e54-1e59, U+1e60-1e61, U+1e64-1e65, U+1e6a-1e6b, U+1e78-1e79, U+1e7c-1e7d, U+1e80-1e87, U+1e8a-1e91, U+1e97, U+1ea4-1ea7, U+1eaa-1eab, U+1eae-1eb1, U+1eb4-1eb5, U+1ebc-1ec1, U+1ec4-1ec5, U+1ed0-1ed3, U+1ed6-1ed7, U+1ef2-1ef3, U+1ef8-1ef9, U+2013-2014, U+2018-2019, U+201c-201e, U+2022, U+2026, U+2032-2033, U+2039-203a, U+20ac, U+20ba, U+2116, U+2122, U+2190-2193, U+219a-219b, U+221e, U+2260, U+2264-2265, U+226e-2271"
     }
   ]
 }
