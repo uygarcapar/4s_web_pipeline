@@ -1991,3 +1991,99 @@ that no one had checked. **Fixing the authoritative copy does nothing if
 the consumers read the convenient one** — and the only reason this surfaced
 is that the stage logs print their own evidence counts, so `1 services`
 appeared twice in a row and the second time it was no longer explicable.
+
+## The digest was the fix loop's only eyes, and it was half blind
+
+`verify` failed on `lhci` for the first real client and the fix loop spent
+two iterations and **$3.21 compressing images**. The images were not the
+problem. This is what the digest told it:
+
+```
+- image-delivery-insight — expected >= 0.9, actual 0.5
+- largest-contentful-paint — expected <= 3500, actual 3952
+- categories — expected >= 0.9, actual 0.87
+```
+
+Two lines that look like one story. What the Lighthouse report said, and
+the digest did not:
+
+```
+LCP element : <h1 class="t-h2 mt-5 …">     ← text, not an image
+TTFB          452ms  11%
+Render Delay 3501ms  89%
+font        6 requests  232 KB             ← its own budget is 2 files
+script      9 requests  214 KB
+image       7 requests   67 KB             ← the entire image class
+```
+
+The LCP was a text element with 89% of its time in render delay, and the
+`image-delivery-insight` finding was one image wasting 20 KB. Fonts were
+3.5x the whole image payload and 3x over their own budget, and **the digest
+never mentioned fonts once** (`grep -c font digest.md` → 0).
+
+The fix agent did not reason badly. Images were the only lead it was given.
+
+So the digest now carries, beside the failure rather than under
+"öneri/recommendation": the LCP element, its phase split, per-type resource
+weight, and the render-blocking list. Thirteen lines on this run, and they
+name the cause. `scripts/lhci-diagnostics.mjs` is the pure part, tested
+against this client's real numbers (17 cases, including nine malformed-LHR
+shapes — a diagnostic block that throws would take the whole digest with
+it).
+
+### I made the same mistake four times before the report stopped me
+
+Chasing the perf failure I formed four hypotheses and every one was wrong:
+
+1. **`adjustFontFallback: false` is a bug** — it is deliberate and measured.
+   `local-fonts.ts` says so: "the synthetic metric adjustment measured WORSE
+   here, not better."
+2. **`--font-display: var(--font-display)` is a circular reference** — it is
+   the Tailwind v4 `@theme inline` idiom. Decisive evidence: Inter Tight was
+   fetched and renders, which a genuinely invalid var would not allow.
+3. **The mono face is unused dead weight** — `.meta` and `.btn-label` both
+   use it, and the hero uses both classes above the fold.
+4. **Duplicate `@font-face` without `unicode-range` breaks ASCII rendering**
+   (since `latin-ext` is last-declared and has no ASCII) — measured in a
+   browser: all six faces load, `document.fonts.check` is true for ASCII,
+   Turkish and dotless `ı`. The browser stacks same-family rules; nothing is
+   broken. Adding `unicode-range` would not even cut requests, because a
+   Turkish page needs both ranges.
+
+Four plausible stories, each killed by one measurement. The difference
+between me and the fix agent is not judgement — it is that I could read the
+Lighthouse result and it could only read the digest. That asymmetry was the
+bug.
+
+### What is actually wrong, and it is not a defect
+
+Nothing. The fonts are correct and all three are genuinely used:
+
+- template baseline (D4-calibrated): **2 families, 4 files** → LCP 2.7-3.2s,
+  performance 0.94-0.96
+- this client, direction `swiss-grid`: **3 families, 6 files** → LCP 3.95s,
+  performance 0.87
+
+D10's design space permits two display/body families plus an optional mono
+accent. The LCP budget was calibrated against a template that uses two. A
+direction that uses all three cannot meet a budget set on two, and
+`swiss-grid` is not misconfigured for doing so — Inter Tight, Public Sans
+and JetBrains Mono are what it declares.
+
+**This is a policy-versus-budget collision, not a bug**, and it will recur
+on every direction whose mono accent lands above the fold. Three ways out,
+and the choice is the operator's because two of them touch protected files:
+
+1. **Combine each family's `latin` + `latin-ext` into one Turkish-targeted
+   subset.** 6 files → 3, and it drops the duplicated metadata and hinting
+   in every pair. The best option: it needs no policy change and no
+   protected-file edit, only a change to how faces are vendored. Turkish
+   needs glyphs from both Google ranges (`ı` is U+0131, in `latin`; `ğ ş İ`
+   are in `latin-ext`), which is exactly why neither file can simply be
+   dropped.
+2. Restrict directions to two families — a D10 design-space change.
+3. Raise the performance/LCP assertion — that config is protected, and
+   loosening it would also stop it catching real regressions.
+
+Note that a `font:count <= 2` budget already exists as a `warn`, and the
+template's own 4 files exceed it. Someone suspected this before it happened.

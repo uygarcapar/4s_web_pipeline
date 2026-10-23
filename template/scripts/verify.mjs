@@ -31,6 +31,7 @@ import {
   writeFileSync,
 } from "node:fs";
 import path from "node:path";
+import { lhciDiagnostics } from "./lhci-diagnostics.mjs";
 
 const CWD = process.cwd();
 const DIGEST_PATH = path.join(CWD, "verify-digest.md");
@@ -318,6 +319,28 @@ function readLhciScores() {
   }
 }
 
+/** The representative run's full Lighthouse result, or null. */
+function readLhr() {
+  const dir = path.join(CWD, ".lighthouseci");
+  try {
+    const manifest = JSON.parse(readFileSync(path.join(dir, "manifest.json"), "utf8"));
+    const entry = manifest.find((m) => m.isRepresentativeRun) ?? manifest[0];
+    if (entry?.jsonPath) return JSON.parse(readFileSync(entry.jsonPath, "utf8"));
+  } catch {
+    // Fall through to the newest lhr-*.json on disk.
+  }
+  try {
+    const newest = readdirSync(dir)
+      .filter((f) => f.startsWith("lhr-") && f.endsWith(".json"))
+      .sort()
+      .pop();
+    if (newest) return JSON.parse(readFileSync(path.join(dir, newest), "utf8"));
+  } catch {
+    /* no LHR on disk */
+  }
+  return null;
+}
+
 function gateLhci() {
   const assertionResultsPath = path.join(
     CWD,
@@ -360,11 +383,17 @@ function gateLhci() {
   }
 
   if (assertions && assertions.errors.length > 0) {
-    // Real threshold failures: hard gate.
-    record("lhci", "fail", res.seconds, cap(assertions.errors, 20), [
-      ...scoreNote,
-      ...assertions.recommendations,
-    ]);
+    // Real threshold failures: hard gate. The diagnostics ride in `details`
+    // rather than `notes` on purpose — notes render as
+    // "öneri/recommendation", which is exactly the prefix a fix loop
+    // deprioritises, and this is the context it needs most.
+    record(
+      "lhci",
+      "fail",
+      res.seconds,
+      [...cap(assertions.errors, 20), ...cap(lhciDiagnostics(readLhr()), 16)],
+      [...scoreNote, ...assertions.recommendations],
+    );
     return { ok: false };
   }
 
