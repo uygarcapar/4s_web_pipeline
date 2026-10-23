@@ -2212,3 +2212,100 @@ template's own baseline face — because `generate` copies the template whole
 and `copyFaces` then adds the direction's faces on top. It is never
 referenced, so it is never fetched and costs no LCP, but it ships in every
 deploy.
+
+## The digest fix, tested against the thing it was written for
+
+The same failure, the same fix agent, different information. Previous two
+iterations, given only `image-delivery-insight 0.5` next to
+`largest-contentful-paint 3952`, spent $3.21 compressing images. This run,
+given the LCP element and phase split, the agent wrote this in the code:
+
+> The LCP element on this archetype is the headline text in the accent
+> block, not this photograph (it carries a reversed-out h1, not an image) —
+> an over-wide `sizes` guess was pulling a next-breakpoint-up image (and,
+> via `priority`'s preload, bandwidth the render-blocking CSS needed first)
+> for no visual gain.
+
+It removed `priority` from the hero image — reasoning that preloading a
+non-LCP element steals bandwidth from the render-blocking CSS that the
+actual LCP waits on — and replaced the `sizes` guess with the grid's own
+arithmetic. That is the right diagnosis, reached because the digest named
+the LCP element. **#57 works**, and the evidence is a behaviour change
+rather than a claim.
+
+It did not move either number. That turned out to be the more interesting
+result.
+
+## `image-delivery-insight` penalises correct behaviour
+
+The audit compares a served image against its **CSS pixel** size and
+ignores device pixel ratio:
+
+```
+displayed   372 CSS px
+DPR         1.75   (Lighthouse's own mobile emulation)
+needed      651 device px
+source      640x480 — the client's own photograph; no larger original exists
+```
+
+`next/image` serves the 640 px source. For a 1.75x screen that is correct
+and still slightly short of ideal. Lighthouse compares 640 against 372 and
+calls it oversized.
+
+Passing the audit means serving ~372 px — shipping a visibly soft hero
+photograph to every high-DPR phone. **The gate is asking us to degrade the
+client's site to move a number**, which is the definition of a
+mis-calibrated hard gate.
+
+D4 already built this category. `legacy-javascript-insight` and
+`network-dependency-tree-insight` are `warn` for exactly this reason:
+"structural to Next.js output, not fixable from a generated site's editable
+surface, so they ride along as digest recommendations." This belongs with
+them. Patch in `docs/patches/D10-image-delivery/`, verified with
+`git apply --check` — operator's call, as a protected file.
+
+Cost of learning this the hard way: three fix iterations and $5.43 across
+two runs, all of it spent on an audit no edit in the editable surface can
+satisfy.
+
+## Where the client stands
+
+| gate | |
+|---|---|
+| tsc | ✅ |
+| eslint | ✅ |
+| build | ✅ |
+| playwright | ✅ (a11y, smoke, visual) |
+| lhci | ❌ two assertions |
+| links, geometry | skipped behind lhci |
+
+Four of the gates that have ever run on a real client now pass. `lhci` has
+two failures left, and neither is a defect in the site:
+
+1. `image-delivery-insight` — above; mis-calibrated for DPR.
+2. `largest-contentful-paint` 3733 ms vs 3500 — 88% render delay on a text
+   element, now dominated by 904 ms of render-blocking CSS from Next's own
+   chunks. Not reachable from `site.config.ts` or `src/sections/**`. The
+   template baseline is 2.7-3.2 s on a fixture; this client's page carries
+   21 services, 17 FAQ pairs and 44 photographs, and is legitimately
+   heavier.
+
+## Two accounting defects worth fixing before the ship test
+
+**The $10 cap cannot see the fix loop.** `state.json` records $4.71 for
+this run; the real spend is ~$10.1. Fix-loop sessions ($1.10, $2.11, $2.22)
+are never added, because the cost is written when a stage *completes* and
+`verify` never completed. The loop is up to three full agent sessions — the
+most expensive thing after `generate` — so the cap is blind to its largest
+discretionary cost. Ten clients at this rate is a real number to be wrong
+about.
+
+**Visual baselines go stale silently.** Baselines are per-client and
+compare "how did this copy look before". When the template or the fonts
+legitimately change and an existing run is re-verified, the baseline is
+invalid and the diff reads to the fix loop as a real regression — it had
+started repairing one before it was stopped. The pipeline does not normally
+hit this, because `generate` copies the template fresh each time; it
+appeared here because `generate` was skipped and files were synced by hand.
+It would also appear for an operator re-verifying an existing run after a
+template change.

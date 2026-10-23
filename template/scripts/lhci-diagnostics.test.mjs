@@ -55,6 +55,30 @@ const failingLhr = {
         ],
       },
     },
+    "image-delivery-insight": {
+      score: 0.5,
+      details: {
+        items: [
+          {
+            url: "http://localhost:3101/_next/image?url=%2Fimages%2Fcrawl%2Fmina-guzellik-01-640x480_c.jpg&w=750&q=75",
+            totalBytes: 31_282,
+            wastedBytes: 20_713,
+            subItems: {
+              type: "subitems",
+              items: [
+                {
+                  reason:
+                    "This image file is larger than it needs to be (640x480) for its displayed dimensions (372x279). Use responsive images to reduce the image download size.",
+                },
+              ],
+            },
+          },
+        ],
+      },
+    },
+    // Passing image audits must stay out of the digest entirely.
+    "modern-image-formats": { score: 1, details: { items: [{ url: "fine.webp" }] } },
+    "unsized-images": { score: null, details: { items: [] } },
   },
 };
 

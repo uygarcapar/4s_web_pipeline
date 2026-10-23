@@ -1,0 +1,34 @@
+diff --git a/template/lighthouserc.cjs b/template/lighthouserc.cjs
+index 1aece50..64c02b2 100644
+--- a/template/lighthouserc.cjs
++++ b/template/lighthouserc.cjs
+@@ -73,6 +73,29 @@ module.exports = {
+          */
+         "legacy-javascript-insight": "warn",
+         "network-dependency-tree-insight": "warn",
++        /*
++         * Measured on minaguzellik.com, the first real client. The audit
++         * compares a served image against its CSS pixel size and ignores
++         * device pixel ratio, so it penalises correct responsive serving:
++         *
++         *   displayed   372 CSS px
++         *   DPR         1.75 (Lighthouse's own mobile emulation)
++         *   needed      651 device px
++         *   source      640x480 — the client's own photograph, no larger
++         *               original exists
++         *
++         * next/image serves the 640 px source, which is the right call for
++         * a 1.75x screen and still slightly short of ideal. Satisfying the
++         * audit means serving ~372 px, i.e. deliberately shipping a soft
++         * image on every high-DPR phone — degrading the client's site to
++         * move a number.
++         *
++         * Same category as the two above: real as a recommendation, wrong
++         * as a hard gate, and not fixable from a generated site's editable
++         * surface. The fix loop spent three iterations and $5.43 on it
++         * across two runs before this was understood.
++         */
++        "image-delivery-insight": "warn",
+       },
+     },
+     upload: { target: "filesystem", outputDir: "./.lighthouseci" },
