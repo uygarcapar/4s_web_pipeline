@@ -142,8 +142,30 @@ export function createProgressNotifier(options?: {
   if (!send) return SILENT;
 
   const inFlight: Promise<unknown>[] = [];
+  // Report the first failure and then stay quiet. Swallowing every send
+  // error made a BLOCKED channel look exactly like an unconfigured one: on
+  // the first real client every message failed with
+  // UNABLE_TO_GET_ISSUER_CERT_LOCALLY — api.telegram.org was being
+  // intercepted at the network layer — and the pipeline said nothing, for
+  // the whole run. One line is enough to tell "no token" from "the token is
+  // fine and the host is unreachable"; repeating it per stage would bury the
+  // run log in the same sentence.
+  let reported = false;
   const post = (text: string) => {
-    inFlight.push(send(text).catch(() => undefined));
+    inFlight.push(
+      send(text).catch((err: unknown) => {
+        if (reported) return;
+        reported = true;
+        const cause = (err as { cause?: { code?: string } })?.cause?.code;
+        const reason = cause ?? (err instanceof Error ? err.message : String(err));
+        // The token never appears here: `reason` is a network error code or
+        // Telegram's own description, and neither carries credentials.
+        console.warn(
+          `[notify] progress messages are not being delivered (${String(reason).slice(0, 120)}). ` +
+            "The run continues; set NOTIFY_PROGRESS=off to silence this.",
+        );
+      }),
+    );
   };
 
   return {

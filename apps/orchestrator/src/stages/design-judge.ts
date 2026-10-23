@@ -143,7 +143,14 @@ ${join(ctx.runDir, "crawl", "asset-manifest.json")}.`,
       // littering the repo root.
       cwd: ctx.runDir,
       model: process.env.JUDGE_MODEL ?? "claude-opus-5",
-      maxTurns: Number.parseInt(process.env.JUDGE_MAX_TURNS ?? "30", 10),
+      // 30 was not enough to finish once: the judge reads the rubric and the
+      // examples, drives a browser at two viewports, inspects the DOM and
+      // the asset manifest, and then answers eighteen questions — and every
+      // navigate, screenshot and snapshot is a turn. It stopped on the first
+      // real client having read only the rubric. The other heavy stages sit
+      // at 40 (plan, fix) and 80 (generate); this is the one that pays a
+      // round trip per observation.
+      maxTurns: Number.parseInt(process.env.JUDGE_MAX_TURNS ?? "60", 10),
       maxBudgetUsd: Number.parseFloat(process.env.JUDGE_BUDGET_USD ?? "3"),
       allowedTools: ["Read", "Glob", "Grep", "mcp__playwright__*"],
       mcpServers: {
