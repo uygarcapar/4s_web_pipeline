@@ -6,6 +6,7 @@ import type { DesignSpec } from "@pipeline/core";
 import { afterEach, describe, expect, it } from "vitest";
 
 import { DIRECTIONS, DIRECTION_IDS } from "./directions/index.js";
+import { FACES, FACE_BY_FAMILY } from "./faces.js";
 import { copyFaces, fontRoles, planLocalFonts } from "./local-fonts.js";
 
 const REPO_ROOT = join(dirname(fileURLToPath(import.meta.url)), "../../../..");
@@ -132,6 +133,75 @@ describe.each(DIRECTION_IDS)("%s", (id) => {
         "a generated site is a redistribution; OFL §2 applies to it too",
       ).toBe(true);
     }
+  });
+});
+
+/**
+ * What the browser renders before the webfont arrives.
+ *
+ * `adjustFontFallback` was `false` for every face, on a measurement taken
+ * when a family shipped Google's latin + latin-ext pair at 235 KB. One
+ * 117 KB file per family changed the answer. Re-measured on the first real
+ * client: LCP 3733ms -> 3086ms, performance 0.89 -> 0.93, CLS 0 either way.
+ *
+ * The mechanism matters more than the numbers. `display: swap` paints the
+ * headline immediately in the fallback, so the font was never the slow part
+ * — but an unmatched fallback reflows the text when the real face lands, and
+ * the reflowed headline registers as a NEW largest-contentful-paint then.
+ * The LCP was not waiting on the font; it was being reset by it.
+ */
+describe("fallback metrics", () => {
+  const moduleFor = (id: string): string => planLocalFonts(specFor(id)).module;
+  const allModules = DIRECTION_IDS.map(moduleFor).join("\n");
+
+  it("matches a sans face against Arial", () => {
+    expect(allModules).toContain('adjustFontFallback: "Arial"');
+  });
+
+  it("leaves no face on the old unmatched setting", () => {
+    // Except mono, which has no honest system metric to match against.
+    for (const id of DIRECTION_IDS) {
+      const module = moduleFor(id);
+      const unmatched = module.split("adjustFontFallback: false").length - 1;
+      const monoFaces = [...module.matchAll(/\/\*\* ([^—]+) —/g)]
+        .map((m) => FACE_BY_FAMILY.get(m[1]!.trim()))
+        .filter((f) => f?.category === "mono").length;
+      expect(unmatched, `${id} has ${unmatched} unmatched faces, ${monoFaces} mono`).toBe(
+        monoFaces,
+      );
+    }
+  });
+
+  it("falls back inside the face's own generic family", () => {
+    for (const face of FACES) {
+      const module = planLocalFonts(specFor(DIRECTION_IDS[0]!)).module;
+      if (!module.includes(face.family)) continue;
+      const stack =
+        face.category === "serif"
+          ? "serif"
+          : face.category === "mono"
+            ? "monospace"
+            : "sans-serif";
+      expect(module, `${face.family} (${face.category})`).toContain(stack);
+    }
+  });
+
+  it("never matches a monospace face against a proportional one", () => {
+    // Arial and Times are the only options and both are proportional;
+    // adjusting ui-monospace to Arial's metrics distorts what the stack
+    // already gets right.
+    const DECL = /\/\*\* ([^—]+) —[^*]*\*\/\s*export const \w+ = localFont\(\{([\s\S]*?)\n\}\);/g;
+    let seen = 0;
+    for (const id of DIRECTION_IDS) {
+      for (const [, family, body] of moduleFor(id).matchAll(DECL)) {
+        if (FACE_BY_FAMILY.get(family!.trim())?.category !== "mono") continue;
+        seen += 1;
+        expect(body, `${family} in ${id}`).toContain("adjustFontFallback: false");
+        expect(body, `${family} in ${id}`).toContain("monospace");
+      }
+    }
+    // A pass because no mono face was examined would prove nothing.
+    expect(seen, "no mono face appeared in any direction").toBeGreaterThan(0);
   });
 });
 
