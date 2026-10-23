@@ -67,7 +67,7 @@ export function Visit({
         {section.title ?? "Bize Gelin"}
       </h2>
 
-      <dl className="mt-12 grid gap-px border-t border-paper-300">
+      <div className="mt-12 grid gap-px border-t border-paper-300">
         <Row label="Adres">
           <span className="t-body text-foreground">
             {contact.address}
@@ -81,7 +81,7 @@ export function Visit({
             <span className="flex flex-col gap-1">
               {openingHours.map((entry) => (
                 <span key={entry.day} className="t-body flex gap-4 text-foreground">
-                  <span className="w-28 shrink-0 text-paper-500">
+                  <span className="w-28 shrink-0 text-[var(--ink-400)]">
                     {WEEKDAYS_TR[entry.day]}
                   </span>
                   <span className="tabular-nums">
@@ -109,19 +109,28 @@ export function Visit({
             {formatPhoneTR(contact.phoneE164)}
           </a>
         </Row>
-      </dl>
+      </div>
     </section>
   );
 }
 
-/** One label/value pair, masked so its content can slide up from the rule. */
+/**
+ * One label/value pair, masked so its content can slide up from the rule.
+ *
+ * The mask frame (`overflow-hidden`, the rule, the padding) and the element
+ * GSAP transforms can't be the same node — a transform can't be clipped by
+ * overflow set on that same element — so each row is its own single-pair
+ * `<dl>` (valid HTML on its own: `dt` immediately followed by `dd`, no
+ * wrapping div, enforced by the a11y gate) nested inside a static frame
+ * `div` that does the clipping.
+ */
 function Row({ label, children }: { label: string; children: React.ReactNode }) {
   return (
     <div className="overflow-hidden border-b border-paper-300 py-6">
-      <div className="visit-row flex flex-col gap-2 sm:flex-row sm:gap-10">
-        <dt className="meta w-44 shrink-0 pt-1 text-paper-500">{label}</dt>
+      <dl className="visit-row flex flex-col gap-2 sm:flex-row sm:gap-10">
+        <dt className="meta w-44 shrink-0 pt-1 text-[var(--ink-400)]">{label}</dt>
         <dd>{children}</dd>
-      </div>
+      </dl>
     </div>
   );
 }
