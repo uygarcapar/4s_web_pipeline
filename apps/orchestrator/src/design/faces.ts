@@ -49,25 +49,37 @@ export interface Face {
    * component can render sentence case, and Anton will still draw capitals.
    */
   uppercaseOnly?: boolean;
+  /**
+   * Which generic family the face belongs to, which decides two things the
+   * browser does before the webfont arrives: the fallback stack it renders
+   * in, and the metrics `adjustFontFallback` matches against.
+   *
+   * Both used to be hardcoded sans-serif for every face, so Fraunces and
+   * Newsreader fell back to system-ui and JetBrains Mono fell back to a
+   * proportional face — a mono accent rendering proportional until its
+   * woff2 lands, in the `.meta` and `.btn-label` text that sits above the
+   * fold.
+   */
+  category: "sans" | "serif" | "mono";
 }
 
 export const FACES: Face[] = [
   // Display
-  { family: "Archivo", slug: "archivo", licence: "OFL", axes: "wdth,wght@62..125,100..900", variable: true },
-  { family: "Anton", slug: "anton", licence: "OFL", axes: "", variable: false, uppercaseOnly: true },
-  { family: "Bebas Neue", slug: "bebas-neue", licence: "OFL", axes: "", variable: false, uppercaseOnly: true },
-  { family: "Fraunces", slug: "fraunces", licence: "OFL", axes: "opsz,wght@9..144,100..900", variable: true },
-  { family: "Newsreader", slug: "newsreader", licence: "OFL", axes: "opsz,wght@6..72,200..800", variable: true },
-  { family: "Instrument Serif", slug: "instrument-serif", licence: "OFL", axes: "", variable: false },
+  { family: "Archivo", slug: "archivo", licence: "OFL", axes: "wdth,wght@62..125,100..900", variable: true , category: "sans" },
+  { family: "Anton", slug: "anton", licence: "OFL", axes: "", variable: false, uppercaseOnly: true , category: "sans" },
+  { family: "Bebas Neue", slug: "bebas-neue", licence: "OFL", axes: "", variable: false, uppercaseOnly: true , category: "sans" },
+  { family: "Fraunces", slug: "fraunces", licence: "OFL", axes: "opsz,wght@9..144,100..900", variable: true , category: "serif" },
+  { family: "Newsreader", slug: "newsreader", licence: "OFL", axes: "opsz,wght@6..72,200..800", variable: true , category: "serif" },
+  { family: "Instrument Serif", slug: "instrument-serif", licence: "OFL", axes: "", variable: false , category: "serif" },
 
   // Body
-  { family: "Karla", slug: "karla", licence: "OFL", axes: "wght@200..800", variable: true },
-  { family: "Public Sans", slug: "public-sans", licence: "OFL", axes: "wght@100..900", variable: true },
-  { family: "Inter Tight", slug: "inter-tight", licence: "OFL", axes: "wght@100..900", variable: true },
+  { family: "Karla", slug: "karla", licence: "OFL", axes: "wght@200..800", variable: true , category: "sans" },
+  { family: "Public Sans", slug: "public-sans", licence: "OFL", axes: "wght@100..900", variable: true , category: "sans" },
+  { family: "Inter Tight", slug: "inter-tight", licence: "OFL", axes: "wght@100..900", variable: true , category: "sans" },
 
   // Mono accent
-  { family: "Space Mono", slug: "space-mono", licence: "OFL", axes: "", variable: false },
-  { family: "JetBrains Mono", slug: "jetbrains-mono", licence: "OFL", axes: "wght@100..800", variable: true },
+  { family: "Space Mono", slug: "space-mono", licence: "OFL", axes: "", variable: false , category: "mono" },
+  { family: "JetBrains Mono", slug: "jetbrains-mono", licence: "OFL", axes: "wght@100..800", variable: true , category: "mono" },
 ];
 
 export const FACE_BY_FAMILY = new Map(FACES.map((f) => [f.family, f]));

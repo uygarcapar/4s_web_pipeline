@@ -132,11 +132,38 @@ function declaration(role: string, face: Face): string {
   // Matched to template/src/lib/fonts.ts, which is the configuration the
   // LCP budget was actually measured against. A generated site loading its
   // fonts differently from the template would be measured against a budget
-  // nothing ever met: `preload` on the display face only (it sets the
-  // largest text, so it is on the LCP path; the body face resolves below
-  // the fold often enough that the extra request costs more than it saves),
-  // and `adjustFontFallback: false` because the synthetic metric adjustment
-  // measured WORSE here, not better.
+  // nothing ever met: `preload` on the display face only — it sets the
+  // largest text, so it is on the LCP path, while the body face resolves
+  // below the fold often enough that the extra request costs more than it
+  // saves.
+  //
+  // `adjustFontFallback` was `false`, on a measurement that said the
+  // synthetic adjustment was worse. That measurement was taken when each
+  // family shipped Google's latin + latin-ext pair — 235 KB over six
+  // requests — and it no longer holds now that a family is one 117 KB file.
+  // Re-measured on minaguzellik.com:
+  //
+  //        adjustFontFallback   LCP      performance
+  //        false                3733ms   0.89
+  //        matched metrics      3086ms   0.93      CLS 0 either way
+  //
+  // The mechanism is why it moved so far. With `display: swap` the headline
+  // paints immediately in the fallback, so it is never the slow part; but an
+  // unmatched fallback reflows the text when the real face arrives, and the
+  // reflowed headline registers as a NEW largest-contentful-paint at that
+  // moment. The LCP was not waiting on the font — it was being reset by it.
+  // `adjustFontFallback` accepts only Arial or Times New Roman, both
+  // proportional, so there is nothing honest to match a monospace face
+  // against: adjusting ui-monospace to Arial's metrics would distort the
+  // very thing the stack gets right. Mono keeps `false` and relies on its
+  // own stack. It is also the one role that is never the LCP element — it
+  // sets `.meta` and `.btn-label`, not the headline.
+  const metrics =
+    face.category === "serif"
+      ? '"Times New Roman"'
+      : face.category === "mono"
+        ? "false"
+        : '"Arial"';
   return `/** ${face.family} — ${face.licence}${face.variable ? ", variable" : ""}. */
 export const ${name} = localFont({
   src: [
@@ -145,12 +172,28 @@ ${sources},
   variable: "--font-${role}-face",
   display: "swap",${face.variable ? '\n  weight: "100 900",' : ""}
   preload: ${role === "display"},
-  // A metric-compatible stack: the swap from fallback to face should not
-  // move the headline, which is both a CLS cost and visibly cheap.
-  fallback: ["system-ui", "Segoe UI", "sans-serif"],
-  adjustFontFallback: false,
+  // A metric-compatible stack, in the face's OWN generic family: these were
+  // hardcoded sans-serif, so a serif display face fell back to system-ui and
+  // a mono accent rendered proportional until its woff2 landed — in the
+  // .meta and .btn-label text that sits above the fold.
+  fallback: ${JSON.stringify(FALLBACK_STACK[face.category])},
+  adjustFontFallback: ${metrics},
 });`;
 }
+
+/**
+ * What the browser renders in before the webfont arrives, per generic family.
+ *
+ * `adjustFontFallback` only accepts Arial or Times New Roman, so it can match
+ * metrics for sans and serif but has nothing for mono. The stack still
+ * matters there: a mono accent that falls back to a proportional face shifts
+ * visibly when it swaps, even if no metric adjustment is available.
+ */
+const FALLBACK_STACK: Record<Face["category"], string[]> = {
+  sans: ["system-ui", "Segoe UI", "Arial", "sans-serif"],
+  serif: ["Georgia", "Times New Roman", "serif"],
+  mono: ["ui-monospace", "SFMono-Regular", "Menlo", "monospace"],
+};
 
 const variablesExpr = (roles: string[]): string =>
   "`" + roles.map((r) => `\${${r}Font.variable}`).join(" ") + "`";

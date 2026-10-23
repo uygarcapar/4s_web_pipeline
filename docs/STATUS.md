@@ -2441,3 +2441,69 @@ when the measurement could not support that claim either way.
 - Fix-loop cost still never reaches `state.json`. This run recorded $4.71
   while roughly $10.1 was actually spent, so the $10 cap did not and could
   not fire. The cap was enforced by hand.
+
+## The LCP was not waiting on the font. It was being reset by it.
+
+`adjustFontFallback: false` was set on a measurement, and the measurement
+said the synthetic adjustment was worse. It was taken when a family shipped
+Google's `latin` + `latin-ext` pair — 235 KB over six requests. One 117 KB
+file per family changed the answer. Re-measured on minaguzellik.com:
+
+| adjustFontFallback | LCP | performance | CLS |
+|---|---|---|---|
+| `false` | 3733 ms | 0.89 | 0 |
+| matched metrics | **3088 ms** | **0.93** | 0 |
+
+The mechanism is the interesting part, and it is the opposite of what the
+phase breakdown suggested. With `display: swap` the headline paints
+immediately in the fallback, so the webfont was never the slow step. But an
+unmatched fallback **reflows** the text when the real face arrives, and the
+reflowed headline registers as a NEW largest-contentful-paint at that
+moment. 88% "render delay" on a text element was not the browser waiting to
+paint — it was painting twice, and the second paint being counted.
+
+CLS stayed 0 either way, which is what made the old setting look free.
+
+### The same line was wrong about two other things
+
+The fallback stack was hardcoded `["system-ui", "Segoe UI", "sans-serif"]`
+for every face. So Fraunces, Newsreader and Instrument Serif fell back to a
+sans-serif, and JetBrains Mono rendered **proportional** until its woff2
+landed — in `.meta` and `.btn-label`, which sit above the fold.
+
+`Face` now carries a `category` (`sans` | `serif` | `mono`) and both the
+stack and the metric match follow it:
+
+- sans → `Arial` metrics, `system-ui, Segoe UI, Arial, sans-serif`
+- serif → `Times New Roman` metrics, `Georgia, Times New Roman, serif`
+- mono → **no** synthetic match, `ui-monospace, SFMono-Regular, Menlo,
+  monospace`
+
+Mono keeps `false` deliberately. `adjustFontFallback` accepts only Arial or
+Times New Roman, both proportional, so there is nothing honest to match a
+monospace face against — adjusting `ui-monospace` to Arial's metrics would
+distort the one thing the stack already gets right. It is also the only role
+that is never the LCP element.
+
+### What this did not fix
+
+The gate still fails, and the reason is worth recording precisely. Three
+runs of the same build:
+
+```
+3119 ms   perf 0.93
+3733 ms   perf 0.89    <- LHCI picked this one as representative
+3088 ms   perf 0.93
+```
+
+Two of three now clear both thresholds, where before the fix all three sat
+at 3724-3733 ms. But there is roughly **600 ms of run-to-run spread on an
+identical build**, and the `median-run` aggregation selected the slow run,
+so `largest-contentful-paint` is still asserted at 3733 ms.
+
+So the change is a real improvement and not a pass. The remaining gap is not
+in the site: it is that a 3500 ms budget cannot be met reliably by a harness
+that varies 600 ms. D4 already noted the template "swings 2.7-3.2 s on this
+harness"; this is the same observation at the point where it starts costing
+fix-loop iterations on a client that is, on most runs, already inside the
+budget.

@@ -20,10 +20,12 @@ export const displayFont = localFont({
   display: "swap",
   weight: "100 900",
   preload: true,
-  // A metric-compatible stack: the swap from fallback to face should not
-  // move the headline, which is both a CLS cost and visibly cheap.
-  fallback: ["system-ui", "Segoe UI", "sans-serif"],
-  adjustFontFallback: false,
+  // A metric-compatible stack, in the face's OWN generic family: these were
+  // hardcoded sans-serif, so a serif display face fell back to system-ui and
+  // a mono accent rendered proportional until its woff2 landed — in the
+  // .meta and .btn-label text that sits above the fold.
+  fallback: ["system-ui","Segoe UI","Arial","sans-serif"],
+  adjustFontFallback: "Arial",
 });
 
 /** JetBrains Mono — OFL, variable. */
@@ -35,9 +37,11 @@ export const monoFont = localFont({
   display: "swap",
   weight: "100 900",
   preload: false,
-  // A metric-compatible stack: the swap from fallback to face should not
-  // move the headline, which is both a CLS cost and visibly cheap.
-  fallback: ["system-ui", "Segoe UI", "sans-serif"],
+  // A metric-compatible stack, in the face's OWN generic family: these were
+  // hardcoded sans-serif, so a serif display face fell back to system-ui and
+  // a mono accent rendered proportional until its woff2 landed — in the
+  // .meta and .btn-label text that sits above the fold.
+  fallback: ["ui-monospace","SFMono-Regular","Menlo","monospace"],
   adjustFontFallback: false,
 });
 
